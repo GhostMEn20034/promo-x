@@ -1,17 +1,26 @@
 package com.promox.core.promotion.internal.condition;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
+import java.util.Map;
+import java.util.Set;
+
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = CompositeConditionNode.class, name = "COMPOSITE"),
-})
 public interface ConditionNode {
-    /**
-     * Determines whether the given rule condition is satisfied by the current workspace state.
-     */
+    String getTypeName();
+    String getDisplayName();
+    Map<Operator, String> getOperatorsDisplayName();
+
+    // Default fallback so they don't HAVE to write a description if they don't want to
+    default String getDescription() {
+        return "";
+    }
+
+    default Set<Operator> getSupportedOperators() {
+        return Set.of();
+    }
+
     boolean evaluate(EngineWorkspace workspace);
 }

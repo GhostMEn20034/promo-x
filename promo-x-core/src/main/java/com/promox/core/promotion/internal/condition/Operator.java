@@ -5,5 +5,6 @@ package com.promox.core.promotion.internal.condition;
  */
 public enum Operator {
     EQUALS,
-    NOT_EQUALS
+    NOT_EQUALS,
+    GREATER_THAN_OR_EQUAL
 }

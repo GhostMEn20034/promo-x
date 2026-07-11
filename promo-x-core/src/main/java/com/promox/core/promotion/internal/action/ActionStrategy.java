@@ -5,9 +5,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = OrderDiscountAction.class, name = "ORDER_FLAT_DISCOUNT"),
+        @JsonSubTypes.Type(value = OrderPercentageDiscountAction.class, name = "ORDER_PERCENTAGE_DISCOUNT")
+})
 public interface ActionStrategy {
-    /**
-     * Mutates the execution workspace parameters to apply structural price deductions.
-     */
     void apply(EngineWorkspace workspace);
 }
