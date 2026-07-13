@@ -1,5 +1,7 @@
 package com.promox.core.promotion.infrastructure.json;
+
 import com.promox.core.promotion.internal.condition.*;
+import com.promox.core.promotion.internal.action.*;
 
 import org.springframework.context.annotation.Bean;
 import tools.jackson.databind.jsontype.NamedType;
@@ -40,6 +42,14 @@ class PromotionJacksonConfig {
                 // Quantity Matches
                 new NamedType(ProductIdQuantityConditionNode.class, ProductIdQuantityConditionNode.TYPE_NAME),
                 new NamedType(ProductSkuQuantityConditionNode.class, ProductSkuQuantityConditionNode.TYPE_NAME)
+        );
+    }
+
+    @Bean
+    public JsonMapperBuilderCustomizer actionStrategySubTypeCustomizer() {
+        return builder -> builder.registerSubtypes(
+                new NamedType(OrderDiscountAction.class, OrderDiscountAction.TYPE_NAME),
+                new NamedType(OrderPercentageDiscountAction.class, OrderPercentageDiscountAction.TYPE_NAME)
         );
     }
 }

@@ -23,13 +23,22 @@ public class PromoRuleEngine {
             boolean isEligible = rule.getConditionTree().evaluate(workspace);
 
             if (isEligible) {
+                workspace.logMatchedRule(rule.getId(), rule.getName());
+
+                boolean ruleActuallyApplied = false;
                 for (ActionStrategy action : rule.getActions()) {
-                    action.apply(workspace);
+                    boolean actionApplied = action.apply(workspace);
+                    if (actionApplied) {
+                        ruleActuallyApplied = true;
+                    }
                 }
-                workspace.logAppliedRule(rule.getId(), rule.getName());
-                // Short-Circuit evaluation if this rule demands exclusivity
-                if (rule.isShortCircuit()) {
-                    break;
+
+                if (ruleActuallyApplied) {
+                    workspace.logAppliedRule(rule.getId(), rule.getName());
+                    // Only short-circuit if a rule actually modified the cart state
+                    if (rule.isShortCircuit()) {
+                        break;
+                    }
                 }
             }
         }

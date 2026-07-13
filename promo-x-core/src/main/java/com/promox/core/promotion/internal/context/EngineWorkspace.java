@@ -18,6 +18,7 @@ public class EngineWorkspace {
     // Core Engine runtime containers
     private final List<WorkspaceLineItem> lineItems;
     private final List<AppliedRuleLog> appliedRules;
+    private final List<MatchedRuleLog> matchedRules;
 
     private final BigDecimal shippingCost;
     private BigDecimal shippingCostDiscount;
@@ -31,6 +32,7 @@ public class EngineWorkspace {
         this.shippingCost = request.shippingCost();
 
         this.appliedRules = new ArrayList<>();
+        this.matchedRules = new ArrayList<>();
         this.lineItems = request.items().stream()
                 .map(WorkspaceLineItem::new)
                 .collect(Collectors.toList());
@@ -38,6 +40,10 @@ public class EngineWorkspace {
 
     public void logAppliedRule(String ruleId, String ruleName) {
         this.appliedRules.add(new AppliedRuleLog(ruleId, ruleName));
+    }
+
+    public void logMatchedRule(String ruleId, String ruleName) {
+        this.matchedRules.add(new MatchedRuleLog(ruleId, ruleName));
     }
 
     public void addShippingDiscount(BigDecimal amount) {
@@ -94,6 +100,7 @@ public class EngineWorkspace {
     public List<String> getPromoCodes() { return promoCodes; }
     public List<WorkspaceLineItem> getLineItems() { return lineItems; }
     public List<AppliedRuleLog> getAppliedRules() { return appliedRules; }
+    public List<MatchedRuleLog> getMatchedRules() { return matchedRules; }
     public BigDecimal getShippingCost() { return shippingCost; }
     public BigDecimal getShippingCostDiscount() { return shippingCostDiscount; }
 }
