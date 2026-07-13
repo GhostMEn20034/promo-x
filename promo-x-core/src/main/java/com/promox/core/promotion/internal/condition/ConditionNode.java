@@ -13,7 +13,7 @@ public interface ConditionNode {
     String getDisplayName();
     Map<Operator, String> getOperatorsDisplayName();
 
-    // Default fallback so they don't HAVE to write a description if they don't want to
+    // Default fallback so you don't HAVE to write a description if you don't want to
     default String getDescription() {
         return "";
     }

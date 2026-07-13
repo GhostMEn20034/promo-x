@@ -4,15 +4,21 @@ import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
 
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.*;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.MISSING_REQUIRED_FIELD;
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.UNSUPPORTED_OPERATOR;
 
 public record SingleProductIdConditionNode(
+        @NotBlank(message = "Target Product ID cannot be null or blank")
         String productId,
+
+        @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
     public static final String TYPE_NAME = "SINGLE_PRODUCT_ID_MATCH";

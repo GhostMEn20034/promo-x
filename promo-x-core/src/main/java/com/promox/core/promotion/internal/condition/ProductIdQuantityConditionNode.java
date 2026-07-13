@@ -3,7 +3,11 @@ package com.promox.core.promotion.internal.condition;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.*;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.*;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -11,8 +15,13 @@ import java.util.Set;
 
 
 public record ProductIdQuantityConditionNode(
+        @NotBlank(message = "Target Product ID cannot be null or blank")
         String productId,
+
+        @Min(value = 1, message = "Required quantity must be greater than zero")
         int requiredQuantity,
+
+        @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
     public static final String TYPE_NAME = "PRODUCT_ID_QUANTITY";

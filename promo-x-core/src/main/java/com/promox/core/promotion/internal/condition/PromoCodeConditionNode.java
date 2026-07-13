@@ -2,16 +2,20 @@ package com.promox.core.promotion.internal.condition;
 
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.*;
 
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.*;
-
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
 import java.util.Set;
 
 
 public record PromoCodeConditionNode(
+        @NotBlank(message = "Promo code cannot be null or blank")
         String code,
+
+        @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
     public static final String TYPE_NAME = "PROMO_CODE";

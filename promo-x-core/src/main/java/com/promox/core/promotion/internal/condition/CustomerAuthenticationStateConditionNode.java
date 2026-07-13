@@ -2,14 +2,18 @@ package com.promox.core.promotion.internal.condition;
 
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.UNSUPPORTED_OPERATOR;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.UNSUPPORTED_OPERATOR;
 
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
 import java.util.Set;
 
 
-public record CustomerAuthenticationStateConditionNode(Operator operator) implements ConditionNode {
+public record CustomerAuthenticationStateConditionNode(
+        @NotNull(message = "Operator is required")
+        Operator operator
+) implements ConditionNode {
     public static final String TYPE_NAME = "CUSTOMER_AUTHENTICATION_STATE";
     public static final String DISPLAY_NAME = "Customer Authentication Status";
     private static final String DESC = """

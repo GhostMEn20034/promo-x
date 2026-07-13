@@ -3,7 +3,12 @@ package com.promox.core.promotion.internal.condition;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.*;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.*;
+
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 
 import java.util.List;
@@ -12,7 +17,10 @@ import java.util.Set;
 
 
 public record ProductCategoryAnyMatchConditionNode(
-        List<String> categories,
+        @NotEmpty(message = "Product categories match list cannot be null or empty")
+        List<@NotBlank(message = "Individual categories cannot be null or blank") String> categories,
+
+        @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
     public static final String TYPE_NAME = "PRODUCT_CATEGORY_ANY_MATCH";

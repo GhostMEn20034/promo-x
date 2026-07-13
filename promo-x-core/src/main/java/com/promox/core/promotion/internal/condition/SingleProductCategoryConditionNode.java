@@ -3,15 +3,22 @@ package com.promox.core.promotion.internal.condition;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.*;
+
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.*;
 
 public record SingleProductCategoryConditionNode(
+        @NotBlank(message = "Target Product category cannot be null or blank")
         String category,
+
+        @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
     public static final String TYPE_NAME = "SINGLE_PRODUCT_CATEGORY_MATCH";

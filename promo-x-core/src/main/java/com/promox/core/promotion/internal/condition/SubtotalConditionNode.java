@@ -2,7 +2,10 @@ package com.promox.core.promotion.internal.condition;
 
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
-import static com.promox.core.promotion.internal.exception.PromotionErrorCodes.*;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.*;
+
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
 import java.util.Set;
@@ -10,7 +13,11 @@ import java.math.BigDecimal;
 
 
 public record SubtotalConditionNode(
+        @NotNull(message = "Threshold cannot be null")
+        @DecimalMin(value = "0.0", message = "Threshold cannot be negative")
         BigDecimal threshold,
+
+        @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
 
