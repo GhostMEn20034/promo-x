@@ -74,9 +74,9 @@ public class EngineWorkspace {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public BigDecimal getNewItemsSubtotal() {
+    public BigDecimal getItemsNetSubtotal() {
         return lineItems.stream()
-                .map(WorkspaceLineItem::getNewTotalPrice)
+                .map(WorkspaceLineItem::getNetPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -90,7 +90,7 @@ public class EngineWorkspace {
     }
 
     public BigDecimal getGrandTotal() {
-        return getNewItemsSubtotal().add(getNewShippingCost());
+        return getItemsNetSubtotal().add(getNewShippingCost());
     }
 
     public String getStorefrontId() { return storefrontId; }

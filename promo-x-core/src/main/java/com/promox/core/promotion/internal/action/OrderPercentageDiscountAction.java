@@ -20,7 +20,7 @@ import java.util.Objects;
  */
 public record OrderPercentageDiscountAction(
         @NotNull(message = "Discount percentage cannot be null")
-        @DecimalMin(value = "0.0", message = "Percentage cannot be less than 0.0")
+        @DecimalMin(value = "0.01", message = "Percentage cannot be less than 0.0")
         @DecimalMax(value = "1.0", message = "Percentage cannot be greater than 1.0")
         BigDecimal discountPercentage
 ) implements ActionStrategy {
@@ -68,14 +68,12 @@ public record OrderPercentageDiscountAction(
         boolean appliedAnyDiscount = false;
 
         for (WorkspaceLineItem item : items) {
-            BigDecimal lineDiscount = item.getTotalPrice()
+            BigDecimal lineDiscount = item.getNetPrice()
                     .multiply(discountPercentage)
                     .setScale(2, RoundingMode.HALF_UP);
 
-            // Only apply and track if the calculated discount is actually greater than zero
             if (lineDiscount.compareTo(BigDecimal.ZERO) > 0) {
-                item.addDiscount(lineDiscount);
-                appliedAnyDiscount = true;
+                appliedAnyDiscount |= item.addDiscount(lineDiscount);
             }
         }
 

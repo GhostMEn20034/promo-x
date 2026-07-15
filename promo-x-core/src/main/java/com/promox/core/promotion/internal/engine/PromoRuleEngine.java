@@ -19,7 +19,6 @@ public class PromoRuleEngine {
                 .toList();
 
         for (PromotionRule rule : sortedRules) {
-            // Null condition blocks act as auto-passing rules
             boolean isEligible = rule.getConditionTree().evaluate(workspace);
 
             if (isEligible) {

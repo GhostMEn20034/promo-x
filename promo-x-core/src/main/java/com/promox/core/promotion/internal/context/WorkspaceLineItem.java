@@ -33,13 +33,25 @@ public class WorkspaceLineItem {
         return this.unitPrice.multiply(BigDecimal.valueOf(this.quantity));
     }
 
-    public BigDecimal getNewTotalPrice() {
-        BigDecimal result = getTotalPrice().subtract(this.discountAmount);
-        return result.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : result; // Guard against negative balances
+    public BigDecimal getNetPrice() {
+        BigDecimal net = getTotalPrice().subtract(this.discountAmount);
+        return net.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : net;
     }
 
-    public void addDiscount(BigDecimal amount) {
-        this.discountAmount = this.discountAmount.add(amount);
+    public boolean addDiscount(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return false;
+        }
+
+        BigDecimal remainingPrice = getNetPrice();
+        if (remainingPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return false; // Item is already fully free
+        }
+
+        // Cap the discount so we don't over-discount the line item
+        BigDecimal actualDiscount = amount.min(remainingPrice);
+        this.discountAmount = this.discountAmount.add(actualDiscount);
+        return true;
     }
 
     public void setDiscountAmount(BigDecimal discountAmount) {

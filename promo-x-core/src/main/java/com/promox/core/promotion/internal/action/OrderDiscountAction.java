@@ -56,7 +56,7 @@ public record OrderDiscountAction(
         if (items.isEmpty()) return false;
 
         // Pro-rata distribution across lines to maintain clean subtotaling
-        BigDecimal totalSubtotal = workspace.getItemsSubtotal();
+        BigDecimal totalSubtotal = workspace.getItemsNetSubtotal();
         if (totalSubtotal.compareTo(BigDecimal.ZERO) == 0) return false;
 
         for (WorkspaceLineItem item : items) {
