@@ -49,7 +49,13 @@ class PromotionJacksonConfig {
     public JsonMapperBuilderCustomizer actionStrategySubTypeCustomizer() {
         return builder -> builder.registerSubtypes(
                 new NamedType(OrderDiscountAction.class, OrderDiscountAction.TYPE_NAME),
-                new NamedType(OrderPercentageDiscountAction.class, OrderPercentageDiscountAction.TYPE_NAME)
+                new NamedType(OrderPercentageDiscountAction.class, OrderPercentageDiscountAction.TYPE_NAME),
+                new NamedType(ShippingPercentageDiscountAction.class, ShippingPercentageDiscountAction.TYPE_NAME),
+                new NamedType(FreeShippingAction.class, FreeShippingAction.TYPE_NAME),
+                new NamedType(ProductIdPercentageDiscountAction.class, ProductIdPercentageDiscountAction.TYPE_NAME),
+                new NamedType(ProductSKUPercentageDiscountAction.class, ProductSKUPercentageDiscountAction.TYPE_NAME),
+                new NamedType(ProductIdBuyXGetYFreeAction.class, ProductIdBuyXGetYFreeAction.TYPE_NAME),
+                new NamedType(ProductSKUBuyXGetYFreeAction.class, ProductSKUBuyXGetYFreeAction.TYPE_NAME)
         );
     }
 }
