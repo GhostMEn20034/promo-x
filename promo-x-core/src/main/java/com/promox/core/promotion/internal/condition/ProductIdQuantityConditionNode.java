@@ -39,7 +39,7 @@ public record ProductIdQuantityConditionNode(
                     "Target Product ID cannot be null or blank."
             );
         }
-        if (requiredQuantity <= 0) {
+        if (requiredQuantity < 1) {
             throw new InvalidConditionNodeException(
                     INVALID_VALUE_RANGE,
                     "Required quantity must be greater than zero."

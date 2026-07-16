@@ -18,7 +18,10 @@ public record SubtotalConditionNode(
         BigDecimal threshold,
 
         @NotNull(message = "Operator is required")
-        Operator operator
+        Operator operator,
+
+        @NotNull(message = "Subtotal type (GROSS or NET) is required")
+        SubtotalType subtotalType
 ) implements ConditionNode {
 
     public static final String TYPE_NAME = "SUBTOTAL";
@@ -76,7 +79,12 @@ public record SubtotalConditionNode(
 
     @Override
     public boolean evaluate(EngineWorkspace workspace) {
-        int comparison = workspace.getItemsSubtotal().compareTo(threshold);
+        BigDecimal calculatedSubtotal = switch (this.subtotalType) {
+            case GROSS -> workspace.getItemsSubtotal();
+            case NET -> workspace.getItemsNetSubtotal();
+        };
+
+        int comparison = calculatedSubtotal.compareTo(threshold);
         return switch (operator) {
             case GREATER_THAN_OR_EQUAL -> comparison >= 0;
             case EQUALS -> comparison == 0;
