@@ -90,7 +90,7 @@ public record ProductIdQuantityConditionNode(
 
         // Sum quantities across lines matching the broader parent Product ID
         int actualQuantity = items.stream()
-                .filter(item -> productId.equalsIgnoreCase(item.getProductId()))
+                .filter(item -> productId.equals(item.getProductId()))
                 .mapToInt(WorkspaceLineItem::getQuantity)
                 .sum();
 

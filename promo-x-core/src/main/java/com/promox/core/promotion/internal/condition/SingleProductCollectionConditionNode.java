@@ -83,12 +83,14 @@ public record SingleProductCollectionConditionNode(
             // True if at least one item belongs to the targeted collection
             case EQUALS -> items.stream()
                     .filter(item -> item.getCollections() != null)
-                    .anyMatch(item -> item.getCollections().contains(collection));
+                    .anyMatch(item -> item.getCollections().stream()
+                            .anyMatch(collection::equalsIgnoreCase));
 
             // True only if absolutely NO items belong to the targeted collection
             case NOT_EQUALS -> items.stream()
                     .filter(item -> item.getCollections() != null)
-                    .noneMatch(item -> item.getCollections().contains(collection));
+                    .noneMatch(item -> item.getCollections().stream()
+                            .anyMatch(collection::equalsIgnoreCase));
 
             default -> false;
         };

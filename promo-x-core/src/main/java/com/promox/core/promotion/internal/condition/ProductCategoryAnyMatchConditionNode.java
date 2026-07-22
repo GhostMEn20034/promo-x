@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 
 public record ProductCategoryAnyMatchConditionNode(
@@ -80,10 +81,12 @@ public record ProductCategoryAnyMatchConditionNode(
             return false; // An empty cart cannot fulfill an allowlist category requirement
         }
 
+        Set<String> targetSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        targetSet.addAll(categories);
+
         // True if any line item's category collection intersects with our target categories list
         return items.stream()
-                .filter(item -> item.getCategories() != null)
                 .anyMatch(item -> item.getCategories().stream()
-                        .anyMatch(categories::contains));
+                        .anyMatch(targetSet::contains));
     }
 }

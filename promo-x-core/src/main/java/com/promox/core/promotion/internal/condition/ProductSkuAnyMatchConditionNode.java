@@ -80,8 +80,11 @@ public record ProductSkuAnyMatchConditionNode(
         }
 
         return switch (operator) {
-            case EQUALS -> items.stream().anyMatch(item -> skus.contains(item.getProductSku()));
-            case NOT_EQUALS -> items.stream().noneMatch(item -> skus.contains(item.getProductSku()));
+            case EQUALS -> items.stream().anyMatch(item ->
+                    skus.stream().anyMatch(sku -> sku.equalsIgnoreCase(item.getProductSku())));
+
+            case NOT_EQUALS -> items.stream().noneMatch(item ->
+                    skus.stream().anyMatch(sku -> sku.equalsIgnoreCase(item.getProductSku())));
             default -> false;
         };
     }

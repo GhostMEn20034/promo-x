@@ -24,7 +24,7 @@ public record SingleProductCategoryConditionNode(
     public static final String TYPE_NAME = "SINGLE_PRODUCT_CATEGORY_MATCH";
     public static final String DISPLAY_NAME = "Single Product Category Match";
     private static final String DESC = """
-            Evaluates whether a specific product category is present or absent in the cart line items.\
+            Evaluates whether a specific product category is present or completely absent in the cart line items.\
             """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.NOT_EQUALS);
@@ -80,8 +80,10 @@ public record SingleProductCategoryConditionNode(
         }
 
         return switch (operator) {
-            case EQUALS -> items.stream().anyMatch(item -> item.getCategories().contains(category));
-            case NOT_EQUALS -> items.stream().noneMatch(item -> item.getCategories().contains(category));
+            case EQUALS -> items.stream().anyMatch(item ->
+                    item.getCategories().stream().anyMatch(category::equalsIgnoreCase));
+            case NOT_EQUALS -> items.stream().noneMatch(item ->
+                    item.getCategories().stream().anyMatch(category::equalsIgnoreCase));
             default -> false;
         };
     }

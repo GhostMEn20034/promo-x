@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 
 public record ProductCollectionAnyMatchConditionNode(
@@ -67,9 +68,12 @@ public record ProductCollectionAnyMatchConditionNode(
             return false; // An empty cart cannot satisfy an allowlist collection requirement
         }
 
+        Set<String> targetSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        targetSet.addAll(collections);
+
         // True if any line item's collections array intersects with our target configuration list
         return items.stream()
                 .anyMatch(item -> item.getCollections().stream()
-                        .anyMatch(collections::contains));
+                        .anyMatch(targetSet::contains));
     }
 }

@@ -9,7 +9,15 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.Set;
 
-
+/**
+ * Condition node that evaluates the authentication state of the customer.
+ *
+ * <p>Configuration mappings:
+ * <ul>
+ *   <li>Use {@code Operator.EQUALS} to check if the customer is authenticated (logged in).</li>
+ *   <li>Use {@code Operator.NOT_EQUALS} to check if the customer is anonymous (guest checkout).</li>
+ * </ul>
+ */
 public record CustomerAuthenticationStateConditionNode(
         @NotNull(message = "Operator is required")
         Operator operator
