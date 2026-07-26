@@ -69,9 +69,8 @@ public record ProductIdPercentageDiscountAction(
 
     @Override
     public boolean apply(EngineWorkspace workspace) {
-        // 1. Filter items by Product ID instead of SKU
         List<WorkspaceLineItem> targets = workspace.getLineItems().stream()
-                .filter(item -> item.getProductId().equalsIgnoreCase(targetProductId))
+                .filter(item -> item.getProductId().equals(targetProductId))
                 .toList();
 
         if (targets.isEmpty()) {
@@ -91,7 +90,6 @@ public record ProductIdPercentageDiscountAction(
                     .multiply(discountPercentage)
                     .setScale(2, RoundingMode.HALF_UP);
 
-            // 2. Safely execute addDiscount on all matching items using the bitwise OR assignment
             appliedAny |= item.addDiscount(discountAmount);
         }
 

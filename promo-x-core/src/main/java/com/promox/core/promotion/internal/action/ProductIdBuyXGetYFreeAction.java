@@ -3,6 +3,9 @@ package com.promox.core.promotion.internal.action;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidActionStrategyException;
+
+import static com.promox.core.promotion.internal.exception.ActionStrategyErrorCodes.*;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,8 +14,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Optional;
 
-import static com.promox.core.promotion.internal.exception.ActionStrategyErrorCodes.INVALID_VALUE_RANGE;
-import static com.promox.core.promotion.internal.exception.ActionStrategyErrorCodes.MISSING_REQUIRED_FIELD;
 
 public record ProductIdBuyXGetYFreeAction(
         @NotBlank(message = "Target Product ID is required")

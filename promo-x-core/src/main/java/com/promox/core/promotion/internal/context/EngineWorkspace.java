@@ -36,6 +36,8 @@ public class EngineWorkspace {
         this.lineItems = request.items().stream()
                 .map(WorkspaceLineItem::new)
                 .collect(Collectors.toList());
+
+        this.shippingCostDiscount = BigDecimal.ZERO;
     }
 
     public void logAppliedRule(String ruleId, String ruleName) {
@@ -80,7 +82,7 @@ public class EngineWorkspace {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public BigDecimal getNewShippingCost() {
+    public BigDecimal getNetShippingCost() {
         BigDecimal cost = this.shippingCost.subtract(this.shippingCostDiscount);
         return cost.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : cost;
     }
@@ -90,7 +92,7 @@ public class EngineWorkspace {
     }
 
     public BigDecimal getGrandTotal() {
-        return getItemsNetSubtotal().add(getNewShippingCost());
+        return getItemsNetSubtotal().add(getNetShippingCost());
     }
 
     public String getStorefrontId() { return storefrontId; }
