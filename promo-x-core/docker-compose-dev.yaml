@@ -1,0 +1,17 @@
+services:
+  db:
+    container_name: promox-psql-db
+    image: postgres:18.3-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-dev-db.sh:/docker-entrypoint-initdb.d/init-dev-db.sh
+      - promox_psql_db_volume:/var/lib/postgresql
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - SQL_DATABASE=${SQL_DATABASE}
+      - SQL_USER=${SQL_USER}
+      - SQL_PASSWORD=${SQL_PASSWORD}
+
+volumes:
+  promox_psql_db_volume:

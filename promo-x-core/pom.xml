@@ -214,6 +214,23 @@
 					</statelessTestsetInfoReporter>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>12.10.0</version>
+				<configuration>
+					<url>jdbc:postgresql://${env.SQL_HOST}/${env.SQL_DATABASE}</url>
+					<user>${env.SQL_USER}</user>
+					<password>${env.SQL_PASSWORD}</password>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>12.10.0</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 		</plugins>
 	</build>
 
