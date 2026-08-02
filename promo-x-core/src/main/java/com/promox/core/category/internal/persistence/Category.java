@@ -2,14 +2,31 @@ package com.promox.core.category.internal.persistence;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+
+/**
+ * <b>Database Index Notes:</b>
+ * The unique partial index on {@code (storefront_id, external_id)}
+ * is defined in DB migration script:
+ * {@code src/main/resources/db/migration/V0.1__category_table.sql}
+ */
 @Entity
-@Table(name = "category")
+@Table(
+    name = "category",
+    indexes = {
+        @Index(
+            name = "idx_category_storefront_external_id",
+            columnList = "storefront_id, external_id",
+            unique = true
+        )
+    }
+)
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,4 +68,7 @@ public class Category {
         }
         return this.parentId;
     }
+
+    @Column(name = "storefront_id")
+    private String storefrontId;
 }
