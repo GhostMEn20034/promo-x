@@ -1,6 +1,5 @@
 package com.promox.core.promotion.internal.engine;
 
-import com.promox.core.promotion.internal.action.ActionStrategy;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import org.springframework.stereotype.Service;
 
@@ -24,15 +23,9 @@ public class PromoRuleEngine {
             if (isEligible) {
                 workspace.logMatchedRule(rule.getId(), rule.getName());
 
-                boolean ruleActuallyApplied = false;
-                for (ActionStrategy action : rule.getActions()) {
-                    boolean actionApplied = action.apply(workspace);
-                    if (actionApplied) {
-                        ruleActuallyApplied = true;
-                    }
-                }
+                boolean actionApplied = rule.getAction().apply(workspace);
 
-                if (ruleActuallyApplied) {
+                if (actionApplied) {
                     workspace.logAppliedRule(rule.getId(), rule.getName());
                     // Only short-circuit if a rule actually modified the cart state
                     if (rule.isShortCircuit()) {

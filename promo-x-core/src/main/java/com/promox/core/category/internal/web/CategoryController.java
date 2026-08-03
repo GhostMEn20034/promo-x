@@ -22,6 +22,6 @@ public class CategoryController {
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryDto createSingleCategory(@Valid @RequestBody CreateCategoryRequest requestBody) {
-        return categoryCommandHandler.createSingleCategory("123", requestBody);
+        return categoryCommandHandler.createSingleCategory(123L, requestBody);
     }
 }

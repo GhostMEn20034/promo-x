@@ -13,13 +13,12 @@ public class CategoryCommandHandler {
         this.categoryService = categoryService;
     }
 
-    public CategoryDto createSingleCategory(String storefrontId, CreateCategoryRequest request) {
+    public CategoryDto createSingleCategory(Long storefrontId, CreateCategoryRequest request) {
         var category = categoryService.createCategory(storefrontId, request);
         return new CategoryDto(
                 category.getId(),
                 category.getExternalId(),
                 category.getName(),
-                category.getParentId(),
                 category.getParent() != null ? new ParentCategoryDto(
                         category.getParent().getId(),
                         category.getParent().getExternalId(),

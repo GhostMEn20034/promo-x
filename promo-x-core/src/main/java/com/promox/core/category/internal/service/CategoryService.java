@@ -19,7 +19,7 @@ public class CategoryService {
     }
 
     @Transactional
-    public Category createCategory(String storefrontId, CreateCategoryRequest creationRequest) {
+    public Category createCategory(Long storefrontId, CreateCategoryRequest creationRequest) {
         validateExternalIdUniqueness(storefrontId, creationRequest.externalId());
 
         Category parent = fetchAndValidateParent(creationRequest.parentId(), storefrontId);
@@ -35,7 +35,7 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    private void validateExternalIdUniqueness(String storefrontId, @Nullable String externalId) {
+    private void validateExternalIdUniqueness(Long storefrontId, @Nullable String externalId) {
         if (externalId == null) {
             return;
         }
@@ -51,7 +51,7 @@ public class CategoryService {
     }
 
     @Nullable
-    private Category fetchAndValidateParent(@Nullable Long parentId, String storefrontId) {
+    private Category fetchAndValidateParent(@Nullable Long parentId, Long storefrontId) {
         if (parentId == null) {
             return null;
         }

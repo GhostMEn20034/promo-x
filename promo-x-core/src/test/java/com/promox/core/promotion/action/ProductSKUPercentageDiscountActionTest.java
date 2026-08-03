@@ -42,7 +42,7 @@ public class ProductSKUPercentageDiscountActionTest {
         }
 
         return new EngineWorkspace(new PromotionEvaluationRequest(
-                "us-storefront",
+                123L,
                 "sess-1",
                 "cust-1",
                 List.of(),

@@ -7,5 +7,5 @@ public record ParentCategoryDto(
         @Nullable String externalId,
         String name,
         @Nullable Long parentId,
-        String storefrontId
+        Long storefrontId
 ) {}

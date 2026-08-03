@@ -3,7 +3,6 @@ package com.promox.core.promotion.dto;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Null;
 
 import java.math.BigDecimal;
 import java.util.List;

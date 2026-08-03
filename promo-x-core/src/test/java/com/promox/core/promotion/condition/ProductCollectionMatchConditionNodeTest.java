@@ -43,7 +43,7 @@ public class ProductCollectionMatchConditionNodeTest {
         });
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                "us-storefront",
+                123L,
                 "sess-999",
                 "cust-456",
                 List.of(),

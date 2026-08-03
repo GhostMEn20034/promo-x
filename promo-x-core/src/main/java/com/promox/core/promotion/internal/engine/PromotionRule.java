@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PromotionRule {
     private String id;
-    private String storefrontId;
+    private Long storefrontId;
     private String name;
     private int priority;
 
@@ -20,5 +20,5 @@ public class PromotionRule {
 
     // Persisted as JSON text in the DB database column
     private ConditionNode conditionTree;
-    private List<ActionStrategy> actions;
+    private ActionStrategy action;
 }
