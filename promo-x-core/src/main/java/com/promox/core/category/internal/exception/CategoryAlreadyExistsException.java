@@ -20,15 +20,15 @@ public final class CategoryAlreadyExistsException extends BusinessException {
             @Nullable String lookupField
     ) {
         super(
-                message,
-                "CATEGORY_ALREADY_EXISTS",
-                List.of(
-                        new BusinessError(
-                                lookupField,
-                                "CATEGORY_ALREADY_EXISTS",
-                                message
-                        )
+            message,
+            "CATEGORY_ALREADY_EXISTS",
+            List.of(
+                new BusinessError(
+                    lookupField,
+                    "CATEGORY_ALREADY_EXISTS",
+                    message
                 )
+            )
         );
     }
 }

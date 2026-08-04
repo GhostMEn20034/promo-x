@@ -2,10 +2,16 @@ package com.promox.core.storefront.internal.persistence;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
+import lombok.*;
 
 
 @Entity
 @Table(name = "storefront")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Storefront {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
