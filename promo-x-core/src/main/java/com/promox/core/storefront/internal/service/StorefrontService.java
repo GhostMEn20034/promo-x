@@ -1,6 +1,7 @@
 package com.promox.core.storefront.internal.service;
 
 import com.promox.core.storefront.internal.dto.CreateStorefrontRequest;
+import com.promox.core.storefront.internal.dto.UpdateStorefrontRequest;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 import org.springframework.stereotype.Service;
@@ -35,5 +36,14 @@ public class StorefrontService {
     @Transactional(readOnly = true)
     public boolean existsById(Long storefrontId) {
         return storefrontRepository.existsById(storefrontId);
+    }
+
+    @Transactional
+    public void updateStorefront(
+            Storefront storefrontToUpdate,
+            UpdateStorefrontRequest dataToApply
+    ) {
+        storefrontToUpdate.setName(dataToApply.name());
+        storefrontToUpdate.setWebsite(dataToApply.website());
     }
 }
