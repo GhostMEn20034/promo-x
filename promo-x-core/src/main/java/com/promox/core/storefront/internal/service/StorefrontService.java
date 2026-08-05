@@ -31,4 +31,9 @@ public class StorefrontService {
     public Optional<Storefront> fetchStorefrontById(Long storefrontId) {
         return storefrontRepository.findById(storefrontId);
     }
+
+    @Transactional(readOnly = true)
+    public boolean existsById(Long storefrontId) {
+        return storefrontRepository.existsById(storefrontId);
+    }
 }

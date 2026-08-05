@@ -1,6 +1,5 @@
 package com.promox.core.storefront;
 
-import com.promox.core.storefront.dto.StorefrontDto;
 import com.promox.core.storefront.internal.StorefrontMapper;
 import com.promox.core.storefront.internal.service.StorefrontService;
 import org.springframework.stereotype.Service;
@@ -19,5 +18,9 @@ public class StorefrontLookupApi {
     public Optional<StorefrontDto> findStorefrontById(Long storefrontId) {
         return storefrontService.fetchStorefrontById(storefrontId)
                 .map(StorefrontMapper::toDto);
+    }
+
+    public boolean existsById(Long storefrontId) {
+        return storefrontService.existsById(storefrontId);
     }
 }

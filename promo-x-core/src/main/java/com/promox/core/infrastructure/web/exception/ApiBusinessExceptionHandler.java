@@ -2,8 +2,6 @@ package com.promox.core.infrastructure.web.exception;
 
 import com.promox.core.infrastructure.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,7 +12,6 @@ import java.time.Instant;
 
 
 @RestControllerAdvice
-@Order(Ordered.LOWEST_PRECEDENCE)
 public class ApiBusinessExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)

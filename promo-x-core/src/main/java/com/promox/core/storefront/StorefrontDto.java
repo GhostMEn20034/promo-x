@@ -1,4 +1,4 @@
-package com.promox.core.storefront.dto;
+package com.promox.core.storefront;
 
 import jakarta.annotation.Nullable;
 

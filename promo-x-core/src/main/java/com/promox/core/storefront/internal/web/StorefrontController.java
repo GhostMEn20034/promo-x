@@ -2,7 +2,7 @@ package com.promox.core.storefront.internal.web;
 
 import com.promox.core.storefront.StorefrontLookupApi;
 import com.promox.core.storefront.internal.dto.CreateStorefrontRequest;
-import com.promox.core.storefront.dto.StorefrontDto;
+import com.promox.core.storefront.StorefrontDto;
 import com.promox.core.storefront.internal.exception.StorefrontNotFoundException;
 import com.promox.core.storefront.internal.service.StorefrontCommandHandler;
 
