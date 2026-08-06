@@ -6,7 +6,7 @@ import java.util.Optional;
 
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
-    boolean existsByStorefrontIdAndExternalId(String storefrontId, String externalId);
+    boolean existsByStorefrontIdAndExternalId(Long storefrontId, String externalId);
 
-    Optional<Category> findByIdAndStorefrontId(Long id, String storefrontId);
+    Optional<Category> findByIdAndStorefrontId(Long id, Long storefrontId);
 }

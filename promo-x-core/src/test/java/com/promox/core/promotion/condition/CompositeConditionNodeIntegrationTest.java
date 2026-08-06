@@ -37,7 +37,7 @@ public class CompositeConditionNodeIntegrationTest {
         }
 
         return new EngineWorkspace(new PromotionEvaluationRequest(
-                "us-storefront", "sess-1", "cust-1", List.of(), items, BigDecimal.ZERO
+                123L, "sess-1", "cust-1", List.of(), items, BigDecimal.ZERO
         ));
     }
 

@@ -14,7 +14,7 @@ import java.util.List;
  * Supports anonymous users by leaving customerId nullable.
  */
 public record PromotionEvaluationRequest(
-        @NotNull String storefrontId,
+        @NotNull Long storefrontId,
         String sessionId, // Can be a Cart ID, Session Cookie, or Device UUID
         String customerId, // Nullable to natively support anonymous guest checkouts
         @NotNull List<String> promoCodes,

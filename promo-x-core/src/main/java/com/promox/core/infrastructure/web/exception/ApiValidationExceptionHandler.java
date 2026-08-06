@@ -125,8 +125,7 @@ public class ApiValidationExceptionHandler {
                         source,
                         ex.getName(),
                         "TYPE_MISMATCH",
-                        "Expected value of type '%s'."
-                                .formatted(expectedType)
+                        "Invalid value type"
                 )
         );
         

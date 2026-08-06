@@ -35,7 +35,7 @@ public class SubtotalConditionNodeTest {
          * customer ID, promo codes, shipping cost during the testing of subtotal nodes
          * */
         var request = new PromotionEvaluationRequest(
-            "us-storefront",
+                123L,
             "sess-999",
             "cust-456",
             List.of(),

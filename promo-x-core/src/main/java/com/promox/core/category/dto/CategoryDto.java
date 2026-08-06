@@ -6,7 +6,6 @@ public record CategoryDto(
         Long id,
         @Nullable String externalId,
         String name,
-        @Nullable Long parentId,
         @Nullable ParentCategoryDto parent,
-        String storefrontId
+        Long storefrontId
 ) {}

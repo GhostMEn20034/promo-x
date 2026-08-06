@@ -30,27 +30,25 @@ import lombok.*;
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @Nullable
     @Column(name = "external_id", unique = true)
-    private String externalId;
+    private @Nullable String externalId;
 
     @Column(nullable = false)
     private String name;
 
     // (Read-only mapping to prevent JPA column collisions)
-    @Nullable
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     @Column(name = "parent_id", insertable = false, updatable = false)
-    private Long parentId;
+    private @Nullable Long parentId;
 
-    @Nullable
     @Setter(AccessLevel.NONE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    private Category parent;
+    private @Nullable Category parent;
 
     public void setParent(@Nullable Category parent) {
         this.parent = parent;
@@ -61,8 +59,8 @@ public class Category {
      * Always returns the live ID if parent is attached,
      * fallback to raw DB parentId field if proxy/entity wasn't loaded.
      */
-    @Nullable
-    public Long getParentId() {
+
+    public @Nullable Long getParentId() {
         if (this.parent != null) {
             return this.parent.getId();
         }
@@ -70,5 +68,5 @@ public class Category {
     }
 
     @Column(name = "storefront_id")
-    private String storefrontId;
+    private Long storefrontId;
 }

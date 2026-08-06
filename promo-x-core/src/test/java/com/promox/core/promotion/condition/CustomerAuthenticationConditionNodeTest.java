@@ -35,7 +35,7 @@ public class CustomerAuthenticationConditionNodeTest {
         );
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                "us-storefront",
+                123L,
                 sessionIdIsNull ? null : "sess-999",
                 isCustomerAnonymous ? null : "cust-456",
                 List.of(),

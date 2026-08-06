@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 
 public class EngineWorkspace {
-    private final String storefrontId;
+    private final Long storefrontId;
     private final String sessionId;
     private final String customerId;
     private final boolean isCustomerAnonymous;
@@ -95,7 +95,7 @@ public class EngineWorkspace {
         return getItemsNetSubtotal().add(getNetShippingCost());
     }
 
-    public String getStorefrontId() { return storefrontId; }
+    public Long getStorefrontId() { return storefrontId; }
     public String getSessionId() { return sessionId; }
     public String getCustomerId() { return customerId; }
     public boolean isCustomerAnonymous() { return isCustomerAnonymous; }

@@ -21,7 +21,10 @@ public class CategoryController {
 
     @PostMapping("/")
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryDto createSingleCategory(@Valid @RequestBody CreateCategoryRequest requestBody) {
-        return categoryCommandHandler.createSingleCategory("123", requestBody);
+    public CategoryDto createSingleCategory(
+            @RequestHeader("X-Storefront-Id") Long storefrontId,
+            @Valid @RequestBody CreateCategoryRequest requestBody
+    ) {
+        return categoryCommandHandler.createSingleCategory(storefrontId, requestBody);
     }
 }
