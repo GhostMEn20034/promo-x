@@ -1,6 +1,7 @@
 package com.promox.core.category.internal.service;
 
 import com.promox.core.category.dto.CreateCategoryRequest;
+import com.promox.core.category.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryAlreadyExistsException;
 import com.promox.core.category.internal.exception.ParentCategoryNotFoundException;
 import com.promox.core.category.internal.persistence.Category;
@@ -68,5 +69,16 @@ public class CategoryService {
 
     public Optional<Category> fetchByIdWithParentCategory(Long categoryId) {
         return categoryRepository.findByIdWithParent(categoryId);
+    }
+
+    @Transactional
+    public void updateCategory(Category categoryToUpdate, UpdateCategoryRequest updateRequest) {
+        validateExternalIdUniqueness(categoryToUpdate.getStorefrontId(), updateRequest.externalId());
+
+        Category parent = fetchAndValidateParent(updateRequest.parentId(), categoryToUpdate.getStorefrontId());
+
+        categoryToUpdate.setName(updateRequest.name());
+        categoryToUpdate.setExternalId(updateRequest.externalId());
+        categoryToUpdate.setParent(parent);
     }
 }

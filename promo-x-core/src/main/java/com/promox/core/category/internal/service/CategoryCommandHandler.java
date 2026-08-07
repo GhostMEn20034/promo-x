@@ -1,12 +1,14 @@
 package com.promox.core.category.internal.service;
 
-import com.promox.core.category.dto.CategoryDto;
+import com.promox.core.category.CategoryDto;
 import com.promox.core.category.dto.CreateCategoryRequest;
+import com.promox.core.category.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.CategoryMapper;
 import com.promox.core.category.internal.exception.CategoryBusinessException;
 import com.promox.core.storefront.StorefrontLookupApi;
-import com.promox.core.storefront.StorefrontDto;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class CategoryCommandHandler {
@@ -30,5 +32,16 @@ public class CategoryCommandHandler {
 
         var category = categoryService.createCategory(storefrontId, request);
         return CategoryMapper.toDto(category);
+    }
+
+    public Optional<CategoryDto> updateCategoryById(
+            Long categoryId,
+            UpdateCategoryRequest updateRequest
+    ) {
+        return categoryService.fetchByIdWithParentCategory(categoryId)
+                .map(category -> {
+                    categoryService.updateCategory(category, updateRequest);
+                    return CategoryMapper.toDto(category);
+                });
     }
 }

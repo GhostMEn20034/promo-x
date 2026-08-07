@@ -1,9 +1,10 @@
 package com.promox.core.category.internal.web;
 
 import com.promox.core.category.CategoryLookupApi;
+import com.promox.core.category.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryNotFoundException;
 import com.promox.core.category.internal.service.CategoryCommandHandler;
-import com.promox.core.category.dto.CategoryDto;
+import com.promox.core.category.CategoryDto;
 import com.promox.core.category.dto.CreateCategoryRequest;
 
 import jakarta.validation.Valid;
@@ -35,6 +36,17 @@ public class CategoryController {
     @GetMapping("/{categoryId}")
     public CategoryDto getById(@PathVariable Long categoryId) {
         return categoryLookupApi.findById(categoryId)
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(categoryId)
+                );
+    }
+
+    @PutMapping("/{categoryId}")
+    public CategoryDto updateCategoryById(
+            @PathVariable Long categoryId,
+            @Valid @RequestBody UpdateCategoryRequest requestBody
+    ) {
+        return categoryCommandHandler.updateCategoryById(categoryId, requestBody)
                 .orElseThrow(() ->
                         new CategoryNotFoundException(categoryId)
                 );
