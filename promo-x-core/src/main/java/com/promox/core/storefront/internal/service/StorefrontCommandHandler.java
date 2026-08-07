@@ -24,7 +24,7 @@ public class StorefrontCommandHandler {
             Long storefrontId,
             UpdateStorefrontRequest updateRequest
     ) {
-        return storefrontService.fetchStorefrontById(storefrontId)
+        return storefrontService.fetchById(storefrontId)
                 .map(storefront -> {
                     storefrontService.updateStorefront(storefront, updateRequest);
                     return StorefrontMapper.toDto(storefront);

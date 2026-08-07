@@ -1,5 +1,7 @@
 package com.promox.core.category.internal.web;
 
+import com.promox.core.category.CategoryLookupApi;
+import com.promox.core.category.internal.exception.CategoryNotFoundException;
 import com.promox.core.category.internal.service.CategoryCommandHandler;
 import com.promox.core.category.dto.CategoryDto;
 import com.promox.core.category.dto.CreateCategoryRequest;
@@ -14,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/category")
 public class CategoryController {
     private final CategoryCommandHandler categoryCommandHandler;
+    private final CategoryLookupApi categoryLookupApi;
 
-    CategoryController(CategoryCommandHandler categoryCommandHandler) {
+    CategoryController(CategoryCommandHandler categoryCommandHandler, CategoryLookupApi categoryLookupApi) {
         this.categoryCommandHandler = categoryCommandHandler;
+        this.categoryLookupApi = categoryLookupApi;
     }
 
     @PostMapping("/")
@@ -26,5 +30,13 @@ public class CategoryController {
             @Valid @RequestBody CreateCategoryRequest requestBody
     ) {
         return categoryCommandHandler.createSingleCategory(storefrontId, requestBody);
+    }
+
+    @GetMapping("/{categoryId}")
+    public CategoryDto getById(@PathVariable Long categoryId) {
+        return categoryLookupApi.findById(categoryId)
+                .orElseThrow(() ->
+                        new CategoryNotFoundException(categoryId)
+                );
     }
 }

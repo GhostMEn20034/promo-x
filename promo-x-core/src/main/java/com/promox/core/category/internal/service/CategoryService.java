@@ -9,6 +9,8 @@ import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 
 @Service
 public class CategoryService {
@@ -58,5 +60,13 @@ public class CategoryService {
 
         return categoryRepository.findByIdAndStorefrontId(parentId, storefrontId)
                 .orElseThrow(() -> new ParentCategoryNotFoundException(parentId));
+    }
+
+    public Optional<Category> fetchById(Long categoryId) {
+        return categoryRepository.findById(categoryId);
+    }
+
+    public Optional<Category> fetchByIdWithParentCategory(Long categoryId) {
+        return categoryRepository.findByIdWithParent(categoryId);
     }
 }

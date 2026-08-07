@@ -37,7 +37,7 @@ public class StorefrontController {
 
     @GetMapping("/{storefrontId}")
     public StorefrontDto getStorefrontById(@PathVariable Long storefrontId) {
-        return storefrontLookupApi.findStorefrontById(storefrontId)
+        return storefrontLookupApi.findById(storefrontId)
                 .orElseThrow(() ->
                         new StorefrontNotFoundException(storefrontId)
                 );
