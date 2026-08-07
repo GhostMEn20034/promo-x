@@ -29,7 +29,7 @@ public class StorefrontService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Storefront> fetchStorefrontById(Long storefrontId) {
+    public Optional<Storefront> fetchById(Long storefrontId) {
         return storefrontRepository.findById(storefrontId);
     }
 

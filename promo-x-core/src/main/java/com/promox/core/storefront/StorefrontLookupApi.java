@@ -15,8 +15,8 @@ public class StorefrontLookupApi {
         this.storefrontService = storefrontService;
     }
 
-    public Optional<StorefrontDto> findStorefrontById(Long storefrontId) {
-        return storefrontService.fetchStorefrontById(storefrontId)
+    public Optional<StorefrontDto> findById(Long storefrontId) {
+        return storefrontService.fetchById(storefrontId)
                 .map(StorefrontMapper::toDto);
     }
 
