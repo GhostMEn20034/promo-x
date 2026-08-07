@@ -1,11 +1,11 @@
-package com.promox.core.category.dto;
+package com.promox.core.category;
 
 import jakarta.annotation.Nullable;
 
-public record CategoryDto(
+public record ParentCategoryDto(
         Long id,
         @Nullable String externalId,
         String name,
-        @Nullable ParentCategoryDto parent,
+        @Nullable Long parentId,
         Long storefrontId
 ) {}

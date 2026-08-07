@@ -1,6 +1,5 @@
 package com.promox.core.category;
 
-import com.promox.core.category.dto.CategoryDto;
 import com.promox.core.category.internal.CategoryMapper;
 import com.promox.core.category.internal.service.CategoryService;
 import org.springframework.stereotype.Service;

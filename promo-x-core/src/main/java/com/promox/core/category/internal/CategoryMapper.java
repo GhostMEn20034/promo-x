@@ -1,7 +1,7 @@
 package com.promox.core.category.internal;
 
-import com.promox.core.category.dto.CategoryDto;
-import com.promox.core.category.dto.ParentCategoryDto;
+import com.promox.core.category.CategoryDto;
+import com.promox.core.category.ParentCategoryDto;
 import com.promox.core.category.internal.persistence.Category;
 
 public final class CategoryMapper {
