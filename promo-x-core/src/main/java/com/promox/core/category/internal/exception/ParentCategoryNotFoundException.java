@@ -17,7 +17,8 @@ public final class ParentCategoryNotFoundException extends BusinessException {
                 new BusinessError(
                     "parentId",
                     "PARENT_CATEGORY_NOT_FOUND",
-                    "Parent category does not exist."
+                    "Parent category does not exist.",
+                    null
                 )
             )
         );

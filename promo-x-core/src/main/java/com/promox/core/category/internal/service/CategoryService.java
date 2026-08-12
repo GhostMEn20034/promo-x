@@ -1,7 +1,8 @@
 package com.promox.core.category.internal.service;
 
-import com.promox.core.category.dto.CreateCategoryRequest;
-import com.promox.core.category.dto.UpdateCategoryRequest;
+import com.promox.core.category.CategoryIdsExistenceResult;
+import com.promox.core.category.internal.dto.CreateCategoryRequest;
+import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryAlreadyExistsException;
 import com.promox.core.category.internal.exception.ParentCategoryNotFoundException;
 import com.promox.core.category.internal.persistence.Category;
@@ -10,7 +11,9 @@ import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 
 @Service
@@ -69,6 +72,20 @@ public class CategoryService {
 
     public Optional<Category> fetchByIdWithParentCategory(Long categoryId) {
         return categoryRepository.findByIdWithParent(categoryId);
+    }
+
+    @Transactional(readOnly = true)
+    public CategoryIdsExistenceResult checkExistenceByIdsAndStorefront(Set<Long> categoryIds, Long storefrontId) {
+        if (categoryIds.isEmpty()) {
+            return new CategoryIdsExistenceResult(Set.of(), Set.of());
+        }
+
+        Set<Long> existingIds = categoryRepository.findExistingIds(categoryIds, storefrontId);
+        // Derive missing IDs via set difference
+        Set<Long> missingIds = new HashSet<>(categoryIds);
+        missingIds.removeAll(existingIds);
+
+        return new CategoryIdsExistenceResult(existingIds, missingIds);
     }
 
     @Transactional

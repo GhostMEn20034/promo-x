@@ -1,6 +1,6 @@
 package com.promox.core.category;
 
-import com.promox.core.category.dto.CreateCategoryRequest;
+import com.promox.core.category.internal.dto.CreateCategoryRequest;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
 import com.promox.core.shared.IntegrationTestBase;

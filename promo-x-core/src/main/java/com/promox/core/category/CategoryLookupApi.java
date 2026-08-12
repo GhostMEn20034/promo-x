@@ -5,6 +5,7 @@ import com.promox.core.category.internal.service.CategoryService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
 
 
 @Service
@@ -18,5 +19,9 @@ public class CategoryLookupApi {
     public Optional<CategoryDto> findById(Long categoryId) {
         return categoryService.fetchByIdWithParentCategory(categoryId)
                 .map(CategoryMapper::toDto);
+    }
+
+    public CategoryIdsExistenceResult checkExistenceByIdsAndStorefront(Set<Long> categoryIds, Long storefrontId) {
+        return categoryService.checkExistenceByIdsAndStorefront(categoryIds, storefrontId);
     }
 }

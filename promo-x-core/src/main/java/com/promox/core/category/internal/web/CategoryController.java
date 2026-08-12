@@ -1,11 +1,11 @@
 package com.promox.core.category.internal.web;
 
 import com.promox.core.category.CategoryLookupApi;
-import com.promox.core.category.dto.UpdateCategoryRequest;
+import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryNotFoundException;
 import com.promox.core.category.internal.service.CategoryCommandHandler;
 import com.promox.core.category.CategoryDto;
-import com.promox.core.category.dto.CreateCategoryRequest;
+import com.promox.core.category.internal.dto.CreateCategoryRequest;
 
 import jakarta.validation.Valid;
 

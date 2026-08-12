@@ -26,7 +26,8 @@ public final class CategoryAlreadyExistsException extends BusinessException {
                 new BusinessError(
                     lookupField,
                     "CATEGORY_ALREADY_EXISTS",
-                    message
+                    message,
+                    null
                 )
             )
         );

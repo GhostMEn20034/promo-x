@@ -1,9 +1,8 @@
 package com.promox.core.product.internal.persistence;
 
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import lombok.Getter;
-import lombok.Setter;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
@@ -25,6 +24,9 @@ import java.util.Set;
 )
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
