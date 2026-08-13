@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Optional;
 
 
 @Service
@@ -35,9 +36,12 @@ public class ProductService {
             .storefrontId(storefrontId)
             .build();
 
-//        creationRequest.categoryIds().forEach(product::addCategory);
-
         return productRepository.save(product);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Product> findById(Long productId) {
+        return productRepository.findWithCategoryById(productId);
     }
 
     private void validateExternalIdUniqueness(@Nullable String externalId, Long storefrontId) {

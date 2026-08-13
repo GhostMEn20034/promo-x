@@ -11,9 +11,7 @@ import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 
 @Service
@@ -41,20 +39,7 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    private void validateExternalIdUniqueness(Long storefrontId, @Nullable String externalId) {
-        if (externalId == null) {
-            return;
-        }
 
-        boolean externalIdExists = categoryRepository.existsByStorefrontIdAndExternalId(storefrontId, externalId);
-        if (externalIdExists) {
-            throw new CategoryAlreadyExistsException(
-                    "Category with external ID '%s' already exists for this storefront."
-                            .formatted(externalId),
-                    "externalId"
-            );
-        }
-    }
 
     @Nullable
     private Category fetchAndValidateParent(@Nullable Long parentId, Long storefrontId) {
@@ -72,6 +57,10 @@ public class CategoryService {
 
     public Optional<Category> fetchByIdWithParentCategory(Long categoryId) {
         return categoryRepository.findByIdWithParent(categoryId);
+    }
+
+    public List<Category> getListById(Collection<Long> categoryIds, Long storefrontId) {
+        return categoryRepository.findAllByIdInAndStorefrontId(categoryIds, storefrontId);
     }
 
     @Transactional(readOnly = true)
@@ -97,5 +86,20 @@ public class CategoryService {
         categoryToUpdate.setName(updateRequest.name());
         categoryToUpdate.setExternalId(updateRequest.externalId());
         categoryToUpdate.setParent(parent);
+    }
+
+    private void validateExternalIdUniqueness(Long storefrontId, @Nullable String externalId) {
+        if (externalId == null) {
+            return;
+        }
+
+        boolean externalIdExists = categoryRepository.existsByStorefrontIdAndExternalId(storefrontId, externalId);
+        if (externalIdExists) {
+            throw new CategoryAlreadyExistsException(
+                "Category with external ID '%s' already exists for this storefront."
+                    .formatted(externalId),
+                "externalId"
+            );
+        }
     }
 }

@@ -2,7 +2,7 @@ package com.promox.core.product.internal.service;
 
 import com.promox.core.category.CategoryIdsExistenceResult;
 import com.promox.core.category.CategoryLookupApi;
-import com.promox.core.product.ProductDto;
+import com.promox.core.product.DefaultProductDto;
 import com.promox.core.product.internal.ProductMapper;
 import com.promox.core.product.internal.dto.CreateSingleProductRequest;
 import com.promox.core.product.internal.exception.ProductBusinessException;
@@ -26,7 +26,7 @@ public class ProductCommandHandler {
     }
 
     @Transactional
-    public ProductDto createSingleProduct(Long storefrontId, CreateSingleProductRequest creationRequest) {
+    public DefaultProductDto createSingleProduct(Long storefrontId, CreateSingleProductRequest creationRequest) {
         validateCategoryIdsExistence(creationRequest.categoryIds(), storefrontId, "categoryIds");
         return ProductMapper.toDto(productService.createSingleProduct(storefrontId, creationRequest));
     }

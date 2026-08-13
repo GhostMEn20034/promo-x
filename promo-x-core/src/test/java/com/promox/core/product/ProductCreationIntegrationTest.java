@@ -82,17 +82,17 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
                 .andReturn().getResponse().getContentAsString();
 
             // Assert JSON Response Content using AssertJ
-            ProductDto responseDto = objectMapper.readValue(responseJson, ProductDto.class);
-            assertThat(responseDto.id()).isNotNull();
-            assertThat(responseDto.externalId()).isEqualTo("EXT-1001");
-            assertThat(responseDto.sku()).isEqualTo("SKU-IPHONE-15");
-            assertThat(responseDto.name()).isEqualTo("iPhone 15 Pro");
+            DefaultProductDto responseDto = objectMapper.readValue(responseJson, DefaultProductDto.class);
+            assertThat(responseDto.base().id()).isNotNull();
+            assertThat(responseDto.base().externalId()).isEqualTo("EXT-1001");
+            assertThat(responseDto.base().sku()).isEqualTo("SKU-IPHONE-15");
+            assertThat(responseDto.base().name()).isEqualTo("iPhone 15 Pro");
             assertThat(responseDto.categoryIds())
                 .containsExactlyInAnyOrder(electronics.getId(), smartphones.getId());
-            assertThat(responseDto.storefrontId()).isEqualTo(activeStorefront.getId());
+            assertThat(responseDto.base().storefrontId()).isEqualTo(activeStorefront.getId());
 
             // Assert Database Persistence
-            Product savedProduct = productRepository.findWithCategoryById(responseDto.id()).orElseThrow();
+            Product savedProduct = productRepository.findWithCategoryById(responseDto.base().id()).orElseThrow();
             assertThat(savedProduct.getSku()).isEqualTo("SKU-IPHONE-15");
             assertThat(savedProduct.getStorefrontId()).isEqualTo(activeStorefront.getId());
             assertThat(savedProduct.getCategoryIds())
