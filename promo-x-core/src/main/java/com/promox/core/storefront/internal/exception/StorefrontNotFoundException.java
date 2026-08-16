@@ -15,7 +15,8 @@ public final class StorefrontNotFoundException extends BusinessException {
                 new BusinessError(
                     null,
                     "STOREFRONT_NOT_FOUND",
-                    "Storefront does not exist."
+                    "Storefront does not exist.",
+                    null
                 )
             )
         );

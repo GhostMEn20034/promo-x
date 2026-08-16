@@ -4,7 +4,7 @@ spring:
 
 
   datasource:
-    url: jdbc:postgresql://${SQL_HOST}/${SQL_DATABASE}
+    url: jdbc:postgresql://${SQL_HOST}/${SQL_DATABASE}?reWriteBatchedInserts=true
     username: ${SQL_USER}
     password: ${SQL_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -13,6 +13,12 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
 
   flyway:
     enabled: false

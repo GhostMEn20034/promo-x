@@ -1,8 +1,8 @@
 package com.promox.core.category.internal.service;
 
 import com.promox.core.category.CategoryDto;
-import com.promox.core.category.dto.CreateCategoryRequest;
-import com.promox.core.category.dto.UpdateCategoryRequest;
+import com.promox.core.category.internal.dto.CreateCategoryRequest;
+import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.CategoryMapper;
 import com.promox.core.category.internal.exception.CategoryBusinessException;
 import com.promox.core.storefront.StorefrontLookupApi;
@@ -26,7 +26,8 @@ public class CategoryCommandHandler {
                     "Storefront does not exist.",
                     "INVALID_STOREFRONT",
                     "storefrontId",
-                    "The specified storefront does not exist."
+                    "The specified storefront does not exist.",
+                    null
             );
         }
 

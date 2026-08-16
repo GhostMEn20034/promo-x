@@ -1,7 +1,8 @@
 package com.promox.core.category.internal.service;
 
-import com.promox.core.category.dto.CreateCategoryRequest;
-import com.promox.core.category.dto.UpdateCategoryRequest;
+import com.promox.core.category.CategoryIdsExistenceResult;
+import com.promox.core.category.internal.dto.CreateCategoryRequest;
+import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryAlreadyExistsException;
 import com.promox.core.category.internal.exception.ParentCategoryNotFoundException;
 import com.promox.core.category.internal.persistence.Category;
@@ -10,7 +11,7 @@ import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.*;
 
 
 @Service
@@ -38,20 +39,7 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    private void validateExternalIdUniqueness(Long storefrontId, @Nullable String externalId) {
-        if (externalId == null) {
-            return;
-        }
 
-        boolean externalIdExists = categoryRepository.existsByStorefrontIdAndExternalId(storefrontId, externalId);
-        if (externalIdExists) {
-            throw new CategoryAlreadyExistsException(
-                    "Category with external ID '%s' already exists for this storefront."
-                            .formatted(externalId),
-                    "externalId"
-            );
-        }
-    }
 
     @Nullable
     private Category fetchAndValidateParent(@Nullable Long parentId, Long storefrontId) {
@@ -71,6 +59,24 @@ public class CategoryService {
         return categoryRepository.findByIdWithParent(categoryId);
     }
 
+    public List<Category> getListById(Collection<Long> categoryIds, Long storefrontId) {
+        return categoryRepository.findAllByIdInAndStorefrontId(categoryIds, storefrontId);
+    }
+
+    @Transactional(readOnly = true)
+    public CategoryIdsExistenceResult checkExistenceByIdsAndStorefront(Set<Long> categoryIds, Long storefrontId) {
+        if (categoryIds.isEmpty()) {
+            return new CategoryIdsExistenceResult(Set.of(), Set.of());
+        }
+
+        Set<Long> existingIds = categoryRepository.findExistingIds(categoryIds, storefrontId);
+        // Derive missing IDs via set difference
+        Set<Long> missingIds = new HashSet<>(categoryIds);
+        missingIds.removeAll(existingIds);
+
+        return new CategoryIdsExistenceResult(existingIds, missingIds);
+    }
+
     @Transactional
     public void updateCategory(Category categoryToUpdate, UpdateCategoryRequest updateRequest) {
         validateExternalIdUniqueness(categoryToUpdate.getStorefrontId(), updateRequest.externalId());
@@ -80,5 +86,20 @@ public class CategoryService {
         categoryToUpdate.setName(updateRequest.name());
         categoryToUpdate.setExternalId(updateRequest.externalId());
         categoryToUpdate.setParent(parent);
+    }
+
+    private void validateExternalIdUniqueness(Long storefrontId, @Nullable String externalId) {
+        if (externalId == null) {
+            return;
+        }
+
+        boolean externalIdExists = categoryRepository.existsByStorefrontIdAndExternalId(storefrontId, externalId);
+        if (externalIdExists) {
+            throw new CategoryAlreadyExistsException(
+                "Category with external ID '%s' already exists for this storefront."
+                    .formatted(externalId),
+                "externalId"
+            );
+        }
     }
 }

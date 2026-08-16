@@ -1,0 +1,4 @@
+logging:
+  level:
+    org.hibernate.engine.jdbc.batch.internal.BatchingBatch: TRACE
+    org.hibernate.orm.jdbc.batch: TRACE

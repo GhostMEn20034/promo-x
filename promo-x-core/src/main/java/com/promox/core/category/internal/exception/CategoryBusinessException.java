@@ -5,6 +5,7 @@ import com.promox.core.infrastructure.exception.BusinessException;
 import jakarta.annotation.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public final class CategoryBusinessException extends BusinessException {
 
@@ -20,7 +21,8 @@ public final class CategoryBusinessException extends BusinessException {
             String message,
             String code,
             @Nullable String path,
-            String errorMessage
+            String errorMessage,
+            @Nullable Map<String, Object> errorContext
     ) {
         return new CategoryBusinessException(
                 message,
@@ -29,7 +31,8 @@ public final class CategoryBusinessException extends BusinessException {
                         new BusinessError(
                                 path,
                                 code,
-                                errorMessage
+                                errorMessage,
+                                null
                         )
                 )
         );

@@ -1,8 +1,8 @@
 package com.promox.core.category.internal.persistence;
 
+import lombok.*;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-import lombok.*;
 
 
 /**
@@ -33,7 +33,7 @@ public class Category {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "external_id", unique = true)
+    @Column(name = "external_id")
     private @Nullable String externalId;
 
     @Column(nullable = false)
@@ -67,6 +67,6 @@ public class Category {
         return this.parentId;
     }
 
-    @Column(name = "storefront_id")
+    @Column(name = "storefront_id", nullable = false)
     private Long storefrontId;
 }

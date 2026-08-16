@@ -1,8 +1,7 @@
 package com.promox.core.infrastructure.exception;
 
-import com.promox.core.infrastructure.web.exception.ApiError;
-
 import java.util.List;
+
 
 public abstract class BusinessException extends RuntimeException {
 

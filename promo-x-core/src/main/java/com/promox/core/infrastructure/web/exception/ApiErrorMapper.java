@@ -13,7 +13,8 @@ public final class ApiErrorMapper {
                 ErrorSource.DOMAIN,
                 error.path(),
                 error.code(),
-                error.message()
+                error.message(),
+                error.errorContext()
         );
     }
 

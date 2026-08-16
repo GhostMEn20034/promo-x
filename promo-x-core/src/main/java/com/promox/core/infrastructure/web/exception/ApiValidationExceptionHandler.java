@@ -90,7 +90,8 @@ public class ApiValidationExceptionHandler {
                             source,
                             parameterName,
                             ValidationErrorCodes.resolve(error),
-                            error.getDefaultMessage()
+                            error.getDefaultMessage(),
+                            null
                     ))
             );
         });
@@ -125,7 +126,8 @@ public class ApiValidationExceptionHandler {
                         source,
                         ex.getName(),
                         "TYPE_MISMATCH",
-                        "Invalid value type"
+                        "Invalid value type",
+                        null
                 )
         );
         
@@ -156,7 +158,8 @@ public class ApiValidationExceptionHandler {
                     ErrorSource.REQUEST_BODY,
                     path,
                     "TYPE_MISMATCH",
-                    "Invalid value type"
+                    "Invalid value type",
+                    null
             ));
         } else {
             errors.add(new ApiError(
@@ -164,7 +167,8 @@ public class ApiValidationExceptionHandler {
                     ErrorSource.REQUEST_BODY,
                     null,
                     "INVALID_JSON",
-                    "Malformed JSON request."
+                    "Malformed JSON request.",
+                    null
             ));
         }
 
@@ -218,7 +222,8 @@ public class ApiValidationExceptionHandler {
                 ErrorSource.REQUEST_BODY,
                 error.getField(),
                 ValidationErrorCodes.resolve(error),
-                error.getDefaultMessage()
+                error.getDefaultMessage(),
+                null
         );
     }
 
@@ -228,7 +233,8 @@ public class ApiValidationExceptionHandler {
                 ErrorSource.REQUEST_BODY,
                 null,
                 ValidationErrorCodes.resolve(error),
-                error.getDefaultMessage()
+                error.getDefaultMessage(),
+                null
         );
     }
 }

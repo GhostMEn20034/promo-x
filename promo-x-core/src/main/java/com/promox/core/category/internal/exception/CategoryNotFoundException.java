@@ -15,7 +15,8 @@ public final class CategoryNotFoundException extends BusinessException {
                 new BusinessError(
                     null,
                     "CATEGORY_NOT_FOUND",
-                    "Category does not exist."
+                    "Category does not exist.",
+                    null
                 )
             )
         );
