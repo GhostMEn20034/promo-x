@@ -2,7 +2,7 @@ package com.promox.core.product;
 
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
-import com.promox.core.product.internal.dto.CreateSingleProductRequest;
+import com.promox.core.product.internal.dto.CreateProductRequest;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.shared.IntegrationTestBase;
@@ -63,7 +63,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
 
             Set<Long> categoryIds = Set.of(electronics.getId(), smartphones.getId());
 
-            CreateSingleProductRequest request = new CreateSingleProductRequest(
+            CreateProductRequest request = new CreateProductRequest(
                 "EXT-1001",
                 "SKU-IPHONE-15",
                 "iPhone 15 Pro",
@@ -102,7 +102,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("Should create product when categoryIds is empty")
         void shouldCreateProduct_whenCategoryIdsIsEmpty() throws Exception {
-            CreateSingleProductRequest request = new CreateSingleProductRequest(
+            CreateProductRequest request = new CreateProductRequest(
                 "EXT-1002",
                 "SKU-NO-CAT",
                 "Uncategorized Item",
@@ -122,7 +122,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("Should create product when optional externalId is null")
         void shouldCreateProduct_whenExternalIdIsNull() throws Exception {
-            CreateSingleProductRequest request = new CreateSingleProductRequest(
+            CreateProductRequest request = new CreateProductRequest(
                 null,
                 "SKU-NO-EXT",
                 "Basic Product",
@@ -155,7 +155,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
                 .categoryIds(Set.of())
                 .build());
 
-            CreateSingleProductRequest request = new CreateSingleProductRequest(
+            CreateProductRequest request = new CreateProductRequest(
                 sharedExternalId,
                 "SKU-ACTIVE-STORE",
                 "Active Store Product",
@@ -187,7 +187,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
 
             Set<Long> requestedCategoryIds = Set.of(realCategory.getId(), missingCategoryId);
 
-            CreateSingleProductRequest request = new CreateSingleProductRequest(
+            CreateProductRequest request = new CreateProductRequest(
                 "EXT-1003",
                 "SKU-INVALID-CAT",
                 "Invalid Category Product",
@@ -216,7 +216,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("Should return 400 when storefront header is missing")
         void shouldFail_whenStorefrontHeaderIsMissing() throws Exception {
-            CreateSingleProductRequest request = new CreateSingleProductRequest(
+            CreateProductRequest request = new CreateProductRequest(
                 "EXT-1", "SKU-1", "Product Name", Set.of()
             );
 
@@ -229,7 +229,7 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("Should return 400 when required fields are blank")
         void shouldFail_whenSkuOrNameIsBlank() throws Exception {
-            CreateSingleProductRequest invalidRequest = new CreateSingleProductRequest(
+            CreateProductRequest invalidRequest = new CreateProductRequest(
                 "EXT-1",
                 "",
                 "   ",

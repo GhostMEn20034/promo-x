@@ -1,7 +1,9 @@
 package com.promox.core.infrastructure.web.exception;
 
 import com.promox.core.infrastructure.exception.BusinessException;
+
 import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,7 +14,7 @@ import java.time.Instant;
 
 
 @RestControllerAdvice
-public class ApiBusinessExceptionHandler {
+public class ApiExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ProblemDetail handleBusinessException(

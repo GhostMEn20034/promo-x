@@ -1,15 +1,17 @@
 package com.promox.core.product.internal.service;
 
-import com.promox.core.product.internal.dto.CreateSingleProductRequest;
+import com.promox.core.product.internal.dto.CreateProductRequest;
 import com.promox.core.product.internal.exception.ProductBusinessException;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 
 import jakarta.annotation.Nullable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -24,7 +26,7 @@ public class ProductService {
     @Transactional
     public Product createSingleProduct(
         Long storefrontId,
-        CreateSingleProductRequest creationRequest
+        CreateProductRequest creationRequest
     ) {
         validateExternalIdUniqueness(creationRequest.externalId(), storefrontId);
 
@@ -37,6 +39,19 @@ public class ProductService {
             .build();
 
         return productRepository.save(product);
+    }
+    /*
+    * <b>Preconditions:</b>
+    * Assumes that all input data has already been pre-validated:
+    * <ul>
+    *   <li>External IDs are unique within the request batch.</li>
+    *   <li>External IDs do not already exist in the database for the given storefront.</li>
+    *   <li>All referenced category IDs exist and are valid for the given storefront.</li>
+    * </ul>
+    * */
+    @Transactional
+    public void createMultipleProducts(Long storefrontId, List<CreateProductRequest> items) {
+        productRepository.saveAllInBatch(storefrontId, items);
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +67,7 @@ public class ProductService {
         if (productRepository.existsByExternalIdAndStorefrontId(externalId, storefrontId)) {
             throw ProductBusinessException.of(
                 "Validation failed: Product with the specified external ID exists",
-                "PRODUCT_WITH_EXTERNAL_ID_EXISTS",
+                "EXTERNAL_ID_ALREADY_EXISTS",
                 null,
                 "Product with the specified external ID exists"
             );

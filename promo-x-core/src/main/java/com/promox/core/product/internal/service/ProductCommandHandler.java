@@ -1,70 +1,70 @@
 package com.promox.core.product.internal.service;
 
-import com.promox.core.category.CategoryIdsExistenceResult;
-import com.promox.core.category.CategoryLookupApi;
+import com.promox.core.category.internal.exception.CategoryBusinessException;
 import com.promox.core.product.DefaultProductDto;
 import com.promox.core.product.internal.ProductMapper;
-import com.promox.core.product.internal.dto.CreateSingleProductRequest;
-import com.promox.core.product.internal.exception.ProductBusinessException;
+import com.promox.core.product.internal.dto.CreateMultipleProductsRequest;
+import com.promox.core.product.internal.dto.CreateProductRequest;
 
-import jakarta.annotation.Nullable;
+import com.promox.core.product.internal.exception.ProductBusinessException;
+import com.promox.core.storefront.StorefrontLookupApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 
 @Service
 public class ProductCommandHandler {
     private final ProductService productService;
-    private final CategoryLookupApi categoryLookupApi;
+    private final ProductCategoryValidator productCategoryValidator;
+    private final ProductValidator productValidator;
+    private final StorefrontLookupApi storefrontLookupApi;
 
-    public ProductCommandHandler(ProductService productService, CategoryLookupApi categoryLookupApi) {
+    public ProductCommandHandler(
+        ProductService productService,
+        ProductCategoryValidator productCategoryValidator,
+        ProductValidator productValidator,
+        StorefrontLookupApi storefrontLookupApi
+    ) {
         this.productService = productService;
-        this.categoryLookupApi = categoryLookupApi;
+        this.productCategoryValidator = productCategoryValidator;
+        this.productValidator = productValidator;
+        this.storefrontLookupApi = storefrontLookupApi;
     }
 
     @Transactional
-    public DefaultProductDto createSingleProduct(Long storefrontId, CreateSingleProductRequest creationRequest) {
-        validateCategoryIdsExistence(creationRequest.categoryIds(), storefrontId, "categoryIds");
+    public DefaultProductDto createSingleProduct(Long storefrontId, CreateProductRequest creationRequest) {
+        if (!storefrontLookupApi.existsById(storefrontId)) {
+            throw ProductBusinessException.of(
+                "Storefront does not exist.",
+                "INVALID_STOREFRONT",
+                null,
+                "The specified storefront does not exist.",
+                null
+            );
+        }
+        productCategoryValidator.validateCategoryIdsExistence(creationRequest.categoryIds(), storefrontId, "categoryIds");
         return ProductMapper.toDto(productService.createSingleProduct(storefrontId, creationRequest));
     }
 
-    /**
-     * Validates that all requested category IDs exist in the system.
-     *
-     * @param categoryIds the set of category IDs to validate for existence
-     * @param path        the field path or property name used for validation error tracking (e.g., "categoryIds")
-     * @throws ProductBusinessException if one or more provided category IDs do not exist
-     */
-    private void validateCategoryIdsExistence(
-        Set<Long> categoryIds,
+    @Transactional
+    public void createMultipleProducts(
         Long storefrontId,
-        @Nullable String path
+        CreateMultipleProductsRequest creationRequest
     ) {
-        if (categoryIds.isEmpty()) {
-            return;
+        if (!storefrontLookupApi.existsById(storefrontId)) {
+            throw ProductBusinessException.of(
+                "Storefront does not exist.",
+                "INVALID_STOREFRONT",
+                null,
+                "The specified storefront does not exist.",
+                null
+            );
         }
 
-        CategoryIdsExistenceResult existenceResult = categoryLookupApi.checkExistenceByIdsAndStorefront(
-            categoryIds,
-            storefrontId
-        );
-
-        if (existenceResult.allExist()) {
-            return;
-        }
-
-        throw ProductBusinessException.of(
-            "Validation failed: specified category IDs do not exist",
-            "CATEGORY_IDS_NOT_FOUND",
-            path,
-            "One or more category IDs do not exist",
-            Map.of(
-                "missingCategoryIds", existenceResult.missingIds(),
-                "existingCategoryIds", existenceResult.existingIds()
-            )
-        );
+        productCategoryValidator.validateCategoryIdsExistenceForBulk(creationRequest.items(), storefrontId);
+        productValidator.validateExternalIdsUniquenessForBulk(creationRequest.items(), storefrontId);
+        productService.createMultipleProducts(storefrontId, creationRequest.items());
     }
 }

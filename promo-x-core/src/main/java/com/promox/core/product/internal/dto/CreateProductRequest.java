@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.Set;
 
-public record CreateSingleProductRequest(
+public record CreateProductRequest(
     @Size(min = 1, max = 255)
     String externalId,
     @NotBlank
@@ -18,7 +18,7 @@ public record CreateSingleProductRequest(
     String name,
     Set<@NotNull @Positive Long> categoryIds
 ) {
-    public CreateSingleProductRequest {
+    public CreateProductRequest {
         categoryIds = (categoryIds == null) ? Set.of() : Set.copyOf(categoryIds);
     }
 }
