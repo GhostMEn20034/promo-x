@@ -13,8 +13,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 
 @RestController
 @RequestMapping("/product")
@@ -46,7 +44,7 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ProductWithCategoriesDto getProductId(@PathVariable Long productId) {
+    public ProductWithCategoriesDto getProductById(@PathVariable Long productId) {
         return productLookupApi.findWithCategoriesById(productId)
             .orElseThrow(() -> new ProductNotFoundException(productId));
     }
