@@ -102,26 +102,6 @@ public class ProductRetrievalIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.sku").value("SKU-NO-CAT"))
                 .andExpect(jsonPath("$.categories.length()").value(0));
         }
-
-        @Test
-        @DisplayName("Should retrieve product when optional externalId is null")
-        void shouldReturnProduct_whenExternalIdIsNull() throws Exception {
-            // Given
-            Product product = productRepository.save(Product.builder()
-                .externalId(null)
-                .sku("SKU-NULL-EXT")
-                .name("Basic Product")
-                .storefrontId(activeStorefront.getId())
-                .categoryIds(Set.of())
-                .build());
-
-            // When / Then
-            mockMvc.perform(get(BASE_URL + "/{productId}", product.getId())
-                    .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(product.getId()))
-                .andExpect(jsonPath("$.externalId").value((Object) null));
-        }
     }
 
     @Nested

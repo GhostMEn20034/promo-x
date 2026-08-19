@@ -40,11 +40,11 @@ public class EngineWorkspace {
         this.shippingCostDiscount = BigDecimal.ZERO;
     }
 
-    public void logAppliedRule(String ruleId, String ruleName) {
+    public void logAppliedRule(Long ruleId, String ruleName) {
         this.appliedRules.add(new AppliedRuleLog(ruleId, ruleName));
     }
 
-    public void logMatchedRule(String ruleId, String ruleName) {
+    public void logMatchedRule(Long ruleId, String ruleName) {
         this.matchedRules.add(new MatchedRuleLog(ruleId, ruleName));
     }
 

@@ -8,6 +8,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -47,6 +50,14 @@ public record CompositeConditionNode(
     @Override
     public String getDescription() {
         return DESC;
+    }
+
+    @Override
+    public Set<String> getProductIdentifiers() {
+        return children.stream()
+            .filter(Objects::nonNull)
+            .flatMap(child -> child.getProductIdentifiers().stream())
+            .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record LineItemRequest(
-        @NotNull String productId,
+        @NotNull String productExternalId,
         @NotNull String productSku,
         List<String> categories,
         List<String> collections,

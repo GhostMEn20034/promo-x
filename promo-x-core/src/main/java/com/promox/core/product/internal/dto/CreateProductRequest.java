@@ -8,7 +8,8 @@ import jakarta.validation.constraints.Size;
 import java.util.Set;
 
 public record CreateProductRequest(
-    @Size(min = 1, max = 255)
+    @NotBlank
+    @Size(max = 255)
     String externalId,
     @NotBlank
     @Size(max = 255)

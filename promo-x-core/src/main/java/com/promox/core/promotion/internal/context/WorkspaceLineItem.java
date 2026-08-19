@@ -9,7 +9,7 @@ import java.util.List;
 
 
 public class WorkspaceLineItem {
-    private final String productId;
+    private final String productExternalId;
     private final String productSku;
     private List<String> categories;
     private List<String> collections;
@@ -19,7 +19,7 @@ public class WorkspaceLineItem {
     private BigDecimal discountAmount;
 
     public WorkspaceLineItem(LineItemRequest request) {
-        this.productId = request.productId();
+        this.productExternalId = request.productExternalId();
         this.productSku = request.productSku();
         this.categories = request.categories() != null ? new ArrayList<>(request.categories()) : new ArrayList<>();
         this.collections = request.collections() != null ? new ArrayList<>(request.collections()) : new ArrayList<>();
@@ -58,7 +58,7 @@ public class WorkspaceLineItem {
         this.discountAmount = discountAmount;
     }
 
-    public String getProductId() { return productId; }
+    public String getProductExternalId() { return productExternalId; }
     public String getProductSku() { return productSku; }
     public List<String> getCategories() { return categories; }
     public List<String> getCollections() { return collections; }

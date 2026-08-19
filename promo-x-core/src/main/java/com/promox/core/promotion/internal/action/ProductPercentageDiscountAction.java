@@ -13,29 +13,30 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Set;
 
 
-public record ProductIdPercentageDiscountAction(
-        @NotBlank(message = "Target Product ID is required")
-        String targetProductId,
+public record ProductPercentageDiscountAction(
+        @NotBlank(message = "Target Product is required")
+        String targetProductExternalId,
 
         @NotNull(message = "Discount percentage rate is required")
         @DecimalMin(value = "0.00", inclusive = false, message = "Discount rate must be greater than 0.00")
         @DecimalMax(value = "1.00", message = "Discount rate cannot exceed 1.00")
         BigDecimal discountPercentage
 ) implements ActionStrategy {
-    public static final String TYPE_NAME = "PRODUCT_ID_PERCENTAGE_DISCOUNT_ACTION";
-    public static final String DISPLAY_NAME = "Discount on specific Product ID";
+    public static final String TYPE_NAME = "PRODUCT_EXTERNAL_ID_PERCENTAGE_DISCOUNT_ACTION";
+    public static final String DISPLAY_NAME = "Discount on specific Product";
     private static final String DESC = """
-            Applies a percentage discount rate (0.00 to 1.00) to all matching Product ID line items. \
+            Applies a percentage discount rate (0.00 to 1.00) to all matching Product line items. \
             This action will not apply if the matching items are already fully discounted.\
             """;
 
-    public ProductIdPercentageDiscountAction {
-        if (targetProductId == null || targetProductId.isBlank()) {
+    public ProductPercentageDiscountAction {
+        if (targetProductExternalId == null || targetProductExternalId.isBlank()) {
             throw new InvalidActionStrategyException(
                     MISSING_REQUIRED_FIELD,
-                    "Target Product ID cannot be null or blank."
+                    "Target Product External ID cannot be null or blank."
             );
         }
         if (discountPercentage == null) {
@@ -67,10 +68,12 @@ public record ProductIdPercentageDiscountAction(
         return DESC;
     }
 
+    @Override public Set<String> getProductIdentifiers() { return Set.of(targetProductExternalId); }
+
     @Override
     public boolean apply(EngineWorkspace workspace) {
         List<WorkspaceLineItem> targets = workspace.getLineItems().stream()
-                .filter(item -> item.getProductId().equals(targetProductId))
+                .filter(item -> item.getProductExternalId().equals(targetProductExternalId))
                 .toList();
 
         if (targets.isEmpty()) {

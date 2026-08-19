@@ -22,5 +22,12 @@ public interface ConditionNode {
         return Set.of();
     }
 
+    /**
+     * Returns products' identifiers (Currently external IDs) mentioned in the condition node
+     */
+    default Set<String> getProductIdentifiers() {
+        return Set.of();
+    }
+
     boolean evaluate(EngineWorkspace workspace);
 }

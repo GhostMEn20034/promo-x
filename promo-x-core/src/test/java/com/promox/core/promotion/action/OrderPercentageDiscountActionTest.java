@@ -163,7 +163,7 @@ public class OrderPercentageDiscountActionTest {
             The Stream's structure:
             1) Scenario name
             2) Discount percentage (e.g. 0.10 for 10%)
-            3) Cart line items (productId, quantity, unitPrice)
+            3) Cart line items (productExternalId, quantity, unitPrice)
             4) Expected discount amount applied to each item
             */
             return Stream.of(

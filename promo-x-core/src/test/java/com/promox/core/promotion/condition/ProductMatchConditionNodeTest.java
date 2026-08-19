@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.UNSUPPORTED_OPERATOR;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 
-public class ProductIdMatchConditionNodeTest {
+public class ProductMatchConditionNodeTest {
     static EngineWorkspace buildTestWorkspace(Map<String, String> productIdToSkuMap) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -53,7 +54,7 @@ public class ProductIdMatchConditionNodeTest {
 
     // product id any match condition node matrix
     static Stream<Arguments> productIdListEvaluationMatrixProvider() {
-        List<String> targets = List.of("prod-apple-14", "prod-samsung-s24");
+        Set<String> targets = Set.of("prod-apple-14", "prod-samsung-s24");
 
         /*
         The Stream's structure:
@@ -80,12 +81,12 @@ public class ProductIdMatchConditionNodeTest {
     @ParameterizedTest(name = "[{index}] ProductIdListAnyMatch -> Operator: {1} | Expects: {3}")
     @MethodSource("productIdListEvaluationMatrixProvider")
     void evaluate_ShouldReturnExpectedBooleanValueWhenVerifyingProductIdCollectionContainmentAgainstLineItemsDynamicState(
-            List<String> targetProductIds,
+            Set<String> targetProductIds,
             Operator operator,
             EngineWorkspace workspace,
             boolean expectedResult
     ) {
-        var node = new ProductIdAnyMatchConditionNode(targetProductIds, operator);
+        var node = new ProductAnyMatchConditionNode(targetProductIds, operator);
 
         assertThat(node.evaluate(workspace))
                 .as("Product ID Collection matching evaluation failed for Operator: %s", operator)
@@ -130,7 +131,7 @@ public class ProductIdMatchConditionNodeTest {
             EngineWorkspace workspace,
             boolean expectedResult
     ) {
-        var node = new SingleProductIdConditionNode(targetProductId, operator);
+        var node = new SingleProductConditionNode(targetProductId, operator);
 
         assertThat(node.evaluate(workspace))
                 .as("Single Product ID evaluation failed for Operator: %s", operator)
@@ -139,7 +140,7 @@ public class ProductIdMatchConditionNodeTest {
 
     @Test
     void constructor_ShouldThrowInvalidConditionNodeExceptionWithUnsupportedOperatorCode_WhenProductIdAnyMatchNodeGivenIllegalOperator() {
-        assertThatThrownBy(() -> new ProductIdAnyMatchConditionNode(List.of("prod-1"), Operator.GREATER_THAN_OR_EQUAL))
+        assertThatThrownBy(() -> new ProductAnyMatchConditionNode(Set.of("prod-1"), Operator.GREATER_THAN_OR_EQUAL))
                 .isInstanceOf(InvalidConditionNodeException.class)
                 .satisfies(ex -> assertThat(((InvalidConditionNodeException) ex).getErrorCode()).isEqualTo(UNSUPPORTED_OPERATOR));
     }
