@@ -120,24 +120,6 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("Should create product when optional externalId is null")
-        void shouldCreateProduct_whenExternalIdIsNull() throws Exception {
-            CreateProductRequest request = new CreateProductRequest(
-                null,
-                "SKU-NO-EXT",
-                "Basic Product",
-                Set.of()
-            );
-
-            mockMvc.perform(post(BASE_URL + "/")
-                    .header(STOREFRONT_HEADER, activeStorefront.getId())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.externalId").value((Object) null));
-        }
-
-        @Test
         @DisplayName("Should allow same externalId if it exists in a different storefront")
         void shouldCreateProduct_whenSameExternalIdExistsInDifferentStorefront() throws Exception {
             // Given: Product with same externalId exists in another storefront
@@ -240,6 +222,23 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
                     .header(STOREFRONT_HEADER, activeStorefront.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("Should create product when optional externalId is null")
+        void shouldFail_whenExternalIdIsNull() throws Exception {
+            CreateProductRequest request = new CreateProductRequest(
+                null,
+                "SKU-NO-EXT",
+                "Basic Product",
+                Set.of()
+            );
+
+            mockMvc.perform(post(BASE_URL + "/")
+                    .header(STOREFRONT_HEADER, activeStorefront.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
         }
     }

@@ -14,32 +14,32 @@ import java.util.Map;
 import java.util.Set;
 
 
-public record SingleProductIdConditionNode(
-        @NotBlank(message = "Target Product ID cannot be null or blank")
-        String productId,
+public record SingleProductConditionNode(
+        @NotBlank(message = "Target Product cannot be null or blank")
+        String productExternalId,
 
         @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
-    public static final String TYPE_NAME = "SINGLE_PRODUCT_ID_MATCH";
-    public static final String DISPLAY_NAME = "Single Product ID Match";
+    public static final String TYPE_NAME = "SINGLE_PRODUCT_EXTERNAL_ID_MATCH";
+    public static final String DISPLAY_NAME = "Single Product Match";
     private static final String DESC = """
-            Evaluates whether a specific product ID is present or absent in the cart line items.\
+            Evaluates whether a specific product is present or absent in the cart line items.\
             """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.NOT_EQUALS);
 
-    public SingleProductIdConditionNode {
-        if (productId == null || productId.isBlank()) {
+    public SingleProductConditionNode {
+        if (productExternalId == null || productExternalId.isBlank()) {
             throw new InvalidConditionNodeException(
                     MISSING_REQUIRED_FIELD,
-                    "Target Product ID cannot be null or blank."
+                    "Target Product External ID cannot be null or blank."
             );
         }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
                     UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by Single Product ID matching.", operator)
+                    String.format("Operator '%s' is not supported by Single Product External ID matching.", operator)
             );
         }
     }
@@ -73,6 +73,11 @@ public record SingleProductIdConditionNode(
     }
 
     @Override
+    public Set<String> getProductIdentifiers() {
+        return Set.of(productExternalId);
+    }
+
+    @Override
     public boolean evaluate(EngineWorkspace workspace) {
         List<WorkspaceLineItem> items = workspace.getLineItems();
         if (items.isEmpty()) {
@@ -80,8 +85,8 @@ public record SingleProductIdConditionNode(
         }
 
         return switch (operator) {
-            case EQUALS -> items.stream().anyMatch(item -> productId.equals(item.getProductId()));
-            case NOT_EQUALS -> items.stream().noneMatch(item -> productId.equals(item.getProductId()));
+            case EQUALS -> items.stream().anyMatch(item -> productExternalId.equals(item.getProductExternalId()));
+            case NOT_EQUALS -> items.stream().noneMatch(item -> productExternalId.equals(item.getProductExternalId()));
             default -> false;
         };
     }

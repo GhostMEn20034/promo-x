@@ -2,7 +2,7 @@ package com.promox.core.promotion.action;
 
 import com.promox.core.promotion.dto.LineItemRequest;
 import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.action.ProductIdPercentageDiscountAction;
+import com.promox.core.promotion.internal.action.ProductPercentageDiscountAction;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidActionStrategyException;
@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ProductIdPercentageDiscountActionTest {
+public class ProductPercentageDiscountActionTest {
     private record ItemSpec(String productId, int quantity, BigDecimal unitPrice) {}
 
     private EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -55,7 +55,7 @@ public class ProductIdPercentageDiscountActionTest {
     @ValueSource(strings = {"   ", "\t", "\n"})
     @DisplayName("Constructor throws MISSING_REQUIRED_FIELD when product ID is null or blank")
     void constructor_ShouldThrowException_WhenProductIdIsNullMatchesOrBlank(String invalidProductId) {
-        assertThatThrownBy(() -> new ProductIdPercentageDiscountAction(invalidProductId, new BigDecimal("0.20")))
+        assertThatThrownBy(() -> new ProductPercentageDiscountAction(invalidProductId, new BigDecimal("0.20")))
                 .isInstanceOf(InvalidActionStrategyException.class)
                 .extracting("errorCode")
                 .isEqualTo(MISSING_REQUIRED_FIELD);
@@ -64,7 +64,7 @@ public class ProductIdPercentageDiscountActionTest {
     @Test
     @DisplayName("Constructor throws MISSING_REQUIRED_FIELD when discount percentage is null")
     void constructor_ShouldThrowException_WhenPercentageIsNull() {
-        assertThatThrownBy(() -> new ProductIdPercentageDiscountAction("PROD-123", null))
+        assertThatThrownBy(() -> new ProductPercentageDiscountAction("PROD-123", null))
                 .isInstanceOf(InvalidActionStrategyException.class)
                 .extracting("errorCode")
                 .isEqualTo(MISSING_REQUIRED_FIELD);
@@ -75,7 +75,7 @@ public class ProductIdPercentageDiscountActionTest {
     void constructor_ShouldThrowException_WhenPercentageIsOutOfRange(String invalidPercentage) {
         var percentage = new BigDecimal(invalidPercentage);
 
-        assertThatThrownBy(() -> new ProductIdPercentageDiscountAction("PROD-123", percentage))
+        assertThatThrownBy(() -> new ProductPercentageDiscountAction("PROD-123", percentage))
                 .isInstanceOf(InvalidActionStrategyException.class)
                 .extracting("errorCode")
                 .isEqualTo(INVALID_VALUE_RANGE);
@@ -88,7 +88,7 @@ public class ProductIdPercentageDiscountActionTest {
                 new ItemSpec("PROD-999", 1, new BigDecimal("10.00"))
         ));
 
-        var action = new ProductIdPercentageDiscountAction("PROD-123", new BigDecimal("0.20"));
+        var action = new ProductPercentageDiscountAction("PROD-123", new BigDecimal("0.20"));
 
         boolean result = action.apply(workspace);
 
@@ -103,7 +103,7 @@ public class ProductIdPercentageDiscountActionTest {
                 new ItemSpec("PROD-123", 1, BigDecimal.ZERO)
         ));
 
-        var action = new ProductIdPercentageDiscountAction("PROD-123", new BigDecimal("0.50"));
+        var action = new ProductPercentageDiscountAction("PROD-123", new BigDecimal("0.50"));
 
         boolean result = action.apply(workspace);
 
@@ -117,7 +117,7 @@ public class ProductIdPercentageDiscountActionTest {
                 new ItemSpec("prod-123", 1, new BigDecimal("50.00"))
         ));
 
-        var action = new ProductIdPercentageDiscountAction("PROD-123", new BigDecimal("0.10"));
+        var action = new ProductPercentageDiscountAction("PROD-123", new BigDecimal("0.10"));
 
         boolean result = action.apply(workspace);
 
@@ -133,7 +133,7 @@ public class ProductIdPercentageDiscountActionTest {
                 new ItemSpec("PROD-200", 1, new BigDecimal("20.00"))
         ));
 
-        var action = new ProductIdPercentageDiscountAction("PROD-100", new BigDecimal("0.25"));
+        var action = new ProductPercentageDiscountAction("PROD-100", new BigDecimal("0.25"));
 
         boolean result = action.apply(workspace);
 
@@ -162,7 +162,7 @@ public class ProductIdPercentageDiscountActionTest {
                 new ItemSpec("PROD-1", 1, new BigDecimal(unitPrice))
         ));
 
-        var action = new ProductIdPercentageDiscountAction("PROD-1", new BigDecimal(percentage));
+        var action = new ProductPercentageDiscountAction("PROD-1", new BigDecimal(percentage));
 
         boolean result = action.apply(workspace);
 

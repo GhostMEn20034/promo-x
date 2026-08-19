@@ -3,8 +3,8 @@ package com.promox.core.promotion.engine;
 import com.promox.core.promotion.dto.LineItemRequest;
 import com.promox.core.promotion.dto.PromotionEvaluationRequest;
 import com.promox.core.promotion.internal.action.FreeShippingAction;
-import com.promox.core.promotion.internal.action.ProductIdBuyXGetYFreeAction;
-import com.promox.core.promotion.internal.action.ProductIdPercentageDiscountAction;
+import com.promox.core.promotion.internal.action.ProductBuyXGetYFreeAction;
+import com.promox.core.promotion.internal.action.ProductPercentageDiscountAction;
 import com.promox.core.promotion.internal.action.ProductSKUPercentageDiscountAction;
 import com.promox.core.promotion.internal.condition.Operator;
 import com.promox.core.promotion.internal.condition.PromoCodeConditionNode;
@@ -48,26 +48,26 @@ public class PromoRuleEngineExecutionTest {
         EngineWorkspace workspace = new EngineWorkspace(request);
 
         // High Priority Rule (Priority: 100, ShortCircuit: TRUE -> 10% OFF PROD-1)
-        PromotionRule highPriorityRule = new PromotionRule(
-                "RULE-HIGH-PRIORITY",
-                STOREFRONT_ID,
-                "High Priority VIP Rule",
-                100,
-                true,
-                new PromoCodeConditionNode("VIP", Operator.EQUALS),
-                new ProductIdPercentageDiscountAction("PROD-1", new BigDecimal("0.10"))
-        );
+        PromotionRule highPriorityRule = PromotionRule.builder()
+            .id(1L)
+            .storefrontId(STOREFRONT_ID)
+            .name("High Priority VIP Rule")
+            .priority(100)
+            .isShortCircuit(true)
+            .conditionTree(new PromoCodeConditionNode("VIP", Operator.EQUALS))
+            .action(new ProductPercentageDiscountAction("PROD-1", new BigDecimal("0.10")))
+            .build();
 
         // Low Priority Rule (Priority: 10, ShortCircuit: FALSE -> 20% OFF PROD-1)
-        PromotionRule lowPriorityRule = new PromotionRule(
-                "RULE-LOW-PRIORITY",
-                STOREFRONT_ID,
-                "Low Priority VIP Rule",
-                10,
-                false,
-                new PromoCodeConditionNode("VIP", Operator.EQUALS),
-                new ProductIdPercentageDiscountAction("PROD-1", new BigDecimal("0.20"))
-        );
+        PromotionRule lowPriorityRule = PromotionRule.builder()
+            .id(2L)
+            .storefrontId(STOREFRONT_ID)
+            .name("Low Priority VIP Rule")
+            .priority(10)
+            .isShortCircuit(false)
+            .conditionTree(new PromoCodeConditionNode("VIP", Operator.EQUALS))
+            .action(new ProductPercentageDiscountAction("PROD-1", new BigDecimal("0.20")))
+            .build();
 
         // Pass rules out of priority order to verify internal engine sorting
         List<PromotionRule> unsortedRules = List.of(lowPriorityRule, highPriorityRule);
@@ -77,11 +77,11 @@ public class PromoRuleEngineExecutionTest {
         // Assert Engine Log Context
         assertThat(workspace.getMatchedRules())
                 .extracting(MatchedRuleLog::ruleId)
-                .containsExactly("RULE-HIGH-PRIORITY");
+                .containsExactly(1L);
 
         assertThat(workspace.getAppliedRules())
                 .extracting(AppliedRuleLog::ruleId)
-                .containsExactly("RULE-HIGH-PRIORITY");
+                .containsExactly(1L);
 
         // Assert calculated discount ($10.00 from 10% discount, ignoring low-priority 20%)
         assertThat(workspace.getItemsDiscount()).isEqualByComparingTo(new BigDecimal("10.00"));
@@ -105,37 +105,40 @@ public class PromoRuleEngineExecutionTest {
         EngineWorkspace workspace = new EngineWorkspace(request);
 
         // Rule 1: 20% off Keyboards (Priority 200)
-        PromotionRule keyboardRule = new PromotionRule(
-                "RULE-SUMMER-KB",
-                STOREFRONT_ID,
-                "Summer Tech Keyboard Discount",
-                200,
-                false,
-                new PromoCodeConditionNode("SUMMER", Operator.EQUALS),
-                new ProductIdPercentageDiscountAction("PROD-KB", new BigDecimal("0.20"))
-        );
+        PromotionRule keyboardRule = PromotionRule.builder()
+            .id(1L)
+            .storefrontId(STOREFRONT_ID)
+            .name("Summer Tech Keyboard Discount")
+            .priority(200)
+            .isShortCircuit(false)
+            .isActive(true)
+            .conditionTree(new PromoCodeConditionNode("SUMMER", Operator.EQUALS))
+            .action(new ProductPercentageDiscountAction("PROD-KB", new BigDecimal("0.20")))
+            .build();
 
         // Rule 2: 10% off Mouse (Priority 150)
-        PromotionRule mouseRule = new PromotionRule(
-                "RULE-SUMMER-MS",
-                STOREFRONT_ID,
-                "Summer Tech Mouse Discount",
-                150,
-                false,
-                new PromoCodeConditionNode("SUMMER", Operator.EQUALS),
-                new ProductSKUPercentageDiscountAction("SKU-MS", new BigDecimal("0.10"))
-        );
+        PromotionRule mouseRule = PromotionRule.builder()
+            .id(2L)
+            .storefrontId(STOREFRONT_ID)
+            .name("Summer Tech Mouse Discount")
+            .priority(150)
+            .isShortCircuit(false)
+            .isActive(true)
+            .conditionTree(new PromoCodeConditionNode("SUMMER", Operator.EQUALS))
+            .action(new ProductSKUPercentageDiscountAction("SKU-MS", new BigDecimal("0.10")))
+            .build();
 
         // Rule 3: Free Shipping (Priority 100)
-        PromotionRule shippingRule = new PromotionRule(
-                "RULE-FREE-SHIPPING",
-                STOREFRONT_ID,
-                "Free Shipping Promotion",
-                100,
-                false,
-                new PromoCodeConditionNode("SUMMER", Operator.EQUALS),
-                new FreeShippingAction()
-        );
+        PromotionRule shippingRule = PromotionRule.builder()
+            .id(3L)
+            .storefrontId(STOREFRONT_ID)
+            .name("Free Shipping Promotion")
+            .priority(100)
+            .isShortCircuit(false)
+            .isActive(true)
+            .conditionTree(new PromoCodeConditionNode("SUMMER", Operator.EQUALS))
+            .action(new FreeShippingAction())
+            .build();
 
         List<PromotionRule> rules = List.of(shippingRule, mouseRule, keyboardRule);
 
@@ -144,11 +147,11 @@ public class PromoRuleEngineExecutionTest {
         // Assert Engine Execution Tracking (Executed in priority order: 200 -> 150 -> 100)
         assertThat(workspace.getMatchedRules())
                 .extracting(MatchedRuleLog::ruleId)
-                .containsExactly("RULE-SUMMER-KB", "RULE-SUMMER-MS", "RULE-FREE-SHIPPING");
+                .containsExactly(1L, 2L, 3L);
 
         assertThat(workspace.getAppliedRules())
                 .extracting(AppliedRuleLog::ruleId)
-                .containsExactly("RULE-SUMMER-KB", "RULE-SUMMER-MS", "RULE-FREE-SHIPPING");
+                .containsExactly(1L, 2L, 3L);
 
         // Assert Workspace Totals & Discounts:
         // - KB Discount: 2 * $100 * 20% = $40.00
@@ -187,27 +190,29 @@ public class PromoRuleEngineExecutionTest {
         // Rule 1 (Priority 100, ShortCircuit: TRUE)
         // Condition matches promo code "MATCH_ONLY", BUT action requires Buy 2 Get 1 Free on PROD-1.
         // Since cart only has 1 unit, BuyXGetYFreeAction returns false.
-        PromotionRule highPriorityInapplicableRule = new PromotionRule(
-                "RULE-INAPPLICABLE-BOGO",
-                STOREFRONT_ID,
-                "Inapplicable BOGO Rule",
-                100,
-                true, // Short circuit enabled, but should NOT halt engine because action won't apply
-                new PromoCodeConditionNode("MATCH_ONLY", Operator.EQUALS),
-                new ProductIdBuyXGetYFreeAction("PROD-1", 2, 1)
-        );
+        PromotionRule highPriorityInapplicableRule = PromotionRule.builder()
+            .id(1L)
+            .storefrontId(STOREFRONT_ID)
+            .name("Inapplicable BOGO Rule")
+            .priority(100)
+            .isShortCircuit(true)
+            .isActive(true)
+            .conditionTree(new PromoCodeConditionNode("MATCH_ONLY", Operator.EQUALS))
+            .action(new ProductBuyXGetYFreeAction("PROD-1", 2, 1))
+            .build();
 
         // Rule 2 (Priority 50, ShortCircuit: FALSE)
         // Fallback rule: 15% OFF PROD-1.
-        PromotionRule lowPriorityFallbackRule = new PromotionRule(
-                "RULE-FALLBACK-PERCENTAGE",
-                STOREFRONT_ID,
-                "Fallback 15% Discount Rule",
-                50,
-                false,
-                new PromoCodeConditionNode("MATCH_ONLY", Operator.EQUALS),
-                new ProductIdPercentageDiscountAction("PROD-1", new BigDecimal("0.15"))
-        );
+        PromotionRule lowPriorityFallbackRule = PromotionRule.builder()
+            .id(2L)
+            .storefrontId(STOREFRONT_ID)
+            .name("Fallback 15% Discount Rule")
+            .priority(50)
+            .isShortCircuit(false)
+            .isActive(true)
+            .conditionTree(new PromoCodeConditionNode("MATCH_ONLY", Operator.EQUALS))
+            .action(new ProductPercentageDiscountAction("PROD-1", new BigDecimal("0.15")))
+            .build();
 
         List<PromotionRule> rules = List.of(highPriorityInapplicableRule, lowPriorityFallbackRule);
 
@@ -217,12 +222,12 @@ public class PromoRuleEngineExecutionTest {
         // Both rules evaluated true for conditions -> Both logged in matchedRules
         assertThat(workspace.getMatchedRules())
                 .extracting(MatchedRuleLog::ruleId)
-                .containsExactly("RULE-INAPPLICABLE-BOGO", "RULE-FALLBACK-PERCENTAGE");
+                .containsExactly(1L, 2L);
 
         // Only Rule 2 actually modified cart state -> Only Rule 2 logged in appliedRules
         assertThat(workspace.getAppliedRules())
                 .extracting(AppliedRuleLog::ruleId)
-                .containsExactly("RULE-FALLBACK-PERCENTAGE");
+                .containsExactly(2L);
 
         // Assert Discount Calculations:
         // 15% applied to $100 = $15.00 discount

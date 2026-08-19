@@ -3,7 +3,7 @@ package com.promox.core.promotion.condition;
 import com.promox.core.promotion.dto.LineItemRequest;
 import com.promox.core.promotion.dto.PromotionEvaluationRequest;
 import com.promox.core.promotion.internal.condition.Operator;
-import com.promox.core.promotion.internal.condition.ProductIdQuantityConditionNode;
+import com.promox.core.promotion.internal.condition.ProductQuantityConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
 import java.math.BigDecimal;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-public class ProductIdQuantityConditionNodeTest {
+public class ProductQuantityConditionNodeTest {
     record ProductItemSpec(String productId, String sku, int quantity) {
         ProductItemSpec(String productId, int quantity) {
             this(productId, "%s-SKU".formatted(productId), quantity);
@@ -153,7 +153,7 @@ public class ProductIdQuantityConditionNodeTest {
             EngineWorkspace workspace,
             boolean expectedResult
     ) {
-        var node = new ProductIdQuantityConditionNode(targetProductId, requiredQuantity, operator);
+        var node = new ProductQuantityConditionNode(targetProductId, requiredQuantity, operator);
 
         assertThat(node.evaluate(workspace))
                 .as("Evaluation failed for Product ID %s with operator %s", targetProductId, operator)
@@ -163,7 +163,7 @@ public class ProductIdQuantityConditionNodeTest {
     @ParameterizedTest
     @ValueSource(strings = {"", "   "})
     void constructor_ShouldThrowInvalidConditionNodeException_WhenProductIdIsBlank(String invalidProductId) {
-        assertThatThrownBy(() -> new ProductIdQuantityConditionNode(invalidProductId, 1, Operator.EQUALS))
+        assertThatThrownBy(() -> new ProductQuantityConditionNode(invalidProductId, 1, Operator.EQUALS))
                 .isInstanceOf(InvalidConditionNodeException.class)
                 .satisfies(ex -> assertThat(((InvalidConditionNodeException) ex).getErrorCode())
                         .isEqualTo(ConditionNodeErrorCodes.MISSING_REQUIRED_FIELD));
@@ -171,7 +171,7 @@ public class ProductIdQuantityConditionNodeTest {
 
     @Test
     void constructor_ShouldThrowInvalidConditionNodeException_WhenProductIdIsNull() {
-        assertThatThrownBy(() -> new ProductIdQuantityConditionNode(null, 1, Operator.EQUALS))
+        assertThatThrownBy(() -> new ProductQuantityConditionNode(null, 1, Operator.EQUALS))
                 .isInstanceOf(InvalidConditionNodeException.class)
                 .satisfies(ex -> assertThat(((InvalidConditionNodeException) ex).getErrorCode())
                         .isEqualTo(ConditionNodeErrorCodes.MISSING_REQUIRED_FIELD));
@@ -180,7 +180,7 @@ public class ProductIdQuantityConditionNodeTest {
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -100})
     void constructor_ShouldThrowInvalidConditionNodeException_WhenRequiredQuantityIsZeroOrNegative(int invalidQuantity) {
-        assertThatThrownBy(() -> new ProductIdQuantityConditionNode("prod-1", invalidQuantity, Operator.EQUALS))
+        assertThatThrownBy(() -> new ProductQuantityConditionNode("prod-1", invalidQuantity, Operator.EQUALS))
                 .isInstanceOf(InvalidConditionNodeException.class)
                 .satisfies(ex -> assertThat(((InvalidConditionNodeException) ex).getErrorCode())
                         .isEqualTo(ConditionNodeErrorCodes.INVALID_VALUE_RANGE));
@@ -188,7 +188,7 @@ public class ProductIdQuantityConditionNodeTest {
 
     @Test
     void constructor_ShouldThrowInvalidConditionNodeException_WhenOperatorIsUnsupported() {
-        assertThatThrownBy(() -> new ProductIdQuantityConditionNode("prod-1", 1, Operator.NOT_EQUALS))
+        assertThatThrownBy(() -> new ProductQuantityConditionNode("prod-1", 1, Operator.NOT_EQUALS))
                 .isInstanceOf(InvalidConditionNodeException.class)
                 .satisfies(ex -> assertThat(((InvalidConditionNodeException) ex).getErrorCode())
                         .isEqualTo(ConditionNodeErrorCodes.UNSUPPORTED_OPERATOR));

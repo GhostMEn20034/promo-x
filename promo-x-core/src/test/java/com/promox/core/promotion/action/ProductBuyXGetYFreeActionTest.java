@@ -2,7 +2,7 @@ package com.promox.core.promotion.action;
 
 import com.promox.core.promotion.dto.LineItemRequest;
 import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.action.ProductIdBuyXGetYFreeAction;
+import com.promox.core.promotion.internal.action.ProductBuyXGetYFreeAction;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
 import com.promox.core.promotion.internal.exception.InvalidActionStrategyException;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ProductIdBuyXGetYFreeActionTest {
+public class ProductBuyXGetYFreeActionTest {
     private record ItemSpec(String productId, int quantity, BigDecimal unitPrice) {}
 
     private EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -59,7 +59,7 @@ public class ProductIdBuyXGetYFreeActionTest {
         @ValueSource(strings = {"   ", "\t", "\n"})
         @DisplayName("Throws MISSING_REQUIRED_FIELD when target product ID is null or blank")
         void constructor_ShouldThrowException_WhenProductIdIsNullMatchesOrBlank(String invalidProductId) {
-            assertThatThrownBy(() -> new ProductIdBuyXGetYFreeAction(invalidProductId, 2, 1))
+            assertThatThrownBy(() -> new ProductBuyXGetYFreeAction(invalidProductId, 2, 1))
                     .isInstanceOf(InvalidActionStrategyException.class)
                     .extracting("errorCode")
                     .isEqualTo(MISSING_REQUIRED_FIELD);
@@ -70,7 +70,7 @@ public class ProductIdBuyXGetYFreeActionTest {
         @ValueSource(ints = {0, -1, -5})
         @DisplayName("Throws INVALID_VALUE_RANGE when buyQuantity is null, zero, or negative")
         void constructor_ShouldThrowException_WhenBuyQuantityIsInvalid(Integer invalidBuyQuantity) {
-            assertThatThrownBy(() -> new ProductIdBuyXGetYFreeAction("PROD-123", invalidBuyQuantity, 1))
+            assertThatThrownBy(() -> new ProductBuyXGetYFreeAction("PROD-123", invalidBuyQuantity, 1))
                     .isInstanceOf(InvalidActionStrategyException.class)
                     .extracting("errorCode")
                     .isEqualTo(INVALID_VALUE_RANGE);
@@ -81,7 +81,7 @@ public class ProductIdBuyXGetYFreeActionTest {
         @ValueSource(ints = {0, -1, -5})
         @DisplayName("Throws INVALID_VALUE_RANGE when freeQuantity is null, zero, or negative")
         void constructor_ShouldThrowException_WhenFreeQuantityIsInvalid(Integer invalidFreeQuantity) {
-            assertThatThrownBy(() -> new ProductIdBuyXGetYFreeAction("PROD-123", 2, invalidFreeQuantity))
+            assertThatThrownBy(() -> new ProductBuyXGetYFreeAction("PROD-123", 2, invalidFreeQuantity))
                     .isInstanceOf(InvalidActionStrategyException.class)
                     .extracting("errorCode")
                     .isEqualTo(INVALID_VALUE_RANGE);
@@ -93,7 +93,7 @@ public class ProductIdBuyXGetYFreeActionTest {
     void apply_ShouldReturnFalse_WhenWorkspaceHasNoLineItems() {
         EngineWorkspace workspace = buildTestWorkspace(List.of());
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-123", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-123", 2, 1);
 
         boolean result = action.apply(workspace);
 
@@ -107,7 +107,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-999", 3, new BigDecimal("10.00"))
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-123", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-123", 2, 1);
 
         boolean result = action.apply(workspace);
 
@@ -122,7 +122,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-123", 2, new BigDecimal("15.00"))
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-123", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-123", 2, 1);
 
         boolean result = action.apply(workspace);
 
@@ -140,7 +140,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-300", 1, new BigDecimal("100.00")) // Non-target item
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-100", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-100", 2, 1);
 
         boolean result = action.apply(workspace);
 
@@ -164,7 +164,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-200", 5, new BigDecimal("10.00"))
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-100", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-100", 2, 1);
 
         // Act
         boolean result = action.apply(workspace);
@@ -182,7 +182,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-123", 3, BigDecimal.ZERO)
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-123", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-123", 2, 1);
 
         boolean result = action.apply(workspace);
 
@@ -196,7 +196,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-100", 3, new BigDecimal("10.00"))
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-100", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-100", 2, 1);
 
         boolean result = action.apply(workspace);
 
@@ -227,7 +227,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("PROD-1", totalCartQty, new BigDecimal(unitPrice))
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-1", buyQty, freeQty);
+        var action = new ProductBuyXGetYFreeAction("PROD-1", buyQty, freeQty);
 
         boolean result = action.apply(workspace);
 
@@ -243,7 +243,7 @@ public class ProductIdBuyXGetYFreeActionTest {
                 new ItemSpec("prod-abc", 3, new BigDecimal("15.00"))
         ));
 
-        var action = new ProductIdBuyXGetYFreeAction("PROD-ABC", 2, 1);
+        var action = new ProductBuyXGetYFreeAction("PROD-ABC", 2, 1);
 
         boolean result = action.apply(workspace);
 

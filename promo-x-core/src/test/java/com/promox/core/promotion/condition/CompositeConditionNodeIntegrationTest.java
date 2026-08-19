@@ -5,7 +5,7 @@ import com.promox.core.promotion.dto.LineItemRequest;
 import com.promox.core.promotion.dto.PromotionEvaluationRequest;
 import com.promox.core.promotion.internal.condition.CompositeConditionNode;
 import com.promox.core.promotion.internal.condition.Operator;
-import com.promox.core.promotion.internal.condition.ProductIdQuantityConditionNode;
+import com.promox.core.promotion.internal.condition.ProductQuantityConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
 import static com.promox.core.promotion.internal.condition.CompositeConditionNode.LogicalOperator;
@@ -44,10 +44,10 @@ public class CompositeConditionNodeIntegrationTest {
     @Test
     @DisplayName("Bundle Discount Rule: Requires 1x Phone AND 2x Cases")
     void bundleDiscount_RequiresBothItemsToMatch() {
-        var phoneCondition = new ProductIdQuantityConditionNode(
+        var phoneCondition = new ProductQuantityConditionNode(
                 "prod-phone", 1, Operator.GREATER_THAN_OR_EQUAL
         );
-        var caseCondition = new ProductIdQuantityConditionNode(
+        var caseCondition = new ProductQuantityConditionNode(
                 "prod-case", 2, Operator.GREATER_THAN_OR_EQUAL
         );
 
@@ -81,8 +81,8 @@ public class CompositeConditionNodeIntegrationTest {
     @Test
     @DisplayName("Alternative Item Rule: Requires 1x MacBook OR 1x iPad")
     void alternativeItemPromo_MatchesEitherProduct() {
-        var macbookCondition = new ProductIdQuantityConditionNode("prod-macbook", 1, Operator.EQUALS);
-        var ipadCondition = new ProductIdQuantityConditionNode("prod-ipad", 1, Operator.EQUALS);
+        var macbookCondition = new ProductQuantityConditionNode("prod-macbook", 1, Operator.EQUALS);
+        var ipadCondition = new ProductQuantityConditionNode("prod-ipad", 1, Operator.EQUALS);
 
         var hardwarePromoRule = new CompositeConditionNode(
                 LogicalOperator.OR,
@@ -106,9 +106,9 @@ public class CompositeConditionNodeIntegrationTest {
     @Test
     @DisplayName("Nested Rule: Charger AND (iPhone OR Galaxy)")
     void nestedCompositeRule_EvaluatesComplexHierarchy() {
-        var chargerCondition = new ProductIdQuantityConditionNode("prod-charger", 1, Operator.GREATER_THAN_OR_EQUAL);
-        var iphoneCondition = new ProductIdQuantityConditionNode("prod-iphone", 1, Operator.GREATER_THAN_OR_EQUAL);
-        var galaxyCondition = new ProductIdQuantityConditionNode("prod-galaxy", 1, Operator.GREATER_THAN_OR_EQUAL);
+        var chargerCondition = new ProductQuantityConditionNode("prod-charger", 1, Operator.GREATER_THAN_OR_EQUAL);
+        var iphoneCondition = new ProductQuantityConditionNode("prod-iphone", 1, Operator.GREATER_THAN_OR_EQUAL);
+        var galaxyCondition = new ProductQuantityConditionNode("prod-galaxy", 1, Operator.GREATER_THAN_OR_EQUAL);
 
         // Inner OR group
         var phoneChoiceGroup = new CompositeConditionNode(

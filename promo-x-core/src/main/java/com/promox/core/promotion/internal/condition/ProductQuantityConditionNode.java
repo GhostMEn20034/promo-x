@@ -14,9 +14,9 @@ import java.util.Map;
 import java.util.Set;
 
 
-public record ProductIdQuantityConditionNode(
-        @NotBlank(message = "Target Product ID cannot be null or blank")
-        String productId,
+public record ProductQuantityConditionNode(
+        @NotBlank(message = "Target Product cannot be null or blank")
+        String productExternalId,
 
         @Min(value = 1, message = "Required quantity must be greater than zero")
         int requiredQuantity,
@@ -24,19 +24,19 @@ public record ProductIdQuantityConditionNode(
         @NotNull(message = "Operator is required")
         Operator operator
 ) implements ConditionNode {
-    public static final String TYPE_NAME = "PRODUCT_ID_QUANTITY";
-    public static final String DISPLAY_NAME = "Product ID Quantity";
+    public static final String TYPE_NAME = "PRODUCT_EXTERNAL_ID_QUANTITY";
+    public static final String DISPLAY_NAME = "Product Quantity";
     private static final String DESC = """
-            Evaluates whether the combined quantity of line items matching a specific product ID meets the required threshold.\
+            Evaluates whether the combined quantity of line items matching a specific product meets the required threshold.\
             """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.GREATER_THAN_OR_EQUAL);
 
-    public ProductIdQuantityConditionNode {
-        if (productId == null || productId.isBlank()) {
+    public ProductQuantityConditionNode {
+        if (productExternalId == null || productExternalId.isBlank()) {
             throw new InvalidConditionNodeException(
                     MISSING_REQUIRED_FIELD,
-                    "Target Product ID cannot be null or blank."
+                    "Target Product External ID cannot be null or blank."
             );
         }
         if (requiredQuantity < 1) {
@@ -48,7 +48,7 @@ public record ProductIdQuantityConditionNode(
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
                     UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by Product ID quantity validation.", operator)
+                    String.format("Operator '%s' is not supported by Product External ID quantity validation.", operator)
             );
         }
     }
@@ -82,6 +82,11 @@ public record ProductIdQuantityConditionNode(
     }
 
     @Override
+    public Set<String> getProductIdentifiers() {
+        return Set.of(productExternalId);
+    }
+
+    @Override
     public boolean evaluate(EngineWorkspace workspace) {
         List<WorkspaceLineItem> items = workspace.getLineItems();
         if (items.isEmpty()) {
@@ -90,7 +95,7 @@ public record ProductIdQuantityConditionNode(
 
         // Sum quantities across lines matching the broader parent Product ID
         int actualQuantity = items.stream()
-                .filter(item -> productId.equals(item.getProductId()))
+                .filter(item -> productExternalId.equals(item.getProductExternalId()))
                 .mapToInt(WorkspaceLineItem::getQuantity)
                 .sum();
 

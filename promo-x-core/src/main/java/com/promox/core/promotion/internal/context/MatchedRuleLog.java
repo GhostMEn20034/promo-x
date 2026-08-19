@@ -1,6 +1,6 @@
 package com.promox.core.promotion.internal.context;
 
 public record MatchedRuleLog(
-        String ruleId,
+        Long ruleId,
         String ruleName
 ) {}
