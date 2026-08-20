@@ -1,8 +1,8 @@
 package com.promox.core.promotion.action;
 
-import com.promox.core.promotion.dto.LineItemRequest;
-import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.action.ShippingPercentageDiscountAction;
+import com.promox.core.promotion.internal.dto.LineItemRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.service.action.ShippingPercentageDiscountAction;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidActionStrategyException;
 

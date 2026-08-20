@@ -1,9 +1,9 @@
 package com.promox.core.promotion.condition;
 
-import com.promox.core.promotion.dto.LineItemRequest;
-import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.condition.Operator;
-import com.promox.core.promotion.internal.condition.ProductQuantityConditionNode;
+import com.promox.core.promotion.internal.dto.LineItemRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.service.condition.Operator;
+import com.promox.core.promotion.internal.service.condition.ProductQuantityConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
 import java.math.BigDecimal;

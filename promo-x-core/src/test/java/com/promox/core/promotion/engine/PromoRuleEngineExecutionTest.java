@@ -1,18 +1,18 @@
 package com.promox.core.promotion.engine;
 
-import com.promox.core.promotion.dto.LineItemRequest;
-import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.action.FreeShippingAction;
-import com.promox.core.promotion.internal.action.ProductBuyXGetYFreeAction;
-import com.promox.core.promotion.internal.action.ProductPercentageDiscountAction;
-import com.promox.core.promotion.internal.action.ProductSKUPercentageDiscountAction;
-import com.promox.core.promotion.internal.condition.Operator;
-import com.promox.core.promotion.internal.condition.PromoCodeConditionNode;
+import com.promox.core.promotion.internal.dto.LineItemRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.service.action.FreeShippingAction;
+import com.promox.core.promotion.internal.service.action.ProductBuyXGetYFreeAction;
+import com.promox.core.promotion.internal.service.action.ProductPercentageDiscountAction;
+import com.promox.core.promotion.internal.service.action.ProductSKUPercentageDiscountAction;
+import com.promox.core.promotion.internal.service.condition.Operator;
+import com.promox.core.promotion.internal.service.condition.PromoCodeConditionNode;
 import com.promox.core.promotion.internal.context.AppliedRuleLog;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.MatchedRuleLog;
-import com.promox.core.promotion.internal.engine.PromoRuleEngine;
-import com.promox.core.promotion.internal.engine.PromotionRule;
+import com.promox.core.promotion.internal.service.engine.PromoRuleEngine;
+import com.promox.core.promotion.internal.persistence.PromotionRule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

@@ -1,6 +1,5 @@
 package com.promox.core.product.internal.service;
 
-import com.promox.core.category.internal.exception.CategoryBusinessException;
 import com.promox.core.product.DefaultProductDto;
 import com.promox.core.product.internal.ProductMapper;
 import com.promox.core.product.internal.dto.CreateMultipleProductsRequest;
@@ -10,8 +9,6 @@ import com.promox.core.product.internal.exception.ProductBusinessException;
 import com.promox.core.storefront.StorefrontLookupApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 
 @Service
