@@ -2,6 +2,7 @@ package com.promox.core.product.internal.service;
 
 import com.promox.core.category.CategoryDto;
 import com.promox.core.category.CategoryLookupApi;
+import com.promox.core.product.ProductExternalIdsExistenceResult;
 import com.promox.core.product.ProductLookupApi;
 import com.promox.core.product.ProductWithCategoriesDto;
 import com.promox.core.product.internal.ProductMapper;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ProductLookupApiImpl implements ProductLookupApi {
@@ -30,4 +32,10 @@ public class ProductLookupApiImpl implements ProductLookupApi {
                return ProductMapper.toDto(product, categories);
             });
     }
+
+    @Override
+    public ProductExternalIdsExistenceResult checkExistenceByExternalIdsAndStorefront(Set<String> productExternalIds, Long storefrontId) {
+        return productService.checkExistenceByExternalIdsAndStorefront(productExternalIds, storefrontId);
+    }
+
 }

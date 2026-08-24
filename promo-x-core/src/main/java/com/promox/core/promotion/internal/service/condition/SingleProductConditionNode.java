@@ -15,31 +15,40 @@ import java.util.Set;
 
 
 public record SingleProductConditionNode(
-        @NotBlank(message = "Target Product cannot be null or blank")
-        String productExternalId,
+    @NotBlank(message = "Target Product cannot be null or blank")
+    String productExternalId,
 
-        @NotNull(message = "Operator is required")
-        Operator operator
+    @NotNull(message = "Operator is required")
+    Operator operator
 ) implements ConditionNode {
+
     public static final String TYPE_NAME = "SINGLE_PRODUCT_EXTERNAL_ID_MATCH";
-    public static final String DISPLAY_NAME = "Single Product Match";
-    private static final String DESC = """
-            Evaluates whether a specific product is present or absent in the cart line items.\
-            """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.NOT_EQUALS);
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Single Product Match",
+        "Evaluates whether a specific product is present or absent in the cart line items.",
+        ALLOWED,
+        Map.of(
+            Operator.EQUALS, "Contains Product",
+            Operator.NOT_EQUALS, "Does Not Contain Product"
+        ),
+        SingleProductConditionNode.class
+    );
 
     public SingleProductConditionNode {
         if (productExternalId == null || productExternalId.isBlank()) {
             throw new InvalidConditionNodeException(
-                    MISSING_REQUIRED_FIELD,
-                    "Target Product External ID cannot be null or blank."
+                MISSING_REQUIRED_FIELD,
+                "Target Product External ID cannot be null or blank."
             );
         }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
-                    UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by Single Product External ID matching.", operator)
+                UNSUPPORTED_OPERATOR,
+                String.format("Operator '%s' is not supported by Single Product External ID matching.", operator)
             );
         }
     }
@@ -47,29 +56,6 @@ public record SingleProductConditionNode(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.EQUALS, "Contains Product",
-                Operator.NOT_EQUALS, "Does Not Contain Product"
-        );
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED;
     }
 
     @Override

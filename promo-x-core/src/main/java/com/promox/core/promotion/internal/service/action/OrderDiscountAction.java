@@ -19,11 +19,16 @@ public record OrderDiscountAction(
         BigDecimal discountAmount
 ) implements ActionStrategy {
     public static final String TYPE_NAME = "ORDER_FLAT_DISCOUNT";
-    public static final String DISPLAY_NAME = "Order Flat Currency Discount";
-    private static final String DESC = """
-            Applies a fixed currency discount across all eligible line items in the cart, \
-            proportionally distributing the deduction based on each line item's subtotal weight.\
-            """;
+
+    public static final ActionStrategySpec SPEC = new ActionStrategySpec(
+        TYPE_NAME,
+        "Order Flat Currency Discount",
+        """
+        Applies a fixed currency discount across all eligible line items in the cart, \
+        proportionally distributing the deduction based on each line item's subtotal weight.\
+        """,
+        OrderDiscountAction.class
+    );
 
     public OrderDiscountAction {
         Objects.requireNonNull(discountAmount, "Discount amount cannot be null");
@@ -38,16 +43,6 @@ public record OrderDiscountAction(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
     }
 
     @Override

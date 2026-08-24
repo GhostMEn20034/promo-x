@@ -17,57 +17,67 @@ import java.util.Set;
 
 
 public record ProductBuyXGetYFreeAction(
-        @NotBlank(message = "Target Product is required")
-        String targetProductExternalId,
+    @NotBlank(message = "Target Product is required")
+    String targetProductExternalId,
 
-        @NotNull(message = "Buy quantity threshold is required")
-        @Min(value = 1, message = "Buy quantity must be at least 1")
-        Integer buyQuantity,
+    @NotNull(message = "Buy quantity threshold is required")
+    @Min(value = 1, message = "Buy quantity must be at least 1")
+    Integer buyQuantity,
 
-        @NotNull(message = "Free quantity count is required")
-        @Min(value = 1, message = "Free quantity must be at least 1")
-        Integer freeQuantity
+    @NotNull(message = "Free quantity count is required")
+    @Min(value = 1, message = "Free quantity must be at least 1")
+    Integer freeQuantity
 ) implements ActionStrategy {
 
     public static final String TYPE_NAME = "PRODUCT_EXTERNAL_ID_BUY_X_GET_X_FREE_ACTION";
-    public static final String DISPLAY_NAME = "Buy X Get Y Free (Product Specific)";
-    private static final String DESC = """
-            Applies a recurring Buy X Get Y Free promotion to a unique Product. \
-            Calculates free items proportionally based on total quantity.\
-            """;
+
+    public static final ActionStrategySpec SPEC = new ActionStrategySpec(
+        TYPE_NAME,
+        "Buy X Get Y Free (Product Specific)",
+        """
+        Applies a recurring Buy X Get Y Free promotion to a unique Product. \
+        Calculates free items proportionally based on total quantity.\
+        """,
+        ProductBuyXGetYFreeAction.class
+    );
 
     // --- Constructor Boundary Integrity ---
     public ProductBuyXGetYFreeAction {
         if (targetProductExternalId == null || targetProductExternalId.isBlank()) {
             throw new InvalidActionStrategyException(
-                    MISSING_REQUIRED_FIELD,
-                    "Target Product External ID cannot be null or blank."
+                MISSING_REQUIRED_FIELD,
+                "Target Product External ID cannot be null or blank."
             );
         }
         if (buyQuantity == null || buyQuantity <= 0) {
             throw new InvalidActionStrategyException(
-                    INVALID_VALUE_RANGE,
-                    "Buy quantity must be greater than zero."
+                INVALID_VALUE_RANGE,
+                "Buy quantity must be greater than zero."
             );
         }
         if (freeQuantity == null || freeQuantity <= 0) {
             throw new InvalidActionStrategyException(
-                    INVALID_VALUE_RANGE,
-                    "Free quantity must be greater than zero."
+                INVALID_VALUE_RANGE,
+                "Free quantity must be greater than zero."
             );
         }
     }
 
-    @Override public String getTypeName() { return TYPE_NAME; }
-    @Override public String getDisplayName() { return DISPLAY_NAME; }
-    @Override public String getDescription() { return DESC; }
-    @Override public Set<String> getProductIdentifiers() { return Set.of(targetProductExternalId); }
+    @Override
+    public String getTypeName() {
+        return TYPE_NAME;
+    }
+
+    @Override
+    public Set<String> getProductIdentifiers() {
+        return Set.of(targetProductExternalId);
+    }
 
     @Override
     public boolean apply(EngineWorkspace workspace) {
         Optional<WorkspaceLineItem> targetItemOpt = workspace.getLineItems().stream()
-                .filter(item -> item.getProductExternalId().equalsIgnoreCase(targetProductExternalId))
-                .findFirst();
+            .filter(item -> item.getProductExternalId().equalsIgnoreCase(targetProductExternalId))
+            .findFirst();
 
         if (targetItemOpt.isEmpty()) {
             return false;
@@ -92,8 +102,8 @@ public record ProductBuyXGetYFreeAction(
         }
 
         BigDecimal discountAmount = item.getUnitPrice()
-                .multiply(BigDecimal.valueOf(freeUnitsToApply))
-                .setScale(2, RoundingMode.HALF_UP);
+            .multiply(BigDecimal.valueOf(freeUnitsToApply))
+            .setScale(2, RoundingMode.HALF_UP);
 
         return item.addDiscount(discountAmount);
     }

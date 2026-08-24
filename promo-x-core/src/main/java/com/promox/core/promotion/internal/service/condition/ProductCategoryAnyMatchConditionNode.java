@@ -18,31 +18,39 @@ import java.util.TreeSet;
 
 
 public record ProductCategoryAnyMatchConditionNode(
-        @NotEmpty(message = "Product categories match list cannot be null or empty")
-        List<@NotBlank(message = "Individual categories cannot be null or blank") String> categories,
+    @NotEmpty(message = "Product categories match list cannot be null or empty")
+    List<@NotBlank(message = "Individual categories cannot be null or blank") String> categories,
 
-        @NotNull(message = "Operator is required")
-        Operator operator
+    @NotNull(message = "Operator is required")
+    Operator operator
 ) implements ConditionNode {
+
     public static final String TYPE_NAME = "PRODUCT_CATEGORY_ANY_MATCH";
-    public static final String DISPLAY_NAME = "Product Category List Match";
-    private static final String DESC = """
-            Evaluates whether any product category from a specified list is present in the cart line items.\
-            """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS);
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Product Category List Match",
+        "Evaluates whether any product category from a specified list is present in the cart line items.",
+        ALLOWED,
+        Map.of(
+            Operator.EQUALS, "Contains Any Category From List"
+        ),
+        ProductCategoryAnyMatchConditionNode.class
+    );
 
     public ProductCategoryAnyMatchConditionNode {
         if (categories == null || categories.isEmpty()) {
             throw new InvalidConditionNodeException(
-                    MISSING_REQUIRED_FIELD,
-                    "Product categories match list cannot be null or empty."
+                MISSING_REQUIRED_FIELD,
+                "Product categories match list cannot be null or empty."
             );
         }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
-                    UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by Category Any-Match logic. Only EQUALS is allowed.", operator)
+                UNSUPPORTED_OPERATOR,
+                String.format("Operator '%s' is not supported by Category Any-Match logic. Only EQUALS is allowed.", operator)
             );
         }
     }
@@ -50,28 +58,6 @@ public record ProductCategoryAnyMatchConditionNode(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.EQUALS, "Contains Any Category From List"
-        );
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED;
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
     }
 
     @Override
@@ -86,7 +72,7 @@ public record ProductCategoryAnyMatchConditionNode(
 
         // True if any line item's category collection intersects with our target categories list
         return items.stream()
-                .anyMatch(item -> item.getCategories().stream()
-                        .anyMatch(targetSet::contains));
+            .anyMatch(item -> item.getCategories().stream()
+                .anyMatch(targetSet::contains));
     }
 }

@@ -13,27 +13,36 @@ import java.math.BigDecimal;
 
 
 public record SubtotalConditionNode(
-        @NotNull(message = "Threshold cannot be null")
-        @DecimalMin(value = "0.0", message = "Threshold cannot be negative")
-        BigDecimal threshold,
+    @NotNull(message = "Threshold cannot be null")
+    @DecimalMin(value = "0.0", message = "Threshold cannot be negative")
+    BigDecimal threshold,
 
-        @NotNull(message = "Operator is required")
-        Operator operator,
+    @NotNull(message = "Operator is required")
+    Operator operator,
 
-        @NotNull(message = "Subtotal type (GROSS or NET) is required")
-        SubtotalType subtotalType
+    @NotNull(message = "Subtotal type (GROSS or NET) is required")
+    SubtotalType subtotalType
 ) implements ConditionNode {
 
     public static final String TYPE_NAME = "SUBTOTAL";
-    public static final String DISPLAY_NAME = "Cart Subtotal";
-    private static final String DESC = """
-            Evaluates whether the items subtotal in the cart matches the defined threshold value.\
-            """;
 
     private static final Set<Operator> ALLOWED_OPERATORS = Set.of(
-            Operator.GREATER_THAN_OR_EQUAL,
-            Operator.EQUALS,
-            Operator.NOT_EQUALS
+        Operator.GREATER_THAN_OR_EQUAL,
+        Operator.EQUALS,
+        Operator.NOT_EQUALS
+    );
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Cart Subtotal",
+        "Evaluates whether the items subtotal in the cart matches the defined threshold value.",
+        ALLOWED_OPERATORS,
+        Map.of(
+            Operator.GREATER_THAN_OR_EQUAL, "Greater Than or Equal To",
+            Operator.EQUALS, "Equals",
+            Operator.NOT_EQUALS, "Does Not Equal"
+        ),
+        SubtotalConditionNode.class
     );
 
     public SubtotalConditionNode {
@@ -51,30 +60,6 @@ public record SubtotalConditionNode(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.GREATER_THAN_OR_EQUAL, "Greater Than or Equal To",
-                Operator.EQUALS, "Equals",
-                Operator.NOT_EQUALS, "Does Not Equal"
-        );
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED_OPERATORS;
     }
 
     @Override

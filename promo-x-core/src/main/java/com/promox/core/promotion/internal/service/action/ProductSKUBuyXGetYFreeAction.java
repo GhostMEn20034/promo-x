@@ -16,70 +16,77 @@ import java.util.List;
 
 
 public record ProductSKUBuyXGetYFreeAction(
-        @NotBlank(message = "Target SKU is required")
-        String targetSku,
+    @NotBlank(message = "Target SKU is required")
+    String targetSku,
 
-        @NotNull(message = "Buy quantity threshold is required")
-        @Min(value = 1, message = "Buy quantity must be at least 1")
-        Integer buyQuantity,
+    @NotNull(message = "Buy quantity threshold is required")
+    @Min(value = 1, message = "Buy quantity must be at least 1")
+    Integer buyQuantity,
 
-        @NotNull(message = "Free quantity count is required")
-        @Min(value = 1, message = "Free quantity must be at least 1")
-        Integer freeQuantity
+    @NotNull(message = "Free quantity count is required")
+    @Min(value = 1, message = "Free quantity must be at least 1")
+    Integer freeQuantity
 ) implements ActionStrategy {
+
     public static final String TYPE_NAME = "PRODUCT_SKU_BUY_X_GET_X_FREE_ACTION";
-    public static final String DISPLAY_NAME = "Buy X Get Y Free (SKU Specific)";
-    private static final String DESC = """
-            Applies a recurring Buy X Get Y Free promotion to a specific SKU. \
-            Calculates free items proportionally across all matching lines.\
-            """;
+
+    public static final ActionStrategySpec SPEC = new ActionStrategySpec(
+        TYPE_NAME,
+        "Buy X Get Y Free (SKU Specific)",
+        """
+        Applies a recurring Buy X Get Y Free promotion to a specific SKU. \
+        Calculates free items proportionally across all matching lines.\
+        """,
+        ProductSKUBuyXGetYFreeAction.class
+    );
 
     // --- Constructor Boundary Integrity ---
     public ProductSKUBuyXGetYFreeAction {
         if (targetSku == null || targetSku.isBlank()) {
             throw new InvalidActionStrategyException(
-                    MISSING_REQUIRED_FIELD,
-                    "Target SKU cannot be null or blank."
+                MISSING_REQUIRED_FIELD,
+                "Target SKU cannot be null or blank."
             );
         }
         if (buyQuantity == null || buyQuantity <= 0) {
             throw new InvalidActionStrategyException(
-                    INVALID_VALUE_RANGE,
-                    "Buy quantity must be greater than zero."
+                INVALID_VALUE_RANGE,
+                "Buy quantity must be greater than zero."
             );
         }
         if (freeQuantity == null) {
             throw new InvalidActionStrategyException(
-                    MISSING_REQUIRED_FIELD,
-                    "Free quantity cannot be null."
+                MISSING_REQUIRED_FIELD,
+                "Free quantity cannot be null."
             );
         }
         if (freeQuantity <= 0) {
             throw new InvalidActionStrategyException(
-                    INVALID_VALUE_RANGE,
-                    "Free quantity must be greater than zero."
+                INVALID_VALUE_RANGE,
+                "Free quantity must be greater than zero."
             );
         }
     }
 
-    @Override public String getTypeName() { return TYPE_NAME; }
-    @Override public String getDisplayName() { return DISPLAY_NAME; }
-    @Override public String getDescription() { return DESC; }
+    @Override
+    public String getTypeName() {
+        return TYPE_NAME;
+    }
 
     @Override
     public boolean apply(EngineWorkspace workspace) {
         List<WorkspaceLineItem> targets = workspace.getLineItems().stream()
-                .filter(item -> item.getProductSku().equalsIgnoreCase(targetSku))
-                .toList();
+            .filter(item -> item.getProductSku().equalsIgnoreCase(targetSku))
+            .toList();
 
         if (targets.isEmpty()) {
             return false;
         }
 
-        //  Calculate the aggregate quantity across all split line items
+        // Calculate the aggregate quantity across all split line items
         int totalSkuQuantity = targets.stream()
-                .mapToInt(WorkspaceLineItem::getQuantity)
-                .sum();
+            .mapToInt(WorkspaceLineItem::getQuantity)
+            .sum();
 
         // Calculate total free units earned globally for this SKU
         int groupSize = this.buyQuantity + this.freeQuantity;
@@ -112,8 +119,8 @@ public record ProductSKUBuyXGetYFreeAction(
 
             // Calculate discount for this item based on its unit MSRP
             BigDecimal discountAmount = item.getUnitPrice()
-                    .multiply(BigDecimal.valueOf(unitsToDiscountOnThisLine))
-                    .setScale(2, RoundingMode.HALF_UP);
+                .multiply(BigDecimal.valueOf(unitsToDiscountOnThisLine))
+                .setScale(2, RoundingMode.HALF_UP);
 
             // Safely apply and decrement our pool of free units
             if (item.addDiscount(discountAmount)) {

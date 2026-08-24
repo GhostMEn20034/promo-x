@@ -6,25 +6,20 @@ import java.math.BigDecimal;
 
 public record FreeShippingAction() implements ActionStrategy {
     public static final String TYPE_NAME = "FREE_SHIPPING_ACTION";
-    public static final String DISPLAY_NAME = "Free Shipping";
-    private static final String DESC = """
-            Waives the flat shipping fee on the order by setting the shipping cost to zero.\
-            The action will count as not applied if the shipping cost is already zero.\
-            """;
+
+    public static final ActionStrategySpec SPEC = new ActionStrategySpec(
+        TYPE_NAME,
+        "Free Shipping",
+        """
+        Waives the flat shipping fee on the order by setting the shipping cost to zero. \
+        The action will count as not applied if the shipping cost is already zero.\
+        """,
+        FreeShippingAction.class
+    );
 
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
     }
 
     @Override

@@ -17,38 +17,44 @@ import java.util.Set;
 
 
 public record ProductPercentageDiscountAction(
-        @NotBlank(message = "Target Product is required")
-        String targetProductExternalId,
+    @NotBlank(message = "Target Product is required")
+    String targetProductExternalId,
 
-        @NotNull(message = "Discount percentage rate is required")
-        @DecimalMin(value = "0.00", inclusive = false, message = "Discount rate must be greater than 0.00")
-        @DecimalMax(value = "1.00", message = "Discount rate cannot exceed 1.00")
-        BigDecimal discountPercentage
+    @NotNull(message = "Discount percentage rate is required")
+    @DecimalMin(value = "0.00", inclusive = false, message = "Discount rate must be greater than 0.00")
+    @DecimalMax(value = "1.00", message = "Discount rate cannot exceed 1.00")
+    BigDecimal discountPercentage
 ) implements ActionStrategy {
+
     public static final String TYPE_NAME = "PRODUCT_EXTERNAL_ID_PERCENTAGE_DISCOUNT_ACTION";
-    public static final String DISPLAY_NAME = "Discount on specific Product";
-    private static final String DESC = """
-            Applies a percentage discount rate (0.00 to 1.00) to all matching Product line items. \
-            This action will not apply if the matching items are already fully discounted.\
-            """;
+
+    public static final ActionStrategySpec SPEC = new ActionStrategySpec(
+        TYPE_NAME,
+        "Discount on specific Product",
+        """
+        Applies a percentage discount rate (0.00 to 1.00) to all matching Product line items. \
+        This action will not apply if the matching items are already fully discounted.\
+        """,
+        ProductPercentageDiscountAction.class
+    );
 
     public ProductPercentageDiscountAction {
         if (targetProductExternalId == null || targetProductExternalId.isBlank()) {
             throw new InvalidActionStrategyException(
-                    MISSING_REQUIRED_FIELD,
-                    "Target Product External ID cannot be null or blank."
+                MISSING_REQUIRED_FIELD,
+                "Target Product External ID cannot be null or blank."
             );
         }
         if (discountPercentage == null) {
             throw new InvalidActionStrategyException(
-                    MISSING_REQUIRED_FIELD,
-                    "Discount percentage cannot be null."
+                MISSING_REQUIRED_FIELD,
+                "Discount percentage cannot be null."
             );
         }
         if (discountPercentage.compareTo(BigDecimal.ZERO) <= 0 || discountPercentage.compareTo(BigDecimal.ONE) > 0) {
             throw new InvalidActionStrategyException(
-                    INVALID_VALUE_RANGE,
-                    "Discount rate must be between 0.00 (exclusive) and 1.00 (inclusive)."
+                INVALID_VALUE_RANGE,
+                "Discount rate must be between 0.00 (exclusive) and 1.00 (inclusive)."
             );
         }
     }
@@ -59,22 +65,15 @@ public record ProductPercentageDiscountAction(
     }
 
     @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
+    public Set<String> getProductIdentifiers() {
+        return Set.of(targetProductExternalId);
     }
-
-    @Override
-    public String getDescription() {
-        return DESC;
-    }
-
-    @Override public Set<String> getProductIdentifiers() { return Set.of(targetProductExternalId); }
 
     @Override
     public boolean apply(EngineWorkspace workspace) {
         List<WorkspaceLineItem> targets = workspace.getLineItems().stream()
-                .filter(item -> item.getProductExternalId().equals(targetProductExternalId))
-                .toList();
+            .filter(item -> item.getProductExternalId().equals(targetProductExternalId))
+            .toList();
 
         if (targets.isEmpty()) {
             return false; // No matching products in the cart
@@ -90,8 +89,8 @@ public record ProductPercentageDiscountAction(
 
             // Calculate percentage discount based on the remaining net value
             BigDecimal discountAmount = remainingPrice
-                    .multiply(discountPercentage)
-                    .setScale(2, RoundingMode.HALF_UP);
+                .multiply(discountPercentage)
+                .setScale(2, RoundingMode.HALF_UP);
 
             appliedAny |= item.addDiscount(discountAmount);
         }

@@ -9,7 +9,7 @@ import com.promox.core.product.internal.persistence.Product;
 import java.util.Collection;
 import java.util.Set;
 
-public class ProductMapper {
+public final class ProductMapper {
     private ProductMapper() {}
 
     public static DefaultProductDto toDto(Product entity) {

@@ -1,10 +1,18 @@
 package com.promox.core.promotion.internal.infrastructure.json;
 
-import com.promox.core.promotion.internal.service.action.*;
+import com.promox.core.promotion.internal.infrastructure.registry.ActionStrategyRegistry;
+import com.promox.core.promotion.internal.infrastructure.registry.ConditionNodeRegistry;
 import com.promox.core.promotion.internal.service.condition.*;
+import com.promox.core.promotion.internal.service.action.*;
+
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.type.format.FormatMapper;
+import org.hibernate.type.format.jackson.Jackson3JsonFormatMapper;
+import org.springframework.boot.hibernate.autoconfigure.HibernatePropertiesCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Configuration;
+import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.jsontype.NamedType;
 
 
@@ -12,53 +20,28 @@ import tools.jackson.databind.jsontype.NamedType;
 class PromotionJacksonConfig {
 
     @Bean
-    public JsonMapperBuilderCustomizer conditionNodeSubtypeCustomizer() {
-        return builder -> builder.registerSubtypes(
-                new NamedType(CompositeConditionNode.class, CompositeConditionNode.TYPE_NAME),
-                new NamedType(PromoCodeConditionNode.class, PromoCodeConditionNode.TYPE_NAME),
-                new NamedType(SubtotalConditionNode.class, SubtotalConditionNode.TYPE_NAME),
-                new NamedType(
-                        CustomerAuthenticationStateConditionNode.class,
-                        CustomerAuthenticationStateConditionNode.TYPE_NAME
-                ),
-
-                // SKU Matches
-                new NamedType(SingleProductSkuConditionNode.class, SingleProductSkuConditionNode.TYPE_NAME),
-                new NamedType(ProductSkuAnyMatchConditionNode.class, ProductSkuAnyMatchConditionNode.TYPE_NAME),
-
-                // Product ID Matches
-                new NamedType(SingleProductConditionNode.class, SingleProductConditionNode.TYPE_NAME),
-                new NamedType(ProductAnyMatchConditionNode.class, ProductAnyMatchConditionNode.TYPE_NAME),
-
-                // Category Matches
-                new NamedType(SingleProductCategoryConditionNode.class, SingleProductCategoryConditionNode.TYPE_NAME),
-                new NamedType(ProductCategoryAnyMatchConditionNode.class, ProductCategoryAnyMatchConditionNode.TYPE_NAME),
-
-                // Collection Matches
-                new NamedType(SingleProductCollectionConditionNode.class, SingleProductCollectionConditionNode.TYPE_NAME),
-                new NamedType(ProductCollectionAnyMatchConditionNode.class, ProductCollectionAnyMatchConditionNode.TYPE_NAME),
-
-                // Quantity Matches
-                new NamedType(ProductQuantityConditionNode.class, ProductQuantityConditionNode.TYPE_NAME),
-                new NamedType(ProductSkuQuantityConditionNode.class, ProductSkuQuantityConditionNode.TYPE_NAME)
-        );
+    public JsonMapperBuilderCustomizer conditionNodeSubtypeCustomizer(ConditionNodeRegistry registry) {
+        return builder -> {
+            NamedType[] namedTypes = registry.getAllSpecs().stream()
+                .map(spec -> new NamedType(spec.implementationClass(), spec.typeName()))
+                .toArray(NamedType[]::new);
+            builder.registerSubtypes(namedTypes);
+        };
     }
 
     @Bean
-    public JsonMapperBuilderCustomizer actionStrategySubTypeCustomizer() {
-        return builder -> builder.registerSubtypes(
-                // Order Discount
-                new NamedType(OrderDiscountAction.class, OrderDiscountAction.TYPE_NAME),
-                new NamedType(OrderPercentageDiscountAction.class, OrderPercentageDiscountAction.TYPE_NAME),
-                // Shipping Discount
-                new NamedType(ShippingPercentageDiscountAction.class, ShippingPercentageDiscountAction.TYPE_NAME),
-                new NamedType(FreeShippingAction.class, FreeShippingAction.TYPE_NAME),
-                // Product Discount
-                new NamedType(ProductPercentageDiscountAction.class, ProductPercentageDiscountAction.TYPE_NAME),
-                new NamedType(ProductSKUPercentageDiscountAction.class, ProductSKUPercentageDiscountAction.TYPE_NAME),
-                // BOGO Free (Buy X Get Y For free)
-                new NamedType(ProductBuyXGetYFreeAction.class, ProductBuyXGetYFreeAction.TYPE_NAME),
-                new NamedType(ProductSKUBuyXGetYFreeAction.class, ProductSKUBuyXGetYFreeAction.TYPE_NAME)
-        );
+    public JsonMapperBuilderCustomizer actionStrategySubTypeCustomizer(ActionStrategyRegistry registry) {
+        return builder -> {
+            NamedType[] namedTypes = registry.getAllSpecs().stream()
+                .map(spec -> new NamedType(spec.implementationClass(), spec.typeName()))
+                .toArray(NamedType[]::new);
+            builder.registerSubtypes(namedTypes);
+        };
+    }
+
+    @Bean
+    public HibernatePropertiesCustomizer hibernateJsonFormatMapperCustomizer(JsonMapper jsonMapper) {
+        FormatMapper formatMapper = new Jackson3JsonFormatMapper(jsonMapper);
+        return props -> props.put(AvailableSettings.JSON_FORMAT_MAPPER, formatMapper);
     }
 }

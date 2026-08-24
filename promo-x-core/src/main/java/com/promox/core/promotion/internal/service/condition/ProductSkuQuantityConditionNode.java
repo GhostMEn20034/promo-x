@@ -16,40 +16,49 @@ import java.util.Set;
 
 
 public record ProductSkuQuantityConditionNode(
-        @NotBlank(message = "Target SKU cannot be null or blank")
-        String sku,
+    @NotBlank(message = "Target SKU cannot be null or blank")
+    String sku,
 
-        @Min(value = 1, message = "Required quantity must be greater than zero")
-        int requiredQuantity,
+    @Min(value = 1, message = "Required quantity must be greater than zero")
+    int requiredQuantity,
 
-        @NotNull(message = "Operator is required")
-        Operator operator
+    @NotNull(message = "Operator is required")
+    Operator operator
 ) implements ConditionNode {
+
     public static final String TYPE_NAME = "PRODUCT_SKU_QUANTITY";
-    public static final String DISPLAY_NAME = "Product SKU Quantity";
-    private static final String DESC = """
-            Evaluates whether the combined quantity of line items matching a specific product SKU meets the required threshold.\
-            """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.GREATER_THAN_OR_EQUAL);
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Product SKU Quantity",
+        "Evaluates whether the combined quantity of line items matching a specific product SKU meets the required threshold.",
+        ALLOWED,
+        Map.of(
+            Operator.EQUALS, "Quantity Equals",
+            Operator.GREATER_THAN_OR_EQUAL, "Quantity Greater Than or Equal To"
+        ),
+        ProductSkuQuantityConditionNode.class
+    );
 
     public ProductSkuQuantityConditionNode {
         if (sku == null || sku.isBlank()) {
             throw new InvalidConditionNodeException(
-                    MISSING_REQUIRED_FIELD,
-                    "Target SKU cannot be null or blank."
+                MISSING_REQUIRED_FIELD,
+                "Target SKU cannot be null or blank."
             );
         }
         if (requiredQuantity <= 0) {
             throw new InvalidConditionNodeException(
-                    INVALID_VALUE_RANGE,
-                    "Required quantity must be greater than zero."
+                INVALID_VALUE_RANGE,
+                "Required quantity must be greater than zero."
             );
         }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
-                    UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by SKU quantity validation.", operator)
+                UNSUPPORTED_OPERATOR,
+                String.format("Operator '%s' is not supported by SKU quantity validation.", operator)
             );
         }
     }
@@ -57,29 +66,6 @@ public record ProductSkuQuantityConditionNode(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.EQUALS, "Quantity Equals",
-                Operator.GREATER_THAN_OR_EQUAL, "Quantity Greater Than or Equal To"
-        );
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED;
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
     }
 
     @Override
@@ -91,9 +77,9 @@ public record ProductSkuQuantityConditionNode(
 
         // Sum quantities across lines matching this exact SKU
         int actualQuantity = items.stream()
-                .filter(item -> sku.equalsIgnoreCase(item.getProductSku()))
-                .mapToInt(WorkspaceLineItem::getQuantity)
-                .sum();
+            .filter(item -> sku.equalsIgnoreCase(item.getProductSku()))
+            .mapToInt(WorkspaceLineItem::getQuantity)
+            .sum();
 
         return switch (operator) {
             case GREATER_THAN_OR_EQUAL -> actualQuantity >= requiredQuantity;

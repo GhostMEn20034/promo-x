@@ -19,22 +19,31 @@ import java.util.Set;
  * </ul>
  */
 public record CustomerAuthenticationStateConditionNode(
-        @NotNull(message = "Operator is required")
-        Operator operator
+    @NotNull(message = "Operator is required")
+    Operator operator
 ) implements ConditionNode {
+
     public static final String TYPE_NAME = "CUSTOMER_AUTHENTICATION_STATE";
-    public static final String DISPLAY_NAME = "Customer Authentication Status";
-    private static final String DESC = """
-            Evaluates whether the customer is a registered user or an anonymous guest.\
-            """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.NOT_EQUALS);
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Customer Authentication Status",
+        "Evaluates whether the customer is a registered user or an anonymous guest.",
+        ALLOWED,
+        Map.of(
+            Operator.EQUALS, "Is Registered User",
+            Operator.NOT_EQUALS, "Is Anonymous Guest"
+        ),
+        CustomerAuthenticationStateConditionNode.class
+    );
 
     public CustomerAuthenticationStateConditionNode {
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
-                    UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by Customer Registration check.", operator)
+                UNSUPPORTED_OPERATOR,
+                String.format("Operator '%s' is not supported by Customer Registration check.", operator)
             );
         }
     }
@@ -42,29 +51,6 @@ public record CustomerAuthenticationStateConditionNode(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.EQUALS, "Is Registered User",
-                Operator.NOT_EQUALS, "Is Anonymous Guest"
-        );
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED;
     }
 
     @Override

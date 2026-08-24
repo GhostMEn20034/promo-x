@@ -15,31 +15,40 @@ import java.util.Set;
 
 
 public record ProductAnyMatchConditionNode(
-        @NotEmpty(message = "Target Product list cannot be null or empty")
-        Set<@NotBlank(message = "Individual Product cannot be null or blank") String> productExternalIds,
+    @NotEmpty(message = "Target Product list cannot be null or empty")
+    Set<@NotBlank(message = "Individual Product cannot be null or blank") String> productExternalIds,
 
-        @NotNull(message = "Operator is required")
-        Operator operator
+    @NotNull(message = "Operator is required")
+    Operator operator
 ) implements ConditionNode {
+
     public static final String TYPE_NAME = "PRODUCT_EXTERNAL_ID_ANY_MATCH";
-    public static final String DISPLAY_NAME = "Product List Match";
-    private static final String DESC = """
-            Evaluates whether any product from a specified list is present or absent in the cart line items.\
-            """;
 
     private static final Set<Operator> ALLOWED = Set.of(Operator.EQUALS, Operator.NOT_EQUALS);
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Product List Match",
+        "Evaluates whether any product from a specified list is present or absent in the cart line items.",
+        ALLOWED,
+        Map.of(
+            Operator.EQUALS, "Contains Any Product From List",
+            Operator.NOT_EQUALS, "Does Not Contain Any Product From List"
+        ),
+        ProductAnyMatchConditionNode.class
+    );
 
     public ProductAnyMatchConditionNode {
         if (productExternalIds == null || productExternalIds.isEmpty()) {
             throw new InvalidConditionNodeException(
-                    MISSING_REQUIRED_FIELD,
-                    "Target Product External ID list cannot be null or empty."
+                MISSING_REQUIRED_FIELD,
+                "Target Product External ID list cannot be null or empty."
             );
         }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
-                    UNSUPPORTED_OPERATOR,
-                    String.format("Operator '%s' is not supported by Product External ID list matching.", operator)
+                UNSUPPORTED_OPERATOR,
+                String.format("Operator '%s' is not supported by Product External ID list matching.", operator)
             );
         }
     }
@@ -47,29 +56,6 @@ public record ProductAnyMatchConditionNode(
     @Override
     public String getTypeName() {
         return TYPE_NAME;
-    }
-
-    @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.EQUALS, "Contains Any Product From List",
-                Operator.NOT_EQUALS, "Does Not Contain Any Product From List"
-        );
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED;
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
     }
 
     @Override

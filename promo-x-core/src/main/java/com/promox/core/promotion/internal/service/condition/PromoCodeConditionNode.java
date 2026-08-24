@@ -12,18 +12,28 @@ import java.util.Set;
 
 
 public record PromoCodeConditionNode(
-        @NotBlank(message = "Promo code cannot be null or blank")
-        String code,
+    @NotBlank(message = "Promo code cannot be null or blank")
+    String code,
 
-        @NotNull(message = "Operator is required")
-        Operator operator
+    @NotNull(message = "Operator is required")
+    Operator operator
 ) implements ConditionNode {
+
     public static final String TYPE_NAME = "PROMO_CODE";
-    public static final String DISPLAY_NAME = "Promo Code Matching";
-    private static final String DESC = """
-            Evaluates whether a specific promotional code has been applied to the current checkout session.""";
 
     private static final Set<Operator> ALLOWED_OPERATORS = Set.of(Operator.EQUALS, Operator.NOT_EQUALS);
+
+    public static final ConditionNodeSpec SPEC = new ConditionNodeSpec(
+        TYPE_NAME,
+        "Promo Code Matching",
+        "Evaluates whether a specific promotional code has been applied to the current checkout session.",
+        ALLOWED_OPERATORS,
+        Map.of(
+            Operator.EQUALS, "Matches Promo Code",
+            Operator.NOT_EQUALS, "Does Not Match Promo Code"
+        ),
+        PromoCodeConditionNode.class
+    );
 
     public PromoCodeConditionNode {
         if (code == null || code.isBlank()) {
@@ -40,32 +50,9 @@ public record PromoCodeConditionNode(
     }
 
     @Override
-    public String getDisplayName() {
-        return DISPLAY_NAME;
-    }
-
-    @Override
-    public Map<Operator, String> getOperatorsDisplayName() {
-        return Map.of(
-                Operator.EQUALS, "Matches Promo Code",
-                Operator.NOT_EQUALS, "Does Not Match Promo Code"
-        );
-    }
-
-    @Override
-    public String getDescription() {
-        return DESC;
-    }
-
-    @Override
-    public Set<Operator> getSupportedOperators() {
-        return ALLOWED_OPERATORS;
-    }
-
-    @Override
     public boolean evaluate(EngineWorkspace workspace) {
         boolean hasCode = workspace.getPromoCodes().stream()
-                .anyMatch(c -> c.equalsIgnoreCase(code));
+            .anyMatch(c -> c.equalsIgnoreCase(code));
 
         return (operator == Operator.EQUALS) == hasCode;
     }
