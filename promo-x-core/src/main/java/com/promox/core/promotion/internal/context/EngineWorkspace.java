@@ -1,6 +1,6 @@
 package com.promox.core.promotion.internal.context;
 
-import com.promox.core.promotion.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

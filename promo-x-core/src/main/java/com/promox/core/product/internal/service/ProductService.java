@@ -1,5 +1,6 @@
 package com.promox.core.product.internal.service;
 
+import com.promox.core.product.ProductExternalIdsExistenceResult;
 import com.promox.core.product.internal.dto.CreateProductRequest;
 import com.promox.core.product.internal.exception.ProductBusinessException;
 import com.promox.core.product.internal.persistence.Product;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 
 @Service
@@ -72,5 +74,21 @@ public class ProductService {
                 "Product with the specified external ID exists"
             );
         }
+    }
+
+    public ProductExternalIdsExistenceResult checkExistenceByExternalIdsAndStorefront(
+        Set<String> productExternalIds,
+        Long storefrontId
+    ) {
+        if (productExternalIds.isEmpty()) {
+            return new ProductExternalIdsExistenceResult(Set.of(), Set.of());
+        }
+
+        Set<String> existingIds = productRepository.findExistingExternalIds(productExternalIds, storefrontId);
+        // Derive missing IDs via set difference
+        Set<String> missingIds = new HashSet<>(productExternalIds);
+        missingIds.removeAll(existingIds);
+
+        return new ProductExternalIdsExistenceResult(existingIds, missingIds);
     }
 }

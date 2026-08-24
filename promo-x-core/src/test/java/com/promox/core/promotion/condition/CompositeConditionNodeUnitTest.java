@@ -1,10 +1,10 @@
 package com.promox.core.promotion.condition;
 
-import com.promox.core.promotion.internal.condition.CompositeConditionNode;
-import com.promox.core.promotion.internal.condition.ConditionNode;
+import com.promox.core.promotion.internal.service.condition.CompositeConditionNode;
+import com.promox.core.promotion.internal.service.condition.ConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
-import static com.promox.core.promotion.internal.condition.CompositeConditionNode.LogicalOperator;
+import static com.promox.core.promotion.internal.service.condition.CompositeConditionNode.LogicalOperator;
 
 import java.util.List;
 

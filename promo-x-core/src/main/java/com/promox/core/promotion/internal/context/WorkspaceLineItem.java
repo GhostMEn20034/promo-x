@@ -1,7 +1,7 @@
 package com.promox.core.promotion.internal.context;
 
 
-import com.promox.core.promotion.dto.LineItemRequest;
+import com.promox.core.promotion.internal.dto.LineItemRequest;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

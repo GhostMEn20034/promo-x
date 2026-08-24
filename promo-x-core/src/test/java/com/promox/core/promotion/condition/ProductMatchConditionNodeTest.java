@@ -1,10 +1,12 @@
 package com.promox.core.promotion.condition;
 
-import com.promox.core.promotion.dto.LineItemRequest;
-import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.condition.*;
+import com.promox.core.promotion.internal.dto.LineItemRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
+import com.promox.core.promotion.internal.service.condition.Operator;
+import com.promox.core.promotion.internal.service.condition.ProductAnyMatchConditionNode;
+import com.promox.core.promotion.internal.service.condition.SingleProductConditionNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

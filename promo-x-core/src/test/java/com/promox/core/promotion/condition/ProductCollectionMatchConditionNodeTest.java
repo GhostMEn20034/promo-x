@@ -1,10 +1,10 @@
 package com.promox.core.promotion.condition;
 
-import com.promox.core.promotion.dto.LineItemRequest;
-import com.promox.core.promotion.dto.PromotionEvaluationRequest;
-import com.promox.core.promotion.internal.condition.Operator;
-import com.promox.core.promotion.internal.condition.ProductCollectionAnyMatchConditionNode;
-import com.promox.core.promotion.internal.condition.SingleProductCollectionConditionNode;
+import com.promox.core.promotion.internal.dto.LineItemRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.service.condition.Operator;
+import com.promox.core.promotion.internal.service.condition.ProductCollectionAnyMatchConditionNode;
+import com.promox.core.promotion.internal.service.condition.SingleProductCollectionConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
 import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.UNSUPPORTED_OPERATOR;
