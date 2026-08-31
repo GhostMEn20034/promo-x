@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -32,9 +31,6 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
     private static final Long STOREFRONT_ID = 100L;
     private static final String EXISTING_PRODUCT_1 = "PROD-KB-01";
     private static final String EXISTING_PRODUCT_2 = "PROD-MS-01";
-
-    @Autowired
-    private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -102,7 +98,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 .andReturn();
 
             JsonNode responseJson = objectMapper.readTree(result.getResponse().getContentAsString());
-            assertThat(responseJson.path("name").asText()).isEqualTo("Summer Tech Bundle Discount");
+            assertThat(responseJson.path("name").asString()).isEqualTo("Summer Tech Bundle Discount");
             assertThat(responseJson.path("priority").asInt()).isEqualTo(100);
             assertThat(responseJson.path("isShortCircuit").asBoolean()).isFalse();
             assertThat(responseJson.path("isActive").asBoolean()).isTrue();
