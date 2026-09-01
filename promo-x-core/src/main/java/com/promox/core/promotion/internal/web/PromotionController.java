@@ -1,8 +1,10 @@
 package com.promox.core.promotion.internal.web;
 
+import com.promox.core.promotion.PromotionLookupApi;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
+import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
 import com.promox.core.promotion.internal.exception.PromotionNotFoundException;
 import com.promox.core.promotion.internal.service.PromotionCommandHandler;
 import jakarta.validation.Valid;
@@ -16,10 +18,16 @@ import org.springframework.web.bind.annotation.*;
 public class PromotionController {
     private final PromotionWebMapper promotionWebMapper;
     private final PromotionCommandHandler promotionCommandHandler;
+    private final PromotionLookupApi promotionLookupApi;
 
-    public PromotionController(PromotionWebMapper promotionWebMapper, PromotionCommandHandler promotionCommandHandler) {
+    public PromotionController(
+        PromotionWebMapper promotionWebMapper,
+        PromotionCommandHandler promotionCommandHandler,
+        PromotionLookupApi promotionLookupApi
+    ) {
         this.promotionWebMapper = promotionWebMapper;
         this.promotionCommandHandler = promotionCommandHandler;
+        this.promotionLookupApi = promotionLookupApi;
     }
 
     @PostMapping("/")
@@ -42,5 +50,13 @@ public class PromotionController {
             .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
 
         return promotionWebMapper.toWebResponse(updatedPromotionRule);
+    }
+
+    @GetMapping("/{promotionRuleId}")
+    public DetailedPromotionWebResponseDto getPromotionRuleById(@PathVariable Long promotionRuleId) {
+        var promotionRule = promotionLookupApi.findById(promotionRuleId)
+            .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
+
+        return promotionWebMapper.toDetailedWebResponse(promotionRule);
     }
 }
