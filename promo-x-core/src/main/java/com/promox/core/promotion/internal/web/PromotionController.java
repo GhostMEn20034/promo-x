@@ -9,6 +9,7 @@ import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto
 import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
 import com.promox.core.promotion.internal.exception.PromotionNotFoundException;
 import com.promox.core.promotion.internal.service.PromotionCommandHandler;
+
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
@@ -43,7 +44,7 @@ public class PromotionController {
         @Valid @RequestBody CreatePromotionRuleRequest creationRequest
     ) {
         return promotionWebMapper.toWebResponse(
-            promotionCommandHandler.createPromotionRule(storefrontId, creationRequest)
+            promotionCommandHandler.create(storefrontId, creationRequest)
         );
     }
 
@@ -52,7 +53,7 @@ public class PromotionController {
         @PathVariable Long promotionRuleId,
         @Valid @RequestBody UpdatePromotionRuleRequest updateRequest
     ) {
-        var updatedPromotionRule = promotionCommandHandler.updatePromotionRule(promotionRuleId, updateRequest)
+        var updatedPromotionRule = promotionCommandHandler.updateById(promotionRuleId, updateRequest)
             .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
 
         return promotionWebMapper.toWebResponse(updatedPromotionRule);
@@ -73,5 +74,12 @@ public class PromotionController {
         @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return promotionLookupApi.findAll(storefrontId, filter, pageable);
+    }
+
+    @DeleteMapping("/{promotionRuleId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePromotionRule(@PathVariable Long promotionRuleId) {
+        promotionCommandHandler.deleteById(promotionRuleId)
+            .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
     }
 }
