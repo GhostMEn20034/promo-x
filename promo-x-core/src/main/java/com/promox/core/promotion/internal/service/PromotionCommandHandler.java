@@ -25,7 +25,7 @@ public class PromotionCommandHandler {
         this.promotionProductValidator = promotionProductValidator;
     }
 
-    public DefaultPromotionDto createPromotionRule(Long storefrontId, CreatePromotionRuleRequest request) {
+    public DefaultPromotionDto create(Long storefrontId, CreatePromotionRuleRequest request) {
         Set<String> productExternalIds = Stream.concat(
             request.conditionTree().getProductIdentifiers().stream(),
             request.action().getProductIdentifiers().stream()
@@ -36,10 +36,10 @@ public class PromotionCommandHandler {
             storefrontId,
             null
         );
-        return promotionMapper.toDto(promotionService.createPromotionRule(request, productExternalIds, storefrontId));
+        return promotionMapper.toDto(promotionService.create(request, productExternalIds, storefrontId));
     }
 
-    public Optional<DefaultPromotionDto> updatePromotionRule(
+    public Optional<DefaultPromotionDto> updateById(
         Long promotionRuleId,
         UpdatePromotionRuleRequest request
     ) {
@@ -55,8 +55,12 @@ public class PromotionCommandHandler {
                     promotionRule.getStorefrontId(),
                     null
                 );
-                promotionService.updatePromotionRule(request, productExternalIds, promotionRule);
+                promotionService.update(request, productExternalIds, promotionRule);
                 return promotionMapper.toDto(promotionRule);
             });
+    }
+
+    public Optional<Long> deleteById(Long promotionRuleId) {
+        return promotionService.deleteById(promotionRuleId);
     }
 }

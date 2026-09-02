@@ -3,6 +3,7 @@ package com.promox.core.promotion.internal.service;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.PromotionFilterRequest;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
+import com.promox.core.promotion.internal.exception.PromotionBusinessException;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.persistence.PromotionRuleSpecifications;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -47,7 +49,7 @@ public class PromotionService {
     }
 
     @Transactional
-    public PromotionRule createPromotionRule(
+    public PromotionRule create(
         CreatePromotionRuleRequest request,
         Set<String> productExternalIds,
         Long storefrontId
@@ -68,7 +70,7 @@ public class PromotionService {
     }
 
     @Transactional
-    public void updatePromotionRule(
+    public void update(
         UpdatePromotionRuleRequest request,
         Set<String> productExternalIds,
         PromotionRule promotionRule
@@ -82,11 +84,24 @@ public class PromotionService {
         promotionRule.setProductExternalIds(new HashSet<>(productExternalIds));
     }
 
+    @Transactional
+    public Optional<Long> deleteById(Long promotionRuleId) {
+        int rowsDeleted = promotionRepository.deletePromotionRuleById(promotionRuleId);
+        return rowsDeleted > 0 ? Optional.of(promotionRuleId) : Optional.empty();
+    }
+
     private void validateSort(Sort sort) {
         for (Sort.Order order : sort) {
             if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
-                throw new IllegalArgumentException(
-                    "Sorting by '" + order.getProperty() + "' is not allowed. Allowed properties: " + ALLOWED_SORT_PROPERTIES
+                throw PromotionBusinessException.of(
+                    "Validation failed: invalid sort property",
+                    "INVALID_SORT_PROPERTY",
+                    null,
+                    "Sorting by '" + order.getProperty() + "' is not allowed",
+                    Map.of(
+                        "invalidProperty", order.getProperty(),
+                        "allowedProperties", ALLOWED_SORT_PROPERTIES
+                    )
                 );
             }
         }
