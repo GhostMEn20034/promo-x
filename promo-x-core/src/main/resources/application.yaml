@@ -22,6 +22,10 @@ spring:
 
   flyway:
     enabled: false
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
 
 server:
   port: 8000

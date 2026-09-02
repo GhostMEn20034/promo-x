@@ -28,6 +28,7 @@ import java.util.Set;
 
 public class PromotionRetrieveIntegrationTest extends IntegrationTestBase {
     private static final String DETAILS_URL_PATH = "/promotion/{promotionRuleId}";
+    private static final String LIST_URL_PATH = "/promotion/";
 
     @Autowired
     private PromotionRepository promotionRepository;
@@ -104,6 +105,37 @@ public class PromotionRetrieveIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.products").isArray())
                 .andExpect(jsonPath("$.products", empty()));
         }
+
+        @Test
+        @DisplayName("Should successfully return paginated promotion summaries for valid storefront")
+        void getPromotionRules_Success() throws Exception {
+            mockMvc.perform(get(LIST_URL_PATH)
+                    .header("X-Storefront-Id", 100L)
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id").value(existingRule.getId()))
+                .andExpect(jsonPath("$.content[0].storefrontId").value(100))
+                .andExpect(jsonPath("$.content[0].name").value("Black Friday Special"))
+                .andExpect(jsonPath("$.content[0].priority").value(1))
+                .andExpect(jsonPath("$.content[0].isShortCircuit").value(true))
+                .andExpect(jsonPath("$.content[0].isActive").value(true))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
+        }
+
+        @Test
+        @DisplayName("Should return empty page when storefront has no promotions")
+        void getPromotionRules_Success_EmptyPageForDifferentStorefront() throws Exception {
+            Long nonExistentStorefrontId = 999L;
+
+            mockMvc.perform(get(LIST_URL_PATH)
+                    .header("X-Storefront-Id", nonExistentStorefrontId)
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", empty()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        }
     }
 
     @Nested
@@ -118,6 +150,14 @@ public class PromotionRetrieveIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(get(DETAILS_URL_PATH, nonExistentId)
                     .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should return 400 BAD REQUEST when X-Storefront-Id header is missing")
+        void getPromotionRules_MissingStorefrontHeader() throws Exception {
+            mockMvc.perform(get(LIST_URL_PATH)
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
         }
     }
 }

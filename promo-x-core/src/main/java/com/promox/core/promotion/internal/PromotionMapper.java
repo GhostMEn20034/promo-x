@@ -6,6 +6,7 @@ import com.promox.core.promotion.internal.infrastructure.registry.ActionStrategy
 import com.promox.core.promotion.internal.infrastructure.registry.ConditionNodeRegistry;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 
+import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -58,6 +59,19 @@ public final class PromotionMapper {
         return new DetailedPromotionDto(
             toBaseDto(rule),
             products
+        );
+    }
+
+    public PromotionSummaryDto toSummaryDto(PromotionRuleSummaryProjection projection) {
+        return new PromotionSummaryDto(
+            projection.getId(),
+            projection.getStorefrontId(),
+            projection.getName(),
+            projection.getPriority(),
+            projection.getIsShortCircuit(),
+            projection.getIsActive(),
+            projection.getCreatedAt(),
+            projection.getUpdatedAt()
         );
     }
 }
