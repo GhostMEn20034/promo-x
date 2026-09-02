@@ -1,12 +1,20 @@
 package com.promox.core.promotion.internal.web;
 
+import com.promox.core.promotion.PromotionLookupApi;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
+import com.promox.core.promotion.internal.dto.PromotionFilterRequest;
+import com.promox.core.promotion.internal.dto.PromotionSummaryDto;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
+import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
 import com.promox.core.promotion.internal.exception.PromotionNotFoundException;
 import com.promox.core.promotion.internal.service.PromotionCommandHandler;
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,10 +24,16 @@ import org.springframework.web.bind.annotation.*;
 public class PromotionController {
     private final PromotionWebMapper promotionWebMapper;
     private final PromotionCommandHandler promotionCommandHandler;
+    private final PromotionLookupApi promotionLookupApi;
 
-    public PromotionController(PromotionWebMapper promotionWebMapper, PromotionCommandHandler promotionCommandHandler) {
+    public PromotionController(
+        PromotionWebMapper promotionWebMapper,
+        PromotionCommandHandler promotionCommandHandler,
+        PromotionLookupApi promotionLookupApi
+    ) {
         this.promotionWebMapper = promotionWebMapper;
         this.promotionCommandHandler = promotionCommandHandler;
+        this.promotionLookupApi = promotionLookupApi;
     }
 
     @PostMapping("/")
@@ -42,5 +56,22 @@ public class PromotionController {
             .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
 
         return promotionWebMapper.toWebResponse(updatedPromotionRule);
+    }
+
+    @GetMapping("/{promotionRuleId}")
+    public DetailedPromotionWebResponseDto getPromotionRuleById(@PathVariable Long promotionRuleId) {
+        var promotionRule = promotionLookupApi.findById(promotionRuleId)
+            .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
+
+        return promotionWebMapper.toDetailedWebResponse(promotionRule);
+    }
+
+    @GetMapping("/")
+    public Page<PromotionSummaryDto> getPromotionRules(
+        @RequestHeader("X-Storefront-Id") Long storefrontId,
+        PromotionFilterRequest filter,
+        @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return promotionLookupApi.findAll(storefrontId, filter, pageable);
     }
 }

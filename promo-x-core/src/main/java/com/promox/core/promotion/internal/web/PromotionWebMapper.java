@@ -1,11 +1,9 @@
 package com.promox.core.promotion.internal.web;
 
-import com.promox.core.promotion.internal.dto.ActionDto;
-import com.promox.core.promotion.internal.dto.ConditionNodeDto;
-import com.promox.core.promotion.internal.dto.DefaultPromotionDto;
-import com.promox.core.promotion.internal.dto.PromotionBaseDto;
+import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.dto.web.ConditionNodeWebResponseDto;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
+import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
 import com.promox.core.promotion.internal.dto.web.PromotionBaseWebResponseDto;
 import com.promox.core.promotion.internal.infrastructure.registry.ConditionNodeRegistry;
 import com.promox.core.promotion.internal.service.condition.CompositeConditionNode;
@@ -29,25 +27,33 @@ public final class PromotionWebMapper {
         this.jsonMapper = jsonMapper;
     }
 
-    public DefaultPromotionWebResponseDto toWebResponse(DefaultPromotionDto dto) {
-        PromotionBaseDto base = dto.base();
-        ConditionNodeDto conditionDto = base.conditionTree();
-        ActionDto actionDto = base.action();
+    private PromotionBaseWebResponseDto toBaseWebDto(PromotionBaseDto dto) {
+        ConditionNodeDto conditionDto = dto.conditionTree();
+        ActionDto actionDto = dto.action();
 
-        PromotionBaseWebResponseDto baseWebDto = new PromotionBaseWebResponseDto(
-            base.id(),
-            base.storefrontId(),
-            base.name(),
-            base.priority(),
-            base.isShortCircuit(),
-            base.isActive(),
+        return new PromotionBaseWebResponseDto(
+            dto.id(),
+            dto.storefrontId(),
+            dto.name(),
+            dto.priority(),
+            dto.isShortCircuit(),
+            dto.isActive(),
             new ConditionNodeWebResponseDto(toConditionNodeJson(conditionDto.node()), conditionDto.spec()),
             actionDto,
-            base.createdAt(),
-            base.updatedAt()
+            dto.createdAt(),
+            dto.updatedAt()
         );
+    }
 
-        return new DefaultPromotionWebResponseDto(baseWebDto, dto.productExternalIds());
+    public DefaultPromotionWebResponseDto toWebResponse(DefaultPromotionDto dto) {
+        return new DefaultPromotionWebResponseDto(toBaseWebDto(dto.base()), dto.productExternalIds());
+    }
+
+    public DetailedPromotionWebResponseDto toDetailedWebResponse(DetailedPromotionDto dto) {
+        return new DetailedPromotionWebResponseDto(
+            toBaseWebDto(dto.base()),
+            dto.products()
+        );
     }
 
     private JsonNode toConditionNodeJson(ConditionNode node) {

@@ -2,9 +2,7 @@ package com.promox.core.product.internal.service;
 
 import com.promox.core.category.CategoryDto;
 import com.promox.core.category.CategoryLookupApi;
-import com.promox.core.product.ProductExternalIdsExistenceResult;
-import com.promox.core.product.ProductLookupApi;
-import com.promox.core.product.ProductWithCategoriesDto;
+import com.promox.core.product.*;
 import com.promox.core.product.internal.ProductMapper;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +29,13 @@ public class ProductLookupApiImpl implements ProductLookupApi {
 
                return ProductMapper.toDto(product, categories);
             });
+    }
+
+    @Override
+    public List<DefaultProductDto> findAllByExternalIds(Set<String> externalIds, Long storefrontId) {
+        return productService.findAllByExternalIds(externalIds, storefrontId).stream()
+            .map(ProductMapper::toDto)
+            .toList();
     }
 
     @Override
