@@ -59,6 +59,24 @@ public class PromotionRule {
     @Column(nullable = false, columnDefinition = "jsonb")
     private ActionStrategy action;
 
+    @Column(name = "has_usage_limit", nullable = false)
+    @Getter(AccessLevel.NONE)
+    private boolean hasUsageLimit = false;
+
+    /**
+     * Total usage budget configured for this rule (informative baseline / max cap).
+     * Nullable when usage tracking is disabled.
+     */
+    @Column(name = "usage_limit", nullable = false)
+    private Integer usageLimit = 0;
+
+    /**
+     * Current available usages remaining. Decremented when the rule triggers.
+     * Nullable when usage tracking is disabled.
+     */
+    @Column(name = "remaining_uses", nullable = false)
+    private Integer remainingUses = 0;
+
     @ElementCollection
     @CollectionTable(
         name = "rule_product",
@@ -74,4 +92,8 @@ public class PromotionRule {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public boolean hasUsageLimit() {
+        return this.hasUsageLimit;
+    }
 }
