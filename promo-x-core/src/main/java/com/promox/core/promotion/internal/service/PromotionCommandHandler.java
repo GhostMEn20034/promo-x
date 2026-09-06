@@ -4,8 +4,10 @@ import com.promox.core.promotion.internal.dto.DefaultPromotionDto;
 import com.promox.core.promotion.internal.PromotionMapper;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
+import com.promox.core.promotion.internal.dto.UpdateUsageLimitsRequest;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.Set;
@@ -25,6 +27,7 @@ public class PromotionCommandHandler {
         this.promotionProductValidator = promotionProductValidator;
     }
 
+    @Transactional
     public DefaultPromotionDto create(Long storefrontId, CreatePromotionRuleRequest request) {
         Set<String> productExternalIds = Stream.concat(
             request.conditionTree().getProductIdentifiers().stream(),
@@ -39,6 +42,7 @@ public class PromotionCommandHandler {
         return promotionMapper.toDto(promotionService.create(request, productExternalIds, storefrontId));
     }
 
+    @Transactional
     public Optional<DefaultPromotionDto> updateById(
         Long promotionRuleId,
         UpdatePromotionRuleRequest request
@@ -60,6 +64,19 @@ public class PromotionCommandHandler {
             });
     }
 
+    @Transactional
+    public Optional<DefaultPromotionDto> updateUsageLimitsById(
+            Long promotionRuleId,
+            UpdateUsageLimitsRequest request
+    ) {
+        return promotionService.findById(promotionRuleId)
+                .map(promotionRule -> {
+                    promotionService.updateUsageLimits(request, promotionRule);
+                    return promotionMapper.toDto(promotionRule);
+                });
+    }
+
+    @Transactional
     public Optional<Long> deleteById(Long promotionRuleId) {
         return promotionService.deleteById(promotionRuleId);
     }

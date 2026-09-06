@@ -3,6 +3,7 @@ package com.promox.core.promotion;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
+import com.promox.core.promotion.internal.dto.UpdateUsageLimitsRequest;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.service.action.OrderDiscountAction;
@@ -29,7 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
-    private static final String BASE_URL = "/promotion/{promotionRuleId}";
+    private static final String UPDATE_PROMOTION_RULE_URL = "/promotion/{promotionRuleId}";
+    private static final String UPDATE_USAGE_LIMITS_URL = "/promotion/{promotionRuleId}/usage-limits";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -92,7 +94,7 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
                 action
             );
 
-            mockMvc.perform(put(BASE_URL, existingRule.getId())
+            mockMvc.perform(put(UPDATE_PROMOTION_RULE_URL, existingRule.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -111,6 +113,103 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
             assertThat(reloaded.getPriority()).isEqualTo(10);
             assertThat(reloaded.isShortCircuit()).isTrue();
             assertThat(reloaded.getProductExternalIds()).containsExactly(updatedProductId);
+        }
+
+        @Test
+        @DisplayName("Should successfully update usage limits when mutateRemainingUses is true")
+        void updateUsageLimits_mutateRemainingUsesTrue_success() throws Exception {
+            var request = new UpdateUsageLimitsRequest(
+                    true,
+                    50,
+                    30,
+                    true
+            );
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.hasUsageLimit").value(true))
+                    .andExpect(jsonPath("$.usageLimit").value(50))
+                    .andExpect(jsonPath("$.remainingUses").value(30));
+
+            PromotionRule reloaded = promotionRepository.findById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.hasUsageLimit()).isTrue();
+            assertThat(reloaded.getUsageLimit()).isEqualTo(50);
+            assertThat(reloaded.getRemainingUses()).isEqualTo(30);
+        }
+
+        @Test
+        @DisplayName("Should update usageLimit but leave remainingUses unchanged when mutateRemainingUses is false")
+        void updateUsageLimits_mutateRemainingUsesFalse_preservesExistingRemainingUses() throws Exception {
+            existingRule.setHasUsageLimit(true);
+            existingRule.setUsageLimit(100);
+            existingRule.setRemainingUses(85);
+            promotionRepository.saveAndFlush(existingRule);
+
+            var request = new UpdateUsageLimitsRequest(
+                    true,
+                    200,
+                    10,
+                    false
+            );
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.usageLimit").value(200))
+                    .andExpect(jsonPath("$.remainingUses").value(85));
+
+            PromotionRule reloaded = promotionRepository.findById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.getUsageLimit()).isEqualTo(200);
+            assertThat(reloaded.getRemainingUses()).isEqualTo(85);
+        }
+
+        @Test
+        @DisplayName("Should flatten remainingUses to usageLimit when remainingUses exceeds usageLimit and mutateRemainingUses is true")
+        void updateUsageLimits_flattensRemainingUsesToLimit() throws Exception {
+            var request = new UpdateUsageLimitsRequest(
+                    true,
+                    50,
+                    120,
+                    true
+            );
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.usageLimit").value(50))
+                    .andExpect(jsonPath("$.remainingUses").value(50));
+
+            PromotionRule reloaded = promotionRepository.findById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.getUsageLimit()).isEqualTo(50);
+            assertThat(reloaded.getRemainingUses()).isEqualTo(50);
+        }
+
+        @Test
+        @DisplayName("Should default missing limits to 1 placeholder when usageLimit and remainingUses are null")
+        void updateUsageLimits_nullLimits_defaultToPlaceholderOne() throws Exception {
+            var request = new UpdateUsageLimitsRequest(
+                    false,
+                    null,
+                    null,
+                    true
+            );
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.hasUsageLimit").value(false))
+                    .andExpect(jsonPath("$.usageLimit").value(1))
+                    .andExpect(jsonPath("$.remainingUses").value(1));
+
+            PromotionRule reloaded = promotionRepository.findById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.hasUsageLimit()).isFalse();
+            assertThat(reloaded.getUsageLimit()).isEqualTo(1);
+            assertThat(reloaded.getRemainingUses()).isEqualTo(1);
         }
     }
 
@@ -131,10 +230,22 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
                 new OrderDiscountAction(BigDecimal.ONE)
             );
 
-            mockMvc.perform(put(BASE_URL, nonExistentId)
+            mockMvc.perform(put(UPDATE_PROMOTION_RULE_URL, nonExistentId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should return 404 NOT FOUND on usage limits update when promotion rule ID does not exist")
+        void updateUsageLimits_NotFound() throws Exception {
+            Long nonExistentId = 9999L;
+            var request = new UpdateUsageLimitsRequest(true, 10, 10, true);
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, nonExistentId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isNotFound());
         }
 
         @Test
@@ -150,7 +261,7 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
                 new OrderDiscountAction(BigDecimal.TEN)
             );
 
-            mockMvc.perform(put(BASE_URL, existingRule.getId())
+            mockMvc.perform(put(UPDATE_PROMOTION_RULE_URL, existingRule.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
@@ -177,7 +288,7 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
                 }
                 """;
 
-            mockMvc.perform(put(BASE_URL, existingRule.getId())
+            mockMvc.perform(put(UPDATE_PROMOTION_RULE_URL, existingRule.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidJson))
                 .andExpect(status().isBadRequest())
@@ -192,6 +303,65 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
                     "conditionTree",
                     "action"
                 )));
+        }
+
+        @Test
+        @DisplayName("Should return 400 BAD REQUEST when usageLimit is zero or negative")
+        void updateUsageLimits_invalidZeroOrNegativeUsageLimit() throws Exception {
+            String invalidJson = """
+                {
+                  "hasUsageLimit": true,
+                  "usageLimit": 0,
+                  "remainingUses": 10,
+                  "mutateRemainingUses": true
+                }
+                """;
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidJson))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                    .andExpect(jsonPath("$.errors[*].path", containsInAnyOrder("usageLimit")));
+        }
+
+        @Test
+        @DisplayName("Should return 400 BAD REQUEST when remainingUses is negative")
+        void updateUsageLimits_invalidNegativeRemainingUses() throws Exception {
+            String invalidJson = """
+                {
+                  "hasUsageLimit": true,
+                  "usageLimit": 10,
+                  "remainingUses": -1,
+                  "mutateRemainingUses": true
+                }
+                """;
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidJson))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                    .andExpect(jsonPath("$.errors[*].path", containsInAnyOrder("remainingUses")));
+        }
+
+        @Test
+        @DisplayName("Should return 400 BAD REQUEST when hasUsageLimit is missing")
+        void updateUsageLimits_missingHasUsageLimit() throws Exception {
+            String invalidJson = """
+                {
+                  "usageLimit": 10,
+                  "remainingUses": 5,
+                  "mutateRemainingUses": true
+                }
+                """;
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidJson))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                    .andExpect(jsonPath("$.errors[*].path", containsInAnyOrder("hasUsageLimit")));
         }
     }
 }

@@ -4,10 +4,7 @@ import com.promox.core.promotion.internal.service.action.ActionStrategy;
 import com.promox.core.promotion.internal.service.condition.ConditionNode;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 
 public record CreatePromotionRuleRequest(
@@ -23,6 +20,15 @@ public record CreatePromotionRuleRequest(
 
     Boolean isActive,
 
+    @NotNull(message = "hasUsageLimit is required")
+    Boolean hasUsageLimit,
+
+    @Positive(message = "usageLimit must be positive")
+    Integer usageLimit,
+
+    @Positive(message = "remainingUses must be positive")
+    Integer remainingUses,
+
     @NotNull(message = "Condition tree is required")
     @Valid
     ConditionNode conditionTree,
@@ -34,6 +40,16 @@ public record CreatePromotionRuleRequest(
     public CreatePromotionRuleRequest {
         if (isActive == null) {
             isActive = true;
+        }
+
+        if (usageLimit == null) {
+            usageLimit = 1;
+        }
+
+        if (remainingUses == null) {
+            remainingUses = usageLimit;
+        } else if (remainingUses > usageLimit) {
+            remainingUses = usageLimit;
         }
     }
 }

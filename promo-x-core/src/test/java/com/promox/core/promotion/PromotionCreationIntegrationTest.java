@@ -66,6 +66,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
               "priority": 100,
               "isShortCircuit": false,
               "isActive": true,
+              "hasUsageLimit": "false",
+              "usageLimit": 10,
+              "remainingUses": 10,
               "conditionTree": {
                 "type": "COMPOSITE",
                 "operator": "AND",
@@ -122,6 +125,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
               "name": "Default Active Rule",
               "priority": 50,
               "isShortCircuit": false,
+              "hasUsageLimit": "false",
+              "usageLimit": 10,
+              "remainingUses": 10,
               "conditionTree": {
                 "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
                 "productExternalId": "%s",
@@ -148,6 +154,93 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             assertThat(savedRules).hasSize(1);
             assertThat(savedRules.getFirst().isActive()).isTrue();
         }
+
+        @Test
+        @DisplayName("Should successfully create promotion rule with usage limit enabled and valid positive limits")
+        void createPromotionRule_withUsageLimit_success() throws Exception {
+            String jsonPayload = """
+            {
+              "name": "Limited Flash Sale Discount",
+              "priority": 100,
+              "isShortCircuit": false,
+              "isActive": true,
+              "hasUsageLimit": true,
+              "usageLimit": 50,
+              "remainingUses": 50,
+              "conditionTree": {
+                "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
+                "productExternalId": "%s",
+                "operator": "EQUALS"
+              },
+              "action": {
+                "type": "ORDER_FLAT_DISCOUNT",
+                "discountAmount": 20.00
+              }
+            }
+            """.formatted(EXISTING_PRODUCT_1);
+
+            MvcResult result = mockMvc.perform(post("/promotion/")
+                            .header("X-Storefront-Id", STOREFRONT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonPayload))
+                    .andExpect(status().isCreated())
+                    .andReturn();
+
+            JsonNode responseJson = objectMapper.readTree(result.getResponse().getContentAsString());
+            assertThat(responseJson.path("hasUsageLimit").asBoolean()).isTrue();
+            assertThat(responseJson.path("usageLimit").asInt()).isEqualTo(50);
+            assertThat(responseJson.path("remainingUses").asInt()).isEqualTo(50);
+
+            var savedRules = promotionRepository.findAll();
+            assertThat(savedRules).hasSize(1);
+
+            var rule = savedRules.getFirst();
+            assertThat(rule.hasUsageLimit()).isTrue();
+            assertThat(rule.getUsageLimit()).isEqualTo(50);
+            assertThat(rule.getRemainingUses()).isEqualTo(50);
+        }
+
+        @Test
+        @DisplayName("Should default remainingUses to usageLimit when hasUsageLimit is true and remainingUses is omitted")
+        void createPromotionRule_withUsageLimit_defaultRemainingUses() throws Exception {
+            String jsonPayload = """
+            {
+              "name": "Limited Sale Auto Default Uses",
+              "priority": 50,
+              "isShortCircuit": false,
+              "isActive": true,
+              "hasUsageLimit": true,
+              "usageLimit": 25,
+              "conditionTree": {
+                "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
+                "productExternalId": "%s",
+                "operator": "EQUALS"
+              },
+              "action": {
+                "type": "ORDER_FLAT_DISCOUNT",
+                "discountAmount": 10.00
+              }
+            }
+            """.formatted(EXISTING_PRODUCT_1);
+
+            MvcResult result = mockMvc.perform(post("/promotion/")
+                            .header("X-Storefront-Id", STOREFRONT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonPayload))
+                    .andExpect(status().isCreated())
+                    .andReturn();
+
+            JsonNode responseJson = objectMapper.readTree(result.getResponse().getContentAsString());
+            assertThat(responseJson.path("hasUsageLimit").asBoolean()).isTrue();
+            assertThat(responseJson.path("usageLimit").asInt()).isEqualTo(25);
+            assertThat(responseJson.path("remainingUses").asInt()).isEqualTo(25);
+
+            var savedRules = promotionRepository.findAll();
+            assertThat(savedRules).hasSize(1);
+            var rule = savedRules.getFirst();
+            assertThat(rule.getUsageLimit()).isEqualTo(25);
+            assertThat(rule.getRemainingUses()).isEqualTo(25);
+        }
     }
 
     @Nested
@@ -172,6 +265,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 10,
                 false,
                 true,
+                false,
+                1,
+                1,
                 conditionTree,
                 new OrderDiscountAction(new BigDecimal("15.00"))
             );
@@ -212,6 +308,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                   "priority": -5,
                   "isShortCircuit": false,
                   "isActive": true,
+                  "hasUsageLimit": true,
+                  "usageLimit": 50,
+                  "remainingUses": 50,
                   "conditionTree": null,
                   "action": null
                 }
@@ -235,6 +334,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                   "priority": 50,
                   "isShortCircuit": false,
                   "isActive": true,
+                  "hasUsageLimit": true,
+                  "usageLimit": 50,
+                  "remainingUses": 50,
                   "conditionTree": {
                     "type": "PRODUCT_EXTERNAL_ID_QUANTITY",
                     "productExternalId": "",
@@ -266,6 +368,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                   "priority": 50,
                   "isShortCircuit": false,
                   "isActive": true,
+                  "hasUsageLimit": true,
+                  "usageLimit": 50,
+                  "remainingUses": 50,
                   "conditionTree": {
                     "type": "COMPOSITE",
                     "operator": "AND",
@@ -302,6 +407,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 10,
                 false,
                 true,
+                false,
+                1,
+                1,
                 new SingleProductConditionNode(EXISTING_PRODUCT_1, Operator.EQUALS),
                 new OrderDiscountAction(new BigDecimal("5.00"))
             );
@@ -310,6 +418,102 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+
+            assertThat(promotionRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should fail validation when hasUsageLimit is true but usageLimit is zero or negative")
+        void createPromotionRule_invalidZeroUsageLimit_whenLimitEnabled() throws Exception {
+            String jsonPayload = """
+            {
+              "name": "Zero Usage Limit Rule",
+              "priority": 10,
+              "isShortCircuit": false,
+              "isActive": true,
+              "hasUsageLimit": true,
+              "usageLimit": 0,
+              "remainingUses": 10,
+              "conditionTree": {
+                "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
+                "productExternalId": "%s",
+                "operator": "EQUALS"
+              },
+              "action": {
+                "type": "ORDER_FLAT_DISCOUNT",
+                "discountAmount": 10.00
+              }
+            }
+            """.formatted(EXISTING_PRODUCT_1);
+
+            mockMvc.perform(post("/promotion/")
+                            .header("X-Storefront-Id", STOREFRONT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonPayload))
+                    .andExpect(status().isBadRequest());
+
+            assertThat(promotionRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should fail validation when hasUsageLimit is true but remainingUses is zero or negative")
+        void createPromotionRule_invalidZeroRemainingUses_whenLimitEnabled() throws Exception {
+            String jsonPayload = """
+            {
+              "name": "Zero Remaining Uses Rule",
+              "priority": 10,
+              "isShortCircuit": false,
+              "isActive": true,
+              "hasUsageLimit": true,
+              "usageLimit": 10,
+              "remainingUses": 0,
+              "conditionTree": {
+                "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
+                "productExternalId": "%s",
+                "operator": "EQUALS"
+              },
+              "action": {
+                "type": "ORDER_FLAT_DISCOUNT",
+                "discountAmount": 10.00
+              }
+            }
+            """.formatted(EXISTING_PRODUCT_1);
+
+            mockMvc.perform(post("/promotion/")
+                            .header("X-Storefront-Id", STOREFRONT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonPayload))
+                    .andExpect(status().isBadRequest());
+
+            assertThat(promotionRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should fail validation when mandatory hasUsageLimit field is missing")
+        void createPromotionRule_missingHasUsageLimitField() throws Exception {
+            String jsonPayload = """
+            {
+              "name": "Missing Usage Limit Flag",
+              "priority": 10,
+              "isShortCircuit": false,
+              "isActive": true,
+              "conditionTree": {
+                "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
+                "productExternalId": "%s",
+                "operator": "EQUALS"
+              },
+              "action": {
+                "type": "ORDER_FLAT_DISCOUNT",
+                "discountAmount": 10.00
+              }
+            }
+            """.formatted(EXISTING_PRODUCT_1);
+
+            mockMvc.perform(post("/promotion/")
+                            .header("X-Storefront-Id", STOREFRONT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonPayload))
+                    .andExpect(status().isBadRequest());
 
             assertThat(promotionRepository.count()).isZero();
         }

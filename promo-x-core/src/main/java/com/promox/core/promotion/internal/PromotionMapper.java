@@ -10,7 +10,6 @@ import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjec
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 
 
 @Component
@@ -24,7 +23,7 @@ public final class PromotionMapper {
         this.conditionRegistry = conditionRegistry;
     }
 
-    protected PromotionBaseDto toBaseDto(PromotionRule rule) {
+    private PromotionBaseDto toBaseDto(PromotionRule rule) {
         ConditionNodeDto conditionTree = new ConditionNodeDto(
             rule.getConditionTree(),
             conditionRegistry.getSpec(rule.getConditionTree().getTypeName())
@@ -41,6 +40,9 @@ public final class PromotionMapper {
             rule.getPriority(),
             rule.isShortCircuit(),
             rule.isActive(),
+            rule.hasUsageLimit(),
+            rule.getUsageLimit(),
+            rule.getRemainingUses(),
             conditionTree,
             action,
             rule.getCreatedAt(),

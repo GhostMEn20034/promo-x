@@ -1,10 +1,7 @@
 package com.promox.core.promotion.internal.web;
 
 import com.promox.core.promotion.PromotionLookupApi;
-import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
-import com.promox.core.promotion.internal.dto.PromotionFilterRequest;
-import com.promox.core.promotion.internal.dto.PromotionSummaryDto;
-import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
+import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
 import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
 import com.promox.core.promotion.internal.exception.PromotionNotFoundException;
@@ -55,6 +52,17 @@ public class PromotionController {
     ) {
         var updatedPromotionRule = promotionCommandHandler.updateById(promotionRuleId, updateRequest)
             .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
+
+        return promotionWebMapper.toWebResponse(updatedPromotionRule);
+    }
+
+    @PatchMapping("/{promotionRuleId}/usage-limits")
+    public DefaultPromotionWebResponseDto updateUsageLimits(
+            @PathVariable Long promotionRuleId,
+            @Valid @RequestBody UpdateUsageLimitsRequest updateRequest
+    ) {
+        var updatedPromotionRule = promotionCommandHandler.updateUsageLimitsById(promotionRuleId, updateRequest)
+                .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
 
         return promotionWebMapper.toWebResponse(updatedPromotionRule);
     }
