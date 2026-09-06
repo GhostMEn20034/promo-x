@@ -67,8 +67,8 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
               "isShortCircuit": false,
               "isActive": true,
               "hasUsageLimit": "false",
-              "usageLimit": 0,
-              "remainingUses": 0,
+              "usageLimit": 10,
+              "remainingUses": 10,
               "conditionTree": {
                 "type": "COMPOSITE",
                 "operator": "AND",
@@ -126,8 +126,8 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
               "priority": 50,
               "isShortCircuit": false,
               "hasUsageLimit": "false",
-              "usageLimit": 0,
-              "remainingUses": 0,
+              "usageLimit": 10,
+              "remainingUses": 10,
               "conditionTree": {
                 "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
                 "productExternalId": "%s",
@@ -266,8 +266,8 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 false,
                 true,
                 false,
-                0,
-                0,
+                1,
+                1,
                 conditionTree,
                 new OrderDiscountAction(new BigDecimal("15.00"))
             );
@@ -308,6 +308,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                   "priority": -5,
                   "isShortCircuit": false,
                   "isActive": true,
+                  "hasUsageLimit": true,
+                  "usageLimit": 50,
+                  "remainingUses": 50,
                   "conditionTree": null,
                   "action": null
                 }
@@ -331,6 +334,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                   "priority": 50,
                   "isShortCircuit": false,
                   "isActive": true,
+                  "hasUsageLimit": true,
+                  "usageLimit": 50,
+                  "remainingUses": 50,
                   "conditionTree": {
                     "type": "PRODUCT_EXTERNAL_ID_QUANTITY",
                     "productExternalId": "",
@@ -362,6 +368,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                   "priority": 50,
                   "isShortCircuit": false,
                   "isActive": true,
+                  "hasUsageLimit": true,
+                  "usageLimit": 50,
+                  "remainingUses": 50,
                   "conditionTree": {
                     "type": "COMPOSITE",
                     "operator": "AND",
@@ -399,8 +408,8 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 false,
                 true,
                 false,
-                0,
-                0,
+                1,
+                1,
                 new SingleProductConditionNode(EXISTING_PRODUCT_1, Operator.EQUALS),
                 new OrderDiscountAction(new BigDecimal("5.00"))
             );

@@ -1,6 +1,5 @@
 package com.promox.core.promotion.internal.dto;
 
-import com.promox.core.promotion.internal.dto.validators.ValidPromotionRuleCreationRequest;
 import com.promox.core.promotion.internal.service.action.ActionStrategy;
 import com.promox.core.promotion.internal.service.condition.ConditionNode;
 
@@ -8,7 +7,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 
-@ValidPromotionRuleCreationRequest
 public record CreatePromotionRuleRequest(
     @NotBlank
     @Size(max = 255)
@@ -25,10 +23,10 @@ public record CreatePromotionRuleRequest(
     @NotNull(message = "hasUsageLimit is required")
     Boolean hasUsageLimit,
 
-    @Min(value = 0, message = "usageLimit cannot be negative")
+    @Positive(message = "usageLimit must be positive")
     Integer usageLimit,
 
-    @Min(value = 0, message = "remainingUses cannot be negative")
+    @Positive(message = "remainingUses must be positive")
     Integer remainingUses,
 
     @NotNull(message = "Condition tree is required")
@@ -44,14 +42,14 @@ public record CreatePromotionRuleRequest(
             isActive = true;
         }
 
-        if (Boolean.FALSE.equals(hasUsageLimit)) {
-            usageLimit = (usageLimit == null) ? 0 : usageLimit;
-            remainingUses = (remainingUses == null) ? 0 : remainingUses;
-        } else if (Boolean.TRUE.equals(hasUsageLimit)) {
-            // Default remainingUses to usageLimit if omitted during creation
-            if (remainingUses == null && usageLimit != null) {
-                remainingUses = usageLimit;
-            }
+        if (usageLimit == null) {
+            usageLimit = 1;
+        }
+
+        if (remainingUses == null) {
+            remainingUses = usageLimit;
+        } else if (remainingUses > usageLimit) {
+            remainingUses = usageLimit;
         }
     }
 }

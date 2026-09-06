@@ -3,6 +3,7 @@ package com.promox.core.promotion.internal.service;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.PromotionFilterRequest;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
+import com.promox.core.promotion.internal.dto.UpdateUsageLimitsRequest;
 import com.promox.core.promotion.internal.exception.PromotionBusinessException;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
@@ -30,6 +31,7 @@ public class PromotionService {
         this.promotionRepository = promotionRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<PromotionRuleSummaryProjection> findAll(
         Long storefrontId,
         PromotionFilterRequest filter,
@@ -85,6 +87,19 @@ public class PromotionService {
         promotionRule.setConditionTree(request.conditionTree());
         promotionRule.setAction(request.action());
         promotionRule.setProductExternalIds(new HashSet<>(productExternalIds));
+    }
+
+    @Transactional
+    public void updateUsageLimits(
+        UpdateUsageLimitsRequest request,
+        PromotionRule promotionRule
+    ) {
+        promotionRule.setHasUsageLimit(request.hasUsageLimit());
+        promotionRule.setUsageLimit(request.usageLimit());
+
+        if (request.mutateRemainingUses()) {
+            promotionRule.setRemainingUses(request.remainingUses());
+        }
     }
 
     @Transactional
