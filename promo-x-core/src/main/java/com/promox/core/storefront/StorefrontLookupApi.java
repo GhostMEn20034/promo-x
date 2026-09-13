@@ -1,26 +1,8 @@
 package com.promox.core.storefront;
 
-import com.promox.core.storefront.internal.StorefrontMapper;
-import com.promox.core.storefront.internal.service.StorefrontService;
-import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
-
-@Service
-public class StorefrontLookupApi {
-    private final StorefrontService storefrontService;
-
-    public StorefrontLookupApi(StorefrontService storefrontService) {
-        this.storefrontService = storefrontService;
-    }
-
-    public Optional<StorefrontDto> findById(Long storefrontId) {
-        return storefrontService.fetchById(storefrontId)
-                .map(StorefrontMapper::toDto);
-    }
-
-    public boolean existsById(Long storefrontId) {
-        return storefrontService.existsById(storefrontId);
-    }
+public interface StorefrontLookupApi {
+    Optional<StorefrontDto> findById(Long storefrontId);
+    boolean existsById(Long storefrontId);
 }
