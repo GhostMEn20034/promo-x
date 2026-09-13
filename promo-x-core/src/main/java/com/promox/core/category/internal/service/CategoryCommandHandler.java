@@ -7,6 +7,7 @@ import com.promox.core.category.internal.CategoryMapper;
 import com.promox.core.category.internal.exception.CategoryBusinessException;
 import com.promox.core.storefront.StorefrontLookupApi;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ public class CategoryCommandHandler {
         this.categoryService = categoryService;
     }
 
+    @Transactional
     public CategoryDto createSingleCategory(Long storefrontId, CreateCategoryRequest request) {
         if (!storefrontLookupApi.existsById(storefrontId)) {
             throw CategoryBusinessException.of(
