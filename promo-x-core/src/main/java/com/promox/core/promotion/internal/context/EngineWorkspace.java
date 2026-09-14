@@ -23,8 +23,8 @@ public class EngineWorkspace {
     private final BigDecimal shippingCost;
     private BigDecimal shippingCostDiscount;
 
-    public EngineWorkspace(PromotionEvaluationRequest request) {
-        this.storefrontId = request.storefrontId();
+    public EngineWorkspace(Long storefrontId, PromotionEvaluationRequest request) {
+        this.storefrontId = storefrontId;
         this.sessionId = request.sessionId();
         this.customerId = request.customerId();
         this.promoCodes = request.promoCodes();

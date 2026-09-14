@@ -27,6 +27,8 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 
 public class ProductCollectionMatchConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(Map<String, List<String>> productIdCollectionsMap) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -43,7 +45,6 @@ public class ProductCollectionMatchConditionNodeTest {
         });
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -51,7 +52,7 @@ public class ProductCollectionMatchConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     // single product collection condition node matrix

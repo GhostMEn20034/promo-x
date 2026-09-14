@@ -20,6 +20,8 @@ import java.util.List;
 
 
 public class PromoCodeConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     private static EngineWorkspace buildTestWorkspace(List<String> promoCodes) {
         LineItemRequest item = new LineItemRequest(
                 "prod-100",
@@ -31,7 +33,6 @@ public class PromoCodeConditionNodeTest {
         );
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
                 "sess-999",
                 "cust-456",
                 promoCodes,
@@ -39,7 +40,7 @@ public class PromoCodeConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> promoCodeProvider() {

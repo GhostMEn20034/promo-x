@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 
 
 public class ProductCategoryMatchConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(Map<String, List<String>> productIdCategoriesMap) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -42,7 +44,6 @@ public class ProductCategoryMatchConditionNodeTest {
         });
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -50,7 +51,7 @@ public class ProductCategoryMatchConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     // Product category any match condition node matrix

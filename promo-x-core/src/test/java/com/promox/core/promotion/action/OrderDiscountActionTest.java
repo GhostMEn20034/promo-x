@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 
 
 public class OrderDiscountActionTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     record ItemSpec(String productId, int quantity, BigDecimal unitPrice) {}
 
     private EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -41,8 +43,7 @@ public class OrderDiscountActionTest {
             ));
         }
 
-        return new EngineWorkspace(new PromotionEvaluationRequest(
-                123L,
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationRequest(
                 "sess-1",
                 "cust-1",
                 List.of(),

@@ -27,6 +27,8 @@ import java.util.List;
 
 
 public class ProductBuyXGetYFreeActionTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     private record ItemSpec(String productId, int quantity, BigDecimal unitPrice) {}
 
     private EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -42,8 +44,7 @@ public class ProductBuyXGetYFreeActionTest {
             ));
         }
 
-        return new EngineWorkspace(new PromotionEvaluationRequest(
-                123L,
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationRequest(
                 "sess-1",
                 "cust-1",
                 List.of(),

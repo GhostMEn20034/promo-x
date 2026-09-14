@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class CompositeConditionNodeIntegrationTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     record ItemSpec(String productId, int quantity) {}
 
     static EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -36,8 +38,8 @@ public class CompositeConditionNodeIntegrationTest {
             ));
         }
 
-        return new EngineWorkspace(new PromotionEvaluationRequest(
-                123L, "sess-1", "cust-1", List.of(), items, BigDecimal.ZERO
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationRequest(
+                "sess-1", "cust-1", List.of(), items, BigDecimal.ZERO
         ));
     }
 

@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 
 public class SubtotalConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
     /*
     * Helper method to construct a real EngineWorkspace for parameterized tests
     * */
@@ -35,7 +36,6 @@ public class SubtotalConditionNodeTest {
          * customer ID, promo codes, shipping cost during the testing of subtotal nodes
          * */
         var request = new PromotionEvaluationRequest(
-                123L,
             "sess-999",
             "cust-456",
             List.of(),
@@ -43,7 +43,7 @@ public class SubtotalConditionNodeTest {
             BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     private static List<LineItemRequest> getLineItems(BigDecimal unitPrice, int totalQuantity) {

@@ -31,7 +31,6 @@ public class PromoRuleEngineExecutionTest {
     void calculate_ShouldExecuteInPriorityOrderAndHalt_WhenShortCircuitRuleApplies() {
         // Arrange: Workspace matching promo code "VIP" with a $100 line item
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                STOREFRONT_ID,
                 "sess-1",
                 "cust-1",
                 List.of("VIP"),
@@ -45,7 +44,7 @@ public class PromoRuleEngineExecutionTest {
                 )),
                 BigDecimal.ZERO
         );
-        EngineWorkspace workspace = new EngineWorkspace(request);
+        EngineWorkspace workspace = new EngineWorkspace(STOREFRONT_ID, request);
 
         // High Priority Rule (Priority: 100, ShortCircuit: TRUE -> 10% OFF PROD-1)
         PromotionRule highPriorityRule = PromotionRule.builder()
@@ -92,7 +91,6 @@ public class PromoRuleEngineExecutionTest {
     void calculate_ShouldApplyMultipleRulesAndActions_WhenWorkspaceContainsMultipleItems() {
         // Arrange: Cart with 2 Keyboards ($100 each) + 1 Mouse ($50) | Shipping: $15.00 | Promo Code: "SUMMER"
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                STOREFRONT_ID,
                 "sess-1",
                 "cust-1",
                 List.of("SUMMER"),
@@ -102,7 +100,7 @@ public class PromoRuleEngineExecutionTest {
                 ),
                 new BigDecimal("15.00")
         );
-        EngineWorkspace workspace = new EngineWorkspace(request);
+        EngineWorkspace workspace = new EngineWorkspace(STOREFRONT_ID, request);
 
         // Rule 1: 20% off Keyboards (Priority 200)
         PromotionRule keyboardRule = PromotionRule.builder()
@@ -171,7 +169,6 @@ public class PromoRuleEngineExecutionTest {
     void calculate_ShouldNotShortCircuitOrLogApplied_WhenRuleIsMatchedButActionReturnsFalse() {
         // Arrange: Cart with 1 unit of PROD-1 ($100) and Promo Code "MATCH_ONLY"
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                STOREFRONT_ID,
                 "sess-1",
                 "cust-1",
                 List.of("MATCH_ONLY"),
@@ -185,7 +182,7 @@ public class PromoRuleEngineExecutionTest {
                 )),
                 BigDecimal.ZERO
         );
-        EngineWorkspace workspace = new EngineWorkspace(request);
+        EngineWorkspace workspace = new EngineWorkspace(STOREFRONT_ID, request);
 
         // Rule 1 (Priority 100, ShortCircuit: TRUE)
         // Condition matches promo code "MATCH_ONLY", BUT action requires Buy 2 Get 1 Free on PROD-1.

@@ -26,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class ProductQuantityConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     record ProductItemSpec(String productId, String sku, int quantity) {
         ProductItemSpec(String productId, int quantity) {
             this(productId, "%s-SKU".formatted(productId), quantity);
@@ -48,7 +50,6 @@ public class ProductQuantityConditionNodeTest {
         }
 
         var request = new PromotionEvaluationRequest(
-                123L,
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -56,7 +57,7 @@ public class ProductQuantityConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> productIdQuantityEvaluationMatrixProvider() {

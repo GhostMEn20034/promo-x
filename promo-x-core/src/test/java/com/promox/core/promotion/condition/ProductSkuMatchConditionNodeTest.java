@@ -27,6 +27,8 @@ import java.util.stream.Stream;
 
 
 public class ProductSkuMatchConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(Map<String, String> productIdToSkuMap) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -43,7 +45,6 @@ public class ProductSkuMatchConditionNodeTest {
         });
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -51,7 +52,7 @@ public class ProductSkuMatchConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
 

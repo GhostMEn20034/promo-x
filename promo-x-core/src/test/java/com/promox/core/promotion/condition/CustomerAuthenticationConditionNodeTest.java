@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 
 
 public class CustomerAuthenticationConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(boolean isCustomerAnonymous, boolean sessionIdIsNull) {
         LineItemRequest item = new LineItemRequest(
                 "prod-100",
@@ -35,7 +37,6 @@ public class CustomerAuthenticationConditionNodeTest {
         );
 
         PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
                 sessionIdIsNull ? null : "sess-999",
                 isCustomerAnonymous ? null : "cust-456",
                 List.of(),
@@ -43,7 +44,7 @@ public class CustomerAuthenticationConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> customerAuthenticationEvaluationMatrixProvider() {

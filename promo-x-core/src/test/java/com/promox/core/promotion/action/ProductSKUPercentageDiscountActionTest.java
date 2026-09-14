@@ -26,6 +26,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 
 public class ProductSKUPercentageDiscountActionTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     private record ItemSpec(String productId, String sku, int quantity, BigDecimal unitPrice) {}
 
     private EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -41,8 +43,7 @@ public class ProductSKUPercentageDiscountActionTest {
             ));
         }
 
-        return new EngineWorkspace(new PromotionEvaluationRequest(
-                123L,
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationRequest(
                 "sess-1",
                 "cust-1",
                 List.of(),
