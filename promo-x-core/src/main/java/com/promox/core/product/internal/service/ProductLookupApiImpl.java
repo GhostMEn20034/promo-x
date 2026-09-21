@@ -4,11 +4,16 @@ import com.promox.core.category.CategoryDto;
 import com.promox.core.category.CategoryLookupApi;
 import com.promox.core.product.*;
 import com.promox.core.product.internal.ProductMapper;
+import com.promox.core.product.internal.persistence.Product;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductLookupApiImpl implements ProductLookupApi {
@@ -35,6 +40,34 @@ public class ProductLookupApiImpl implements ProductLookupApi {
     public List<DefaultProductDto> findAllByExternalIds(Set<String> externalIds, Long storefrontId) {
         return productService.findAllByExternalIds(externalIds, storefrontId).stream()
             .map(ProductMapper::toDto)
+            .toList();
+    }
+
+    @Override
+    public List<ProductWithCategoriesDto> findAllWithCategoriesByExternalIds(Set<String> externalIds, Long storefrontId) {
+        List<Product> products = productService.findAllByExternalIds(externalIds, storefrontId);
+        if (products.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> categoryIds = products.stream()
+            .flatMap(product -> product.getCategoryIds().stream())
+            .collect(Collectors.toSet());
+
+        Map<Long, CategoryDto> categoriesById = categoryIds.isEmpty()
+            ? Map.of()
+            : categoryLookupApi.getListById(categoryIds, storefrontId).stream()
+                .collect(Collectors.toMap(CategoryDto::id, Function.identity()));
+
+        return products.stream()
+            .map(product -> {
+                List<CategoryDto> categories = product.getCategoryIds().stream()
+                    .map(categoriesById::get)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+                return ProductMapper.toDto(product, categories);
+            })
             .toList();
     }
 

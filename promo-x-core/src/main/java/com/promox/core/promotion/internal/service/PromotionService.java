@@ -1,5 +1,7 @@
 package com.promox.core.promotion.internal.service;
 
+import com.promox.core.promotion.internal.context.AppliedRuleLog;
+import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
 import com.promox.core.promotion.internal.dto.PromotionFilterRequest;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
@@ -9,6 +11,9 @@ import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.persistence.PromotionRuleSpecifications;
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
+import com.promox.core.promotion.internal.service.engine.PromoRuleEngine;
+import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,7 +21,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -26,9 +34,17 @@ public class PromotionService {
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of("createdAt", "updatedAt", "priority");
 
     private final PromotionRepository promotionRepository;
+    private final PromoRuleEngine promoRuleEngine;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public PromotionService(PromotionRepository promotionRepository) {
+    public PromotionService(
+        PromotionRepository promotionRepository,
+        PromoRuleEngine promoRuleEngine,
+        ApplicationEventPublisher eventPublisher
+    ) {
         this.promotionRepository = promotionRepository;
+        this.promoRuleEngine = promoRuleEngine;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -48,6 +64,15 @@ public class PromotionService {
 
     public Optional<PromotionRule> findById(Long promotionRuleId) {
         return promotionRepository.findById(promotionRuleId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PromotionRule> findAllActiveSortedByPriority(Long storefrontId) {
+        List<PromotionRule> rules = promotionRepository.findAllByStorefrontIdAndIsActiveTrue(storefrontId);
+
+        return rules.stream()
+            .sorted(Comparator.comparingInt(PromotionRule::getPriority).reversed())
+            .toList();
     }
 
     @Transactional
@@ -99,6 +124,34 @@ public class PromotionService {
 
         if (request.mutateRemainingUses()) {
             promotionRule.setRemainingUses(request.remainingUses());
+        }
+    }
+
+    @Transactional
+    public void reduceRemainingUses(Collection<Long> ruleIds) {
+        if (ruleIds.isEmpty()) {
+            return;
+        }
+
+        for (PromotionRule rule : promotionRepository.findAllById(ruleIds)) {
+            if (rule.hasUsageLimit() && rule.getRemainingUses() > 0) {
+                rule.setRemainingUses(rule.getRemainingUses() - 1);
+            }
+        }
+    }
+
+    @Transactional
+    public void applyRules(Long storefrontId, EngineWorkspace workspace) {
+        List<PromotionRule> rules = findAllActiveSortedByPriority(storefrontId);
+
+        promoRuleEngine.calculate(workspace, rules);
+
+        List<Long> appliedRuleIds = workspace.getAppliedRules().stream()
+            .map(AppliedRuleLog::ruleId)
+            .toList();
+
+        if (!appliedRuleIds.isEmpty()) {
+            eventPublisher.publishEvent(new PromotionRulesAppliedEvent(storefrontId, appliedRuleIds));
         }
     }
 

@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.CustomerAuthenticationStateConditionNode;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 
 
 public class CustomerAuthenticationConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(boolean isCustomerAnonymous, boolean sessionIdIsNull) {
         LineItemRequest item = new LineItemRequest(
                 "prod-100",
@@ -34,8 +36,7 @@ public class CustomerAuthenticationConditionNodeTest {
                 new BigDecimal("15.01")
         );
 
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 sessionIdIsNull ? null : "sess-999",
                 isCustomerAnonymous ? null : "cust-456",
                 List.of(),
@@ -43,7 +44,7 @@ public class CustomerAuthenticationConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> customerAuthenticationEvaluationMatrixProvider() {

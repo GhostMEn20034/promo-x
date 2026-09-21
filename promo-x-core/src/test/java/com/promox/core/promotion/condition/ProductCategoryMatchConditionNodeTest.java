@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductCategoryAnyMatchConditionNode;
 import com.promox.core.promotion.internal.service.condition.SingleProductCategoryConditionNode;
@@ -26,6 +26,8 @@ import java.util.stream.Stream;
 
 
 public class ProductCategoryMatchConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(Map<String, List<String>> productIdCategoriesMap) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -41,8 +43,7 @@ public class ProductCategoryMatchConditionNodeTest {
             items.add(item);
         });
 
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -50,7 +51,7 @@ public class ProductCategoryMatchConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     // Product category any match condition node matrix

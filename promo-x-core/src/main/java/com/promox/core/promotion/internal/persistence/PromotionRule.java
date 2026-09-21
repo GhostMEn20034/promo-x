@@ -85,6 +85,14 @@ public class PromotionRule {
     @Column(name = "product_external_id", nullable = false)
     private Set<String> productExternalIds = new HashSet<>();
 
+    @ElementCollection
+    @CollectionTable(
+        name = "rule_category",
+        joinColumns = @JoinColumn(name = "rule_id")
+    )
+    @Column(name = "category_external_id", nullable = false)
+    private Set<String> categoryExternalIds = new HashSet<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;

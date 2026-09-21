@@ -1,6 +1,7 @@
 package com.promox.core.promotion.internal;
 
 import com.promox.core.product.DefaultProductDto;
+import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.infrastructure.registry.ActionStrategyRegistry;
 import com.promox.core.promotion.internal.infrastructure.registry.ConditionNodeRegistry;
@@ -9,6 +10,7 @@ import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -61,6 +63,50 @@ public final class PromotionMapper {
         return new DetailedPromotionDto(
             toBaseDto(rule),
             products
+        );
+    }
+
+    public PromotionEvaluationResponse toEvaluationResponse(EngineWorkspace workspace) {
+        List<PromotionEvaluationResponse.LineItemResult> items = workspace.getLineItems().stream()
+            .map(item -> new PromotionEvaluationResponse.LineItemResult(
+                item.getProductExternalId(),
+                item.getProductSku(),
+                item.getCategories(),
+                item.getCollections(),
+                item.getQuantity(),
+                item.getUnitPrice(),
+                item.getTotalPrice(),
+                item.getDiscountAmount(),
+                item.getNetPrice()
+            ))
+            .toList();
+
+        List<PromotionEvaluationResponse.RuleResult> matchedRules = workspace.getMatchedRules().stream()
+            .map(rule -> new PromotionEvaluationResponse.RuleResult(rule.ruleId(), rule.ruleName()))
+            .toList();
+
+        List<PromotionEvaluationResponse.RuleResult> appliedRules = workspace.getAppliedRules().stream()
+            .map(rule -> new PromotionEvaluationResponse.RuleResult(rule.ruleId(), rule.ruleName()))
+            .toList();
+
+        BigDecimal oldTotal = workspace.getItemsSubtotal().add(workspace.getShippingCost());
+
+        return new PromotionEvaluationResponse(
+            workspace.getSessionId(),
+            workspace.getCustomerId(),
+            workspace.getPromoCodes(),
+            oldTotal,
+            workspace.getGrandTotal(),
+            workspace.getTotalDiscount(),
+            workspace.getItemsSubtotal(),
+            workspace.getItemsDiscount(),
+            workspace.getItemsNetSubtotal(),
+            workspace.getShippingCost(),
+            workspace.getShippingCostDiscount(),
+            workspace.getNetShippingCost(),
+            items,
+            matchedRules,
+            appliedRules
         );
     }
 

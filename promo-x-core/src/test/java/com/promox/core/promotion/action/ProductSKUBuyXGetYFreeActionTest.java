@@ -1,7 +1,7 @@
 package com.promox.core.promotion.action;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.action.ProductSKUBuyXGetYFreeAction;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.WorkspaceLineItem;
@@ -28,6 +28,8 @@ import java.util.List;
 
 
 public class ProductSKUBuyXGetYFreeActionTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     private record ItemSpec(String productId, String sku, int quantity, BigDecimal unitPrice) {}
 
     private EngineWorkspace buildTestWorkspace(List<ItemSpec> specs) {
@@ -43,8 +45,7 @@ public class ProductSKUBuyXGetYFreeActionTest {
             ));
         }
 
-        return new EngineWorkspace(new PromotionEvaluationRequest(
-                123L,
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationParams(
                 "sess-1",
                 "cust-1",
                 List.of(),

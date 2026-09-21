@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductQuantityConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
@@ -26,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class ProductQuantityConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     record ProductItemSpec(String productId, String sku, int quantity) {
         ProductItemSpec(String productId, int quantity) {
             this(productId, "%s-SKU".formatted(productId), quantity);
@@ -47,8 +49,7 @@ public class ProductQuantityConditionNodeTest {
             items.add(item);
         }
 
-        var request = new PromotionEvaluationRequest(
-                123L,
+        var request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -56,7 +57,7 @@ public class ProductQuantityConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> productIdQuantityEvaluationMatrixProvider() {

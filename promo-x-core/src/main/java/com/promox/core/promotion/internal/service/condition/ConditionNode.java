@@ -19,5 +19,13 @@ public interface ConditionNode {
         return Set.of();
     }
 
+    /**
+     * Returns categories' identifiers mentioned in the condition node
+     */
+    @JsonIgnore
+    default Set<String> getCategoryIds() {
+        return Set.of();
+    }
+
     boolean evaluate(EngineWorkspace workspace);
 }

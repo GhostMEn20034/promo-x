@@ -10,6 +10,8 @@ public interface ProductLookupApi {
 
     List<DefaultProductDto> findAllByExternalIds(Set<String> externalIds, Long storefrontId);
 
+    List<ProductWithCategoriesDto> findAllWithCategoriesByExternalIds(Set<String> externalIds, Long storefrontId);
+
     ProductExternalIdsExistenceResult checkExistenceByExternalIdsAndStorefront(
         Set<String> productExternalIds,
         Long storefrontId

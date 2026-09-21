@@ -48,6 +48,14 @@ public record CompositeConditionNode(
     }
 
     @Override
+    public Set<String> getCategoryIds() {
+        return children == null ? Set.of() : children.stream()
+                                             .filter(Objects::nonNull)
+                                             .flatMap(child -> child.getCategoryIds().stream())
+                                             .collect(Collectors.toUnmodifiableSet());
+    }
+
+    @Override
     public boolean evaluate(EngineWorkspace workspace) {
         if (children == null || children.isEmpty()) {
             return true;

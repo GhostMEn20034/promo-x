@@ -1,7 +1,7 @@
 package com.promox.core.promotion.action;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.action.FreeShippingAction;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FreeShippingActionTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     private EngineWorkspace buildTestWorkspace(BigDecimal shippingCost) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -30,8 +32,7 @@ public class FreeShippingActionTest {
         ));
 
 
-        return new EngineWorkspace(new PromotionEvaluationRequest(
-                123L,
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationParams(
                 "sess-1",
                 "cust-1",
                 List.of(),

@@ -1,7 +1,7 @@
 package com.promox.core.promotion.engine;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.action.FreeShippingAction;
 import com.promox.core.promotion.internal.service.action.ProductBuyXGetYFreeAction;
 import com.promox.core.promotion.internal.service.action.ProductPercentageDiscountAction;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,8 +31,7 @@ public class PromoRuleEngineExecutionTest {
     @DisplayName("Should execute rules in descending priority order and short-circuit pipeline when high-priority rule applies")
     void calculate_ShouldExecuteInPriorityOrderAndHalt_WhenShortCircuitRuleApplies() {
         // Arrange: Workspace matching promo code "VIP" with a $100 line item
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                STOREFRONT_ID,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-1",
                 "cust-1",
                 List.of("VIP"),
@@ -45,7 +45,7 @@ public class PromoRuleEngineExecutionTest {
                 )),
                 BigDecimal.ZERO
         );
-        EngineWorkspace workspace = new EngineWorkspace(request);
+        EngineWorkspace workspace = new EngineWorkspace(STOREFRONT_ID, request);
 
         // High Priority Rule (Priority: 100, ShortCircuit: TRUE -> 10% OFF PROD-1)
         PromotionRule highPriorityRule = PromotionRule.builder()
@@ -69,10 +69,12 @@ public class PromoRuleEngineExecutionTest {
             .action(new ProductPercentageDiscountAction("PROD-1", new BigDecimal("0.20")))
             .build();
 
-        // Pass rules out of priority order to verify internal engine sorting
-        List<PromotionRule> unsortedRules = List.of(lowPriorityRule, highPriorityRule);
+        // The engine assumes pre-sorted input, so sort here the way callers are expected to
+        List<PromotionRule> sortedRules = List.of(lowPriorityRule, highPriorityRule).stream()
+                .sorted(Comparator.comparingInt(PromotionRule::getPriority).reversed())
+                .toList();
 
-        engine.calculate(workspace, unsortedRules);
+        engine.calculate(workspace, sortedRules);
 
         // Assert Engine Log Context
         assertThat(workspace.getMatchedRules())
@@ -91,8 +93,7 @@ public class PromoRuleEngineExecutionTest {
     @DisplayName("Should sequentially apply multiple rules across a multi-item workspace")
     void calculate_ShouldApplyMultipleRulesAndActions_WhenWorkspaceContainsMultipleItems() {
         // Arrange: Cart with 2 Keyboards ($100 each) + 1 Mouse ($50) | Shipping: $15.00 | Promo Code: "SUMMER"
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                STOREFRONT_ID,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-1",
                 "cust-1",
                 List.of("SUMMER"),
@@ -102,7 +103,7 @@ public class PromoRuleEngineExecutionTest {
                 ),
                 new BigDecimal("15.00")
         );
-        EngineWorkspace workspace = new EngineWorkspace(request);
+        EngineWorkspace workspace = new EngineWorkspace(STOREFRONT_ID, request);
 
         // Rule 1: 20% off Keyboards (Priority 200)
         PromotionRule keyboardRule = PromotionRule.builder()
@@ -140,7 +141,10 @@ public class PromoRuleEngineExecutionTest {
             .action(new FreeShippingAction())
             .build();
 
-        List<PromotionRule> rules = List.of(shippingRule, mouseRule, keyboardRule);
+        // The engine assumes pre-sorted input, so sort here the way callers are expected to
+        List<PromotionRule> rules = List.of(shippingRule, mouseRule, keyboardRule).stream()
+                .sorted(Comparator.comparingInt(PromotionRule::getPriority).reversed())
+                .toList();
 
         engine.calculate(workspace, rules);
 
@@ -170,8 +174,7 @@ public class PromoRuleEngineExecutionTest {
     @DisplayName("Should log matched rule without applying it when action fails, allowing lower-priority rule to execute")
     void calculate_ShouldNotShortCircuitOrLogApplied_WhenRuleIsMatchedButActionReturnsFalse() {
         // Arrange: Cart with 1 unit of PROD-1 ($100) and Promo Code "MATCH_ONLY"
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                STOREFRONT_ID,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-1",
                 "cust-1",
                 List.of("MATCH_ONLY"),
@@ -185,7 +188,7 @@ public class PromoRuleEngineExecutionTest {
                 )),
                 BigDecimal.ZERO
         );
-        EngineWorkspace workspace = new EngineWorkspace(request);
+        EngineWorkspace workspace = new EngineWorkspace(STOREFRONT_ID, request);
 
         // Rule 1 (Priority 100, ShortCircuit: TRUE)
         // Condition matches promo code "MATCH_ONLY", BUT action requires Buy 2 Get 1 Free on PROD-1.

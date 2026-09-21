@@ -26,5 +26,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
 
     Optional<Product> findByExternalId(String externalId);
 
-    List<Product> findAllByExternalIdIn(Collection<String> externalIds);
+    @EntityGraph(attributePaths = "categoryIds")
+    List<Product> findAllByStorefrontIdAndExternalIdIn(Long storefrontId, Collection<String> externalIds);
 }

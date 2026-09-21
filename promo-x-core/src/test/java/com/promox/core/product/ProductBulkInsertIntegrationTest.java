@@ -61,8 +61,8 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
         this.defaultStorefrontId = storefront.getId();
 
         List<Category> savedCategories = categoryRepository.saveAll(List.of(
-            Category.builder().name("Category 10").storefrontId(defaultStorefrontId).build(),
-            Category.builder().name("Category 20").storefrontId(defaultStorefrontId).build()
+            Category.builder().externalId("CAT-10").name("Category 10").storefrontId(defaultStorefrontId).build(),
+            Category.builder().externalId("CAT-20").name("Category 20").storefrontId(defaultStorefrontId).build()
         ));
 
         this.category10Id = savedCategories.get(0).getId();

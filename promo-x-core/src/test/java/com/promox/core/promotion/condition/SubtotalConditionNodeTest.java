@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.SubtotalConditionNode;
 import com.promox.core.promotion.internal.service.condition.SubtotalType;
@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 
 public class SubtotalConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
     /*
     * Helper method to construct a real EngineWorkspace for parameterized tests
     * */
@@ -34,8 +35,7 @@ public class SubtotalConditionNodeTest {
          * We ignore Store Front ID, session ID,
          * customer ID, promo codes, shipping cost during the testing of subtotal nodes
          * */
-        var request = new PromotionEvaluationRequest(
-                123L,
+        var request = new PromotionEvaluationParams(
             "sess-999",
             "cust-456",
             List.of(),
@@ -43,7 +43,7 @@ public class SubtotalConditionNodeTest {
             BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     private static List<LineItemRequest> getLineItems(BigDecimal unitPrice, int totalQuantity) {

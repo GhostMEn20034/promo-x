@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductSkuQuantityConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
@@ -26,6 +26,8 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 
 public class ProductSkuQuantityConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     record SkuItemSpec(String sku, int quantity) {}
 
     static EngineWorkspace buildTestWorkspace(List<SkuItemSpec> itemsSpec) {
@@ -45,8 +47,7 @@ public class ProductSkuQuantityConditionNodeTest {
             index++;
         }
 
-        var request = new PromotionEvaluationRequest(
-                123L,
+        var request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -54,7 +55,7 @@ public class ProductSkuQuantityConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> skuQuantityEvaluationMatrixProvider() {

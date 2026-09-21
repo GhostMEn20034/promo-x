@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.PromoCodeConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
@@ -20,6 +20,8 @@ import java.util.List;
 
 
 public class PromoCodeConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     private static EngineWorkspace buildTestWorkspace(List<String> promoCodes) {
         LineItemRequest item = new LineItemRequest(
                 "prod-100",
@@ -30,8 +32,7 @@ public class PromoCodeConditionNodeTest {
                 new BigDecimal("15.01")
         );
 
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 promoCodes,
@@ -39,7 +40,7 @@ public class PromoCodeConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
     static Stream<Arguments> promoCodeProvider() {

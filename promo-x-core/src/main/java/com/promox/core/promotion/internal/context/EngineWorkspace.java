@@ -1,6 +1,6 @@
 package com.promox.core.promotion.internal.context;
 
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -23,17 +23,17 @@ public class EngineWorkspace {
     private final BigDecimal shippingCost;
     private BigDecimal shippingCostDiscount;
 
-    public EngineWorkspace(PromotionEvaluationRequest request) {
-        this.storefrontId = request.storefrontId();
-        this.sessionId = request.sessionId();
-        this.customerId = request.customerId();
-        this.promoCodes = request.promoCodes();
-        this.isCustomerAnonymous = request.customerId() == null;
-        this.shippingCost = request.shippingCost();
+    public EngineWorkspace(Long storefrontId, PromotionEvaluationParams params) {
+        this.storefrontId = storefrontId;
+        this.sessionId = params.sessionId();
+        this.customerId = params.customerId();
+        this.promoCodes = params.promoCodes();
+        this.isCustomerAnonymous = params.customerId() == null;
+        this.shippingCost = params.shippingCost();
 
         this.appliedRules = new ArrayList<>();
         this.matchedRules = new ArrayList<>();
-        this.lineItems = request.items().stream()
+        this.lineItems = params.items().stream()
                 .map(WorkspaceLineItem::new)
                 .collect(Collectors.toList());
 

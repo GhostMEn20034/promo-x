@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductSkuAnyMatchConditionNode;
 import com.promox.core.promotion.internal.service.condition.SingleProductSkuConditionNode;
@@ -27,6 +27,8 @@ import java.util.stream.Stream;
 
 
 public class ProductSkuMatchConditionNodeTest {
+    private static final Long STOREFRONT_ID = 123L;
+
     static EngineWorkspace buildTestWorkspace(Map<String, String> productIdToSkuMap) {
         List<LineItemRequest> items = new ArrayList<>();
 
@@ -42,8 +44,7 @@ public class ProductSkuMatchConditionNodeTest {
             items.add(item);
         });
 
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
-                123L,
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 List.of(),
@@ -51,7 +52,7 @@ public class ProductSkuMatchConditionNodeTest {
                 BigDecimal.ZERO
         );
 
-        return new EngineWorkspace(request);
+        return new EngineWorkspace(STOREFRONT_ID, request);
     }
 
 

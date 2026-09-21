@@ -129,6 +129,7 @@ public class ProductRetrievalIntegrationTest extends IntegrationTestBase {
 
     private Category createCategory(String name) {
         Category category = new Category();
+        category.setExternalId("EXT-" + name);
         category.setName(name);
         category.setStorefrontId(activeStorefront.getId());
         return categoryRepository.save(category);
