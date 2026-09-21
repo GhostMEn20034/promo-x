@@ -58,6 +58,11 @@ public record SingleProductCategoryConditionNode(
     }
 
     @Override
+    public Set<String> getCategoryIds() {
+        return Set.of(category);
+    }
+
+    @Override
     public boolean evaluate(EngineWorkspace workspace) {
         List<WorkspaceLineItem> items = workspace.getLineItems();
         if (items.isEmpty()) {

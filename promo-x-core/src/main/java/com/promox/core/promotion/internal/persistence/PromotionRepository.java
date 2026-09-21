@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PromotionRepository extends JpaRepository<PromotionRule, Long>, JpaSpecificationExecutor<PromotionRule> {
-    @EntityGraph(attributePaths = "productExternalIds")
+    @EntityGraph(attributePaths = {"productExternalIds", "categoryExternalIds"})
     List<PromotionRule> findAllWithProductsBy();
 
-    @EntityGraph(attributePaths = "productExternalIds")
+    @EntityGraph(attributePaths = {"productExternalIds", "categoryExternalIds"})
     Optional<PromotionRule> findWithProductsById(Long id);
+
+    @EntityGraph(attributePaths = {"productExternalIds", "categoryExternalIds"})
+    List<PromotionRule> findAllByStorefrontIdAndIsActiveTrue(Long storefrontId);
 
     @Modifying
     @Query("DELETE FROM PromotionRule p WHERE p.id = :id")

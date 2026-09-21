@@ -61,7 +61,7 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<Product> findAllByExternalIds(Collection<String> externalIds, Long storefrontId) {
-        return productRepository.findAllByExternalIdIn(externalIds);
+        return productRepository.findAllByStorefrontIdAndExternalIdIn(storefrontId, externalIds);
     }
 
     private void validateExternalIdUniqueness(@Nullable String externalId, Long storefrontId) {

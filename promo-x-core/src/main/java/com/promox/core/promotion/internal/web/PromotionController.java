@@ -90,4 +90,12 @@ public class PromotionController {
         promotionCommandHandler.deleteById(promotionRuleId)
             .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
     }
+
+    @PostMapping("/evaluate")
+    public PromotionEvaluationResponse evaluatePromotionRules(
+            @RequestHeader("X-Storefront-Id") Long storefrontId,
+            @Valid @RequestBody PromotionEvaluationRequest evaluationRequest
+    ) {
+        return promotionCommandHandler.evaluate(storefrontId, evaluationRequest);
+    }
 }

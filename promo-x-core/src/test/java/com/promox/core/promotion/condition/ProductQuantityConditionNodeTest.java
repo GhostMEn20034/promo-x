@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductQuantityConditionNode;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
@@ -49,7 +49,7 @@ public class ProductQuantityConditionNodeTest {
             items.add(item);
         }
 
-        var request = new PromotionEvaluationRequest(
+        var request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 List.of(),

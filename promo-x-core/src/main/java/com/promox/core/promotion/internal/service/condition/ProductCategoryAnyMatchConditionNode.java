@@ -61,6 +61,11 @@ public record ProductCategoryAnyMatchConditionNode(
     }
 
     @Override
+    public Set<String> getCategoryIds() {
+        return Set.copyOf(categories);
+    }
+
+    @Override
     public boolean evaluate(EngineWorkspace workspace) {
         List<WorkspaceLineItem> items = workspace.getLineItems();
         if (items.isEmpty()) {

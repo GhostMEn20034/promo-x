@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.SubtotalConditionNode;
 import com.promox.core.promotion.internal.service.condition.SubtotalType;
@@ -35,7 +35,7 @@ public class SubtotalConditionNodeTest {
          * We ignore Store Front ID, session ID,
          * customer ID, promo codes, shipping cost during the testing of subtotal nodes
          * */
-        var request = new PromotionEvaluationRequest(
+        var request = new PromotionEvaluationParams(
             "sess-999",
             "cust-456",
             List.of(),

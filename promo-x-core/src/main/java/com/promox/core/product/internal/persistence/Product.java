@@ -33,8 +33,8 @@ public class Product {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "external_id")
-    private @Nullable String externalId;
+    @Column(name = "external_id", nullable = false)
+    private String externalId;
 
     @Column(nullable = false)
     private String sku;

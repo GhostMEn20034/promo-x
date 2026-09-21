@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.CustomerAuthenticationStateConditionNode;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
@@ -36,7 +36,7 @@ public class CustomerAuthenticationConditionNodeTest {
                 new BigDecimal("15.01")
         );
 
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 sessionIdIsNull ? null : "sess-999",
                 isCustomerAnonymous ? null : "cust-456",
                 List.of(),

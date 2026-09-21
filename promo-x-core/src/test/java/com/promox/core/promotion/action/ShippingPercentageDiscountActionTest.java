@@ -1,7 +1,7 @@
 package com.promox.core.promotion.action;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.action.ShippingPercentageDiscountAction;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidActionStrategyException;
@@ -38,7 +38,7 @@ public class ShippingPercentageDiscountActionTest {
         ));
 
 
-        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationRequest(
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationParams(
                 "sess-1",
                 "cust-1",
                 List.of(),

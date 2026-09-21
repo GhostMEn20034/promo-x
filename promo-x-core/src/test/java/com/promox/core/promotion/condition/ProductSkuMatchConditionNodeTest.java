@@ -1,7 +1,7 @@
 package com.promox.core.promotion.condition;
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductSkuAnyMatchConditionNode;
 import com.promox.core.promotion.internal.service.condition.SingleProductSkuConditionNode;
@@ -44,7 +44,7 @@ public class ProductSkuMatchConditionNodeTest {
             items.add(item);
         });
 
-        PromotionEvaluationRequest request = new PromotionEvaluationRequest(
+        PromotionEvaluationParams request = new PromotionEvaluationParams(
                 "sess-999",
                 "cust-456",
                 List.of(),

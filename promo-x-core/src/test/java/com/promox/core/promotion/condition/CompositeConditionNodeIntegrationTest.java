@@ -2,7 +2,7 @@ package com.promox.core.promotion.condition;
 
 
 import com.promox.core.promotion.internal.dto.LineItemRequest;
-import com.promox.core.promotion.internal.dto.PromotionEvaluationRequest;
+import com.promox.core.promotion.internal.dto.PromotionEvaluationParams;
 import com.promox.core.promotion.internal.service.condition.CompositeConditionNode;
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.ProductQuantityConditionNode;
@@ -38,7 +38,7 @@ public class CompositeConditionNodeIntegrationTest {
             ));
         }
 
-        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationRequest(
+        return new EngineWorkspace(STOREFRONT_ID, new PromotionEvaluationParams(
                 "sess-1", "cust-1", List.of(), items, BigDecimal.ZERO
         ));
     }
