@@ -10,5 +10,5 @@ import java.util.List;
 public record PromotionEvaluationItem(
         @NotNull String productExternalId,
         @Min(value = 1) int quantity,
-        @DecimalMin(value = "0.00", message = "Price per unit must be positive") BigDecimal unitPrice
+        @NotNull @DecimalMin(value = "0.00", message = "Price per unit must be positive") BigDecimal unitPrice
 ) {}

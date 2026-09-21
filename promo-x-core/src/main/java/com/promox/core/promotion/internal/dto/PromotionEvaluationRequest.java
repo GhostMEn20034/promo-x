@@ -12,6 +12,6 @@ public record PromotionEvaluationRequest(
         String sessionId, // Can be a Cart ID, Session Cookie, or Device UUID
         String customerId, // Nullable to natively support anonymous guest checkouts
         @NotNull List<String> promoCodes,
-        @Size(min=1, max = 128) List<@Valid PromotionEvaluationItem> items,
-        @DecimalMin(value = "0.00", message = "Shipping cost must be positive") BigDecimal shippingCost
+        @NotNull @Size(min=1, max = 128) List<@Valid PromotionEvaluationItem> items,
+        @NotNull @DecimalMin(value = "0.00", message = "Shipping cost must be positive") BigDecimal shippingCost
 ) {}
