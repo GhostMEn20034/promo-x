@@ -12,6 +12,17 @@ services:
       - SQL_DATABASE=${SQL_DATABASE}
       - SQL_USER=${SQL_USER}
       - SQL_PASSWORD=${SQL_PASSWORD}
+  redis_db:
+    container_name: promox-redis-db
+    image: redis:8.8.3-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - promox_redis_db_volume:/data
+
+    environment:
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --appendonly yes
 
 volumes:
   promox_psql_db_volume:
+  promox_redis_db_volume:

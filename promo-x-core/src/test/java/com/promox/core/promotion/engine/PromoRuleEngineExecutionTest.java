@@ -13,6 +13,7 @@ import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.MatchedRuleLog;
 import com.promox.core.promotion.internal.service.engine.PromoRuleEngine;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
+import com.promox.core.promotion.internal.persistence.PromotionRuleBaseProjection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -70,8 +71,9 @@ public class PromoRuleEngineExecutionTest {
             .build();
 
         // The engine assumes pre-sorted input, so sort here the way callers are expected to
-        List<PromotionRule> sortedRules = List.of(lowPriorityRule, highPriorityRule).stream()
+        List<PromotionRuleBaseProjection> sortedRules = List.of(lowPriorityRule, highPriorityRule).stream()
                 .sorted(Comparator.comparingInt(PromotionRule::getPriority).reversed())
+                .map(PromotionRuleBaseProjection::from)
                 .toList();
 
         engine.calculate(workspace, sortedRules);
@@ -142,8 +144,9 @@ public class PromoRuleEngineExecutionTest {
             .build();
 
         // The engine assumes pre-sorted input, so sort here the way callers are expected to
-        List<PromotionRule> rules = List.of(shippingRule, mouseRule, keyboardRule).stream()
+        List<PromotionRuleBaseProjection> rules = List.of(shippingRule, mouseRule, keyboardRule).stream()
                 .sorted(Comparator.comparingInt(PromotionRule::getPriority).reversed())
+                .map(PromotionRuleBaseProjection::from)
                 .toList();
 
         engine.calculate(workspace, rules);
@@ -217,7 +220,9 @@ public class PromoRuleEngineExecutionTest {
             .action(new ProductPercentageDiscountAction("PROD-1", new BigDecimal("0.15")))
             .build();
 
-        List<PromotionRule> rules = List.of(highPriorityInapplicableRule, lowPriorityFallbackRule);
+        List<PromotionRuleBaseProjection> rules = List.of(highPriorityInapplicableRule, lowPriorityFallbackRule).stream()
+                .map(PromotionRuleBaseProjection::from)
+                .toList();
 
         engine.calculate(workspace, rules);
 
