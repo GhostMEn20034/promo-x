@@ -26,6 +26,18 @@ spring:
     web:
       pageable:
         one-indexed-parameters: true
+    redis:
+      url: redis://:${REDIS_PASSWORD}@${REDIS_HOST}
+
+  cache:
+    type: redis
 
 server:
   port: 8000
+
+# Application-specific properties
+promox:
+  cache:
+    ttls:
+      promotion-rules: 1h
+      products-with-categories: 1h

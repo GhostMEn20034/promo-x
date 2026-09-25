@@ -1,12 +1,17 @@
 package com.promox.core.shared;
 
 import com.promox.core.testfixtures.config.PostgresTestConfiguration;
+import com.promox.core.testfixtures.config.RedisTestConfiguration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.sql.DataSource;
@@ -16,7 +21,7 @@ import java.sql.Statement;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(PostgresTestConfiguration.class)
+@Import({PostgresTestConfiguration.class, RedisTestConfiguration.class})
 public abstract class IntegrationTestBase {
 
     @Autowired
@@ -24,6 +29,14 @@ public abstract class IntegrationTestBase {
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired
+    private CacheManager cacheManager;
+
+    @DynamicPropertySource
+    static void redisProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.url", RedisTestConfiguration::getUrl);
+    }
 
     @BeforeEach
     void cleanDatabase() throws Exception {
@@ -40,6 +53,13 @@ public abstract class IntegrationTestBase {
                     END LOOP;
                 END $$;
             """);
+        }
+
+        for (String cacheName : cacheManager.getCacheNames()) {
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                cache.clear();
+            }
         }
     }
 }

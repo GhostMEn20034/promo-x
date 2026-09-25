@@ -9,10 +9,12 @@ import com.promox.core.promotion.internal.dto.UpdateUsageLimitsRequest;
 import com.promox.core.promotion.internal.exception.PromotionBusinessException;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
+import com.promox.core.promotion.internal.persistence.PromotionRuleBaseProjection;
 import com.promox.core.promotion.internal.persistence.PromotionRuleSpecifications;
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
 import com.promox.core.promotion.internal.service.engine.PromoRuleEngine;
 import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,15 +35,18 @@ public class PromotionService {
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of("createdAt", "updatedAt", "priority");
 
     private final PromotionRepository promotionRepository;
+    private final PromotionRuleCacheReader promotionRuleCacheReader;
     private final PromoRuleEngine promoRuleEngine;
     private final ApplicationEventPublisher eventPublisher;
 
     public PromotionService(
         PromotionRepository promotionRepository,
+        PromotionRuleCacheReader promotionRuleCacheReader,
         PromoRuleEngine promoRuleEngine,
         ApplicationEventPublisher eventPublisher
     ) {
         this.promotionRepository = promotionRepository;
+        this.promotionRuleCacheReader = promotionRuleCacheReader;
         this.promoRuleEngine = promoRuleEngine;
         this.eventPublisher = eventPublisher;
     }
@@ -66,15 +70,7 @@ public class PromotionService {
         return promotionRepository.findById(promotionRuleId);
     }
 
-    @Transactional(readOnly = true)
-    public List<PromotionRule> findAllActiveSortedByPriority(Long storefrontId) {
-        List<PromotionRule> rules = promotionRepository.findAllByStorefrontIdAndIsActiveTrue(storefrontId);
-
-        return rules.stream()
-            .sorted(Comparator.comparingInt(PromotionRule::getPriority).reversed())
-            .toList();
-    }
-
+    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, key = "#storefrontId")
     @Transactional
     public PromotionRule create(
         CreatePromotionRuleRequest request,
@@ -99,6 +95,7 @@ public class PromotionService {
         return promotionRepository.save(promotionRule);
     }
 
+    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, key = "#promotionRule.storefrontId")
     @Transactional
     public void update(
         UpdatePromotionRuleRequest request,
@@ -142,7 +139,7 @@ public class PromotionService {
 
     @Transactional
     public void applyRules(Long storefrontId, EngineWorkspace workspace) {
-        List<PromotionRule> rules = findAllActiveSortedByPriority(storefrontId);
+        List<PromotionRuleBaseProjection> rules = promotionRuleCacheReader.findAllActiveSortedByPriority(storefrontId);
 
         promoRuleEngine.calculate(workspace, rules);
 
@@ -155,6 +152,7 @@ public class PromotionService {
         }
     }
 
+    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, allEntries = true)
     @Transactional
     public Optional<Long> deleteById(Long promotionRuleId) {
         int rowsDeleted = promotionRepository.deletePromotionRuleById(promotionRuleId);

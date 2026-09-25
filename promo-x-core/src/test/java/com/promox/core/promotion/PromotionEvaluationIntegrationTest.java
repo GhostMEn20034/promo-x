@@ -4,6 +4,7 @@ import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
+import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.service.action.ActionStrategy;
@@ -24,13 +25,14 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.modulith.test.EnableScenarios;
+import org.springframework.modulith.test.Scenario;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,10 +41,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@EnableScenarios
 public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
     private static final String EVALUATE_URL_PATH = "/promotion/evaluate";
     private static final Long STOREFRONT_ID = 100L;
@@ -317,7 +319,7 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("Should decrement remaining uses only for applied rules that have a usage limit")
-        void evaluate_appliedRuleWithUsageLimit_reducesRemainingUses() throws Exception {
+        void evaluate_appliedRuleWithUsageLimit_reducesRemainingUses(Scenario scenario) {
             PromotionRule limited = saveLimitedRule("Limited keyboards", "SUMMER", 5);
             PromotionRule limitedNotMatched = saveLimitedRule("Limited other code", "WINTER", 5);
             PromotionRule unlimited = saveRule(
@@ -326,16 +328,36 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
                 new FreeShippingAction()
             );
 
-            JsonNode response = evaluateOk(cartPayload(SUMMER_PROMO_CODE));
+            scenario.stimulate(() -> evaluateOkUnchecked(cartPayload(SUMMER_PROMO_CODE)))
+                .andWaitForStateChange(() -> remainingUses(limited), remaining -> remaining == 4)
+                .andVerify((_, response) -> {
+                    assertThat(ruleIds(response, "appliedRules")).containsExactly(limited.getId(), unlimited.getId());
+                    assertThat(remainingUses(limitedNotMatched)).isEqualTo(5);
+                    assertThat(promotionRepository.findById(unlimited.getId()).orElseThrow().hasUsageLimit()).isFalse();
+                    assertThat(remainingUses(unlimited)).isZero();
+                });
+        }
 
-            assertThat(ruleIds(response, "appliedRules")).containsExactly(limited.getId(), unlimited.getId());
-
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
-                assertThat(remainingUses(limited)).isEqualTo(4)
+        @Test
+        @DisplayName("Should publish PromotionRulesAppliedEvent with the applied rule IDs")
+        void evaluate_appliedRules_publishesRulesAppliedEvent(Scenario scenario) {
+            PromotionRule keyboards = saveRule(
+                STOREFRONT_ID, "10% off keyboards", 100, false, true,
+                new PromoCodeConditionNode("SUMMER", Operator.EQUALS),
+                new ProductPercentageDiscountAction(KEYBOARD, new BigDecimal("0.10"))
             );
-            assertThat(remainingUses(limitedNotMatched)).isEqualTo(5);
-            assertThat(promotionRepository.findById(unlimited.getId()).orElseThrow().hasUsageLimit()).isFalse();
-            assertThat(remainingUses(unlimited)).isZero();
+            PromotionRule shipping = saveRule(
+                STOREFRONT_ID, "Free shipping", 10, false, true,
+                new PromoCodeConditionNode("SUMMER", Operator.EQUALS),
+                new FreeShippingAction()
+            );
+
+            scenario.stimulate(() -> evaluateOkUnchecked(cartPayload(SUMMER_PROMO_CODE)))
+                .andWaitForEventOfType(PromotionRulesAppliedEvent.class)
+                .matchingMappedValue(PromotionRulesAppliedEvent::storefrontId, STOREFRONT_ID)
+                .toArriveAndVerify(event ->
+                    assertThat(event.appliedRuleIds()).containsExactly(keyboards.getId(), shipping.getId())
+                );
         }
     }
 
@@ -468,6 +490,14 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
             .andReturn();
 
         return objectMapper.readTree(result.getResponse().getContentAsString());
+    }
+
+    private JsonNode evaluateOkUnchecked(String payload) {
+        try {
+            return evaluateOk(payload);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** Cart of 2 keyboards @ 100.00 + 1 mouse @ 50.00 with 15.00 shipping (old total 265.00). */

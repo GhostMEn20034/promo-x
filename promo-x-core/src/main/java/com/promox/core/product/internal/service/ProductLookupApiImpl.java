@@ -2,6 +2,7 @@ package com.promox.core.product.internal.service;
 
 import com.promox.core.category.CategoryDto;
 import com.promox.core.category.CategoryLookupApi;
+import com.promox.core.infrastructure.cache.RedisBatchCache;
 import com.promox.core.product.*;
 import com.promox.core.product.internal.ProductMapper;
 import com.promox.core.product.internal.persistence.Product;
@@ -17,12 +18,21 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductLookupApiImpl implements ProductLookupApi {
+    // Must match the promox.cache.ttls key in application.yaml
+    public static final String PRODUCTS_WITH_CATEGORIES_CACHE = "products-with-categories";
+
     private final ProductService productService;
     private final CategoryLookupApi categoryLookupApi;
+    private final RedisBatchCache redisBatchCache;
 
-    public ProductLookupApiImpl(ProductService productService, CategoryLookupApi categoryLookupApi) {
+    public ProductLookupApiImpl(
+        ProductService productService,
+        CategoryLookupApi categoryLookupApi,
+        RedisBatchCache redisBatchCache
+    ) {
         this.productService = productService;
         this.categoryLookupApi = categoryLookupApi;
+        this.redisBatchCache = redisBatchCache;
     }
 
     @Override
@@ -45,9 +55,22 @@ public class ProductLookupApiImpl implements ProductLookupApi {
 
     @Override
     public List<ProductWithCategoriesDto> findAllWithCategoriesByExternalIds(Set<String> externalIds, Long storefrontId) {
+        Map<String, ProductWithCategoriesDto> products = redisBatchCache.getAll(
+            PRODUCTS_WITH_CATEGORIES_CACHE,
+            externalIds,
+            // External IDs are only unique per storefront.
+            externalId -> storefrontId + ":" + externalId,
+            ProductWithCategoriesDto.class,
+            missingExternalIds -> loadWithCategories(missingExternalIds, storefrontId)
+        );
+
+        return List.copyOf(products.values());
+    }
+
+    private Map<String, ProductWithCategoriesDto> loadWithCategories(Set<String> externalIds, Long storefrontId) {
         List<Product> products = productService.findAllByExternalIds(externalIds, storefrontId);
         if (products.isEmpty()) {
-            return List.of();
+            return Map.of();
         }
 
         Set<Long> categoryIds = products.stream()
@@ -60,15 +83,17 @@ public class ProductLookupApiImpl implements ProductLookupApi {
                 .collect(Collectors.toMap(CategoryDto::id, Function.identity()));
 
         return products.stream()
-            .map(product -> {
-                List<CategoryDto> categories = product.getCategoryIds().stream()
-                    .map(categoriesById::get)
-                    .filter(Objects::nonNull)
-                    .toList();
+            .collect(Collectors.toMap(
+                Product::getExternalId,
+                product -> {
+                    List<CategoryDto> categories = product.getCategoryIds().stream()
+                        .map(categoriesById::get)
+                        .filter(Objects::nonNull)
+                        .toList();
 
-                return ProductMapper.toDto(product, categories);
-            })
-            .toList();
+                    return ProductMapper.toDto(product, categories);
+                }
+            ));
     }
 
     @Override
