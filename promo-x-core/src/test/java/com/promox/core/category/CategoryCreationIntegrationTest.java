@@ -119,7 +119,7 @@ public class CategoryCreationIntegrationTest extends IntegrationTestBase {
     @DisplayName("Should throw business error when specified Storefront does not exist")
     void createCategory_ShouldReturnError_WhenStorefrontDoesNotExist() throws Exception {
         Long nonExistentStorefrontId = 99999L;
-        var request = new CreateCategoryRequest("Smartphones", null, null);
+        var request = new CreateCategoryRequest("Smartphones", "1234", null);
 
         mockMvc.perform(post(BASE_URL + "/")
                         .header(STOREFRONT_HEADER, nonExistentStorefrontId)
@@ -194,7 +194,7 @@ public class CategoryCreationIntegrationTest extends IntegrationTestBase {
         );
 
         // Try referencing foreign parent under activeStorefront
-        var request = new CreateCategoryRequest("Invalid Child", null, otherStorefrontParent.getId());
+        var request = new CreateCategoryRequest("Invalid Child", "123", otherStorefrontParent.getId());
 
         mockMvc.perform(post(BASE_URL + "/")
                         .header(STOREFRONT_HEADER, activeStorefront.getId())
