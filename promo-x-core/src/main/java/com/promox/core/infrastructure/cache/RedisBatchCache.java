@@ -87,6 +87,28 @@ public class RedisBatchCache {
         return result;
     }
 
+    /**
+     * Evicts the entries for the given identifiers with a single UNLINK (non-blocking delete).
+     *
+     * @param cacheName cache configured in the cache manager
+     * @param ids       identifiers whose entries to evict
+     * @param keyMapper maps an identifier to its cache key (same mapping used for {@link #getAll})
+     */
+    public <I> void evictAll(String cacheName, Collection<I> ids, Function<I, String> keyMapper) {
+        if (ids.isEmpty()) {
+            return;
+        }
+
+        RedisCacheConfiguration configuration = configurationFor(cacheName);
+        byte[][] redisKeys = new HashSet<>(ids).stream()
+            .map(id -> serializeKey(configuration, cacheName, keyMapper.apply(id)))
+            .toArray(byte[][]::new);
+
+        try (RedisConnection connection = connectionFactory.getConnection()) {
+            connection.keyCommands().unlink(redisKeys);
+        }
+    }
+
     private <I, V> Map<I, V> readAll(
         List<I> uniqueIds,
         byte[][] redisKeys,

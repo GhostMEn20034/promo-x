@@ -1,6 +1,7 @@
 package com.promox.core.product;
 
 import com.promox.core.category.CategoryDto;
+import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
 import com.promox.core.product.internal.persistence.Product;
@@ -15,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.modulith.test.EnableScenarios;
+import org.springframework.modulith.test.Scenario;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -23,8 +28,11 @@ import java.util.Objects;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
+@EnableScenarios
 public class ProductLookupCacheIntegrationTest extends IntegrationTestBase {
     private static final Long STOREFRONT_ID = 100L;
     private static final Long OTHER_STOREFRONT_ID = 200L;
@@ -50,6 +58,9 @@ public class ProductLookupCacheIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Category keyboards;
 
@@ -235,6 +246,43 @@ public class ProductLookupCacheIntegrationTest extends IntegrationTestBase {
 
             assertThat(isCached(STOREFRONT_ID, KEYBOARD)).isFalse();
             assertThat(lookup(STOREFRONT_ID, KEYBOARD)).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Category Update Invalidation Tests")
+    class CategoryUpdateInvalidationTests {
+
+        @Test
+        @DisplayName("Should evict only the cached products of the updated category within the event's storefront")
+        void categoryUpdate_evictsOnlyProductsOfThatCategoryInStorefront(Scenario scenario) {
+            saveProduct(STOREFRONT_ID, KEYBOARD, Set.of(keyboards.getId()));
+            saveProduct(STOREFRONT_ID, MOUSE, Set.of());
+            saveProduct(OTHER_STOREFRONT_ID, KEYBOARD, Set.of());
+            lookup(STOREFRONT_ID, KEYBOARD, MOUSE);
+            lookup(OTHER_STOREFRONT_ID, KEYBOARD);
+
+            scenario.stimulate(() -> updateCategory(keyboards, "Mechanical Keyboards", "CAT-MECHANICAL"))
+                .andWaitForStateChange(() -> isCached(STOREFRONT_ID, KEYBOARD), cached -> !cached)
+                .andVerify(cached -> {
+                    assertThat(isCached(STOREFRONT_ID, MOUSE)).isTrue();
+                    assertThat(isCached(OTHER_STOREFRONT_ID, KEYBOARD)).isTrue();
+
+                    CategoryDto category = lookup(STOREFRONT_ID, KEYBOARD).getFirst().categories().iterator().next();
+                    assertThat(category.name()).isEqualTo("Mechanical Keyboards");
+                    assertThat(category.externalId()).isEqualTo("CAT-MECHANICAL");
+                });
+        }
+    }
+
+    private void updateCategory(Category category, String name, String externalId) {
+        try {
+            mockMvc.perform(put("/category/{categoryId}", category.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(new UpdateCategoryRequest(name, externalId, null))))
+                .andExpect(status().isOk());
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 

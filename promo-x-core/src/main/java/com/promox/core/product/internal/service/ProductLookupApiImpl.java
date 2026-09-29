@@ -21,6 +21,11 @@ public class ProductLookupApiImpl implements ProductLookupApi {
     // Must match the promox.cache.ttls key in application.yaml
     public static final String PRODUCTS_WITH_CATEGORIES_CACHE = "products-with-categories";
 
+    // External IDs are only unique per storefront.
+    public static String productCacheKey(Long storefrontId, String externalId) {
+        return storefrontId + ":" + externalId;
+    }
+
     private final ProductService productService;
     private final CategoryLookupApi categoryLookupApi;
     private final RedisBatchCache redisBatchCache;
@@ -58,8 +63,7 @@ public class ProductLookupApiImpl implements ProductLookupApi {
         Map<String, ProductWithCategoriesDto> products = redisBatchCache.getAll(
             PRODUCTS_WITH_CATEGORIES_CACHE,
             externalIds,
-            // External IDs are only unique per storefront.
-            externalId -> storefrontId + ":" + externalId,
+            externalId -> productCacheKey(storefrontId, externalId),
             ProductWithCategoriesDto.class,
             missingExternalIds -> loadWithCategories(missingExternalIds, storefrontId)
         );

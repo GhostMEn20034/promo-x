@@ -28,4 +28,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, Product
 
     @EntityGraph(attributePaths = "categoryIds")
     List<Product> findAllByStorefrontIdAndExternalIdIn(Long storefrontId, Collection<String> externalIds);
+
+    @Query("SELECT p.externalId FROM Product p JOIN p.categoryIds c WHERE p.storefrontId = :storefrontId AND c = :categoryId")
+    List<String> findExternalIdsByStorefrontIdAndCategoryId(
+        @Param("storefrontId") Long storefrontId,
+        @Param("categoryId") Long categoryId
+    );
 }
