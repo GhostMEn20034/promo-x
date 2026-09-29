@@ -64,6 +64,11 @@ public class ProductService {
         return productRepository.findAllByStorefrontIdAndExternalIdIn(storefrontId, externalIds);
     }
 
+    @Transactional(readOnly = true)
+    public List<String> findExternalIdsByCategoryId(Long categoryId, Long storefrontId) {
+        return productRepository.findExternalIdsByStorefrontIdAndCategoryId(storefrontId, categoryId);
+    }
+
     private void validateExternalIdUniqueness(@Nullable String externalId, Long storefrontId) {
         if (externalId == null) {
             return;

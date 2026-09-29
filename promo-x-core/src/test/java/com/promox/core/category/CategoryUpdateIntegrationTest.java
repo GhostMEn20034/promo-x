@@ -1,5 +1,6 @@
 package com.promox.core.category;
 
+import com.promox.core.category.event.CategoryUpdatedEvent;
 import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
@@ -10,14 +11,17 @@ import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
 import org.springframework.http.MediaType;
-import tools.jackson.databind.ObjectMapper;
+import org.springframework.modulith.test.AssertablePublishedEvents;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.modulith.test.PublishedEventsExtension;
+import tools.jackson.databind.ObjectMapper;
 import java.util.stream.Stream;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -48,7 +52,10 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
 
     @Test
     @DisplayName("Should update category successfully when request is valid")
-    void updateCategory_ShouldReturn200_WhenUpdatingCategoryNameAndExternalId() throws Exception {
+    @ExtendWith(PublishedEventsExtension.class)
+    void updateCategory_ShouldReturn200_WhenUpdatingCategoryNameAndExternalId(
+            AssertablePublishedEvents events
+    ) throws Exception {
         Category existing = categoryRepository.save(
                 Category.builder()
                         .name("Old Name")
@@ -68,11 +75,17 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.externalId").value("NEW-EXT"))
                 .andExpect(jsonPath("$.storefrontId").value(activeStorefront.getId()))
                 .andExpect(jsonPath("$.parent").isEmpty());
+
+        events.assertThat()
+                .contains(CategoryUpdatedEvent.class);
     }
 
     @Test
     @DisplayName("Should assign parent category successfully when parent exists in same storefront")
-    void updateCategory_ShouldReturn200_WhenAssigningValidParent() throws Exception {
+    @ExtendWith(PublishedEventsExtension.class)
+    void updateCategory_ShouldReturn200_WhenAssigningValidParent(
+            AssertablePublishedEvents events
+    ) throws Exception {
         Category parent = categoryRepository.save(
                 Category.builder()
                         .name("Parent Category")
@@ -98,6 +111,9 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.id").value(child.getId()))
                 .andExpect(jsonPath("$.parent.id").value(parent.getId()))
                 .andExpect(jsonPath("$.parent.name").value("Parent Category"));
+
+        events.assertThat()
+                .contains(CategoryUpdatedEvent.class);
     }
 
 

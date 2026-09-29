@@ -1,6 +1,7 @@
 package com.promox.core.category.internal.service;
 
 import com.promox.core.category.CategoryIdsExistenceResult;
+import com.promox.core.category.event.CategoryUpdatedEvent;
 import com.promox.core.category.internal.dto.CreateCategoryRequest;
 import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryAlreadyExistsException;
@@ -8,6 +9,7 @@ import com.promox.core.category.internal.exception.ParentCategoryNotFoundExcepti
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
 import jakarta.annotation.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +19,11 @@ import java.util.*;
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, ApplicationEventPublisher eventPublisher) {
         this.categoryRepository = categoryRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -86,6 +90,14 @@ public class CategoryService {
         categoryToUpdate.setName(updateRequest.name());
         categoryToUpdate.setExternalId(updateRequest.externalId());
         categoryToUpdate.setParent(parent);
+
+        eventPublisher.publishEvent(new CategoryUpdatedEvent(
+                categoryToUpdate.getId(),
+                categoryToUpdate.getExternalId(),
+                categoryToUpdate.getName(),
+                categoryToUpdate.getParentId(),
+                categoryToUpdate.getStorefrontId()
+        ));
     }
 
     private void validateExternalIdUniqueness(Long storefrontId, @Nullable String externalId) {

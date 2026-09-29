@@ -10,6 +10,7 @@ public record CreateCategoryRequest(
         @Size(min = 2, max = 50)
         String name,
 
+        @NotBlank(message = "Category external ID is required")
         @Size(min = 1, max = 512)
         String externalId,
 
