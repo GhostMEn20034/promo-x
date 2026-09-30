@@ -5,6 +5,7 @@ import com.promox.core.product.ProductLookupApi;
 import com.promox.core.product.ProductWithCategoriesDto;
 import com.promox.core.product.internal.dto.CreateMultipleProductsRequest;
 import com.promox.core.product.internal.dto.CreateProductRequest;
+import com.promox.core.product.internal.dto.UpdateProductRequest;
 import com.promox.core.product.internal.exception.ProductNotFoundException;
 import com.promox.core.product.internal.service.ProductCommandHandler;
 
@@ -41,6 +42,15 @@ public class ProductController {
         @Valid @RequestBody CreateMultipleProductsRequest multipleProductsRequest
     ) {
         productCommandHandler.createMultipleProducts(storefrontId, multipleProductsRequest);
+    }
+
+    @PutMapping("/{productId}")
+    public DefaultProductDto updateProduct(
+        @PathVariable Long productId,
+        @Valid @RequestBody UpdateProductRequest updateRequest
+    ) {
+        return productCommandHandler.updateById(productId, updateRequest)
+            .orElseThrow(() -> new ProductNotFoundException(productId));
     }
 
     @GetMapping("/{productId}")

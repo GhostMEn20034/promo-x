@@ -1,13 +1,16 @@
 package com.promox.core.product.internal.service;
 
 import com.promox.core.product.ProductExternalIdsExistenceResult;
+import com.promox.core.product.event.ProductUpdatedEvent;
 import com.promox.core.product.internal.dto.CreateProductRequest;
+import com.promox.core.product.internal.dto.UpdateProductRequest;
 import com.promox.core.product.internal.exception.ProductBusinessException;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 
 import jakarta.annotation.Nullable;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +19,14 @@ import java.util.*;
 
 @Service
 public class ProductService {
+    private final ApplicationEventPublisher eventPublisher;
     private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(
+            ApplicationEventPublisher eventPublisher,
+            ProductRepository productRepository
+    ) {
+        this.eventPublisher = eventPublisher;
         this.productRepository = productRepository;
     }
 
@@ -51,6 +59,37 @@ public class ProductService {
     @Transactional
     public void createMultipleProducts(Long storefrontId, List<CreateProductRequest> items) {
         productRepository.saveAllInBatch(storefrontId, items);
+    }
+
+    /**
+     * Updates a managed product in place; changes are persisted through dirty checking.
+     * <b>Precondition:</b> all referenced category IDs exist for the product's storefront.
+     */
+    @Transactional
+    public void update(Product product, UpdateProductRequest request) {
+        String previousExternalId = product.getExternalId();
+        if (!previousExternalId.equals(request.externalId())) {
+            validateExternalIdUniqueness(request.externalId(), product.getStorefrontId());
+        }
+
+        product.setExternalId(request.externalId());
+        product.setSku(request.sku());
+        product.setName(request.name());
+        product.setCategoryIds(new HashSet<>(request.categoryIds()));
+
+        // Flush so @UpdateTimestamp has set the new updatedAt before it goes into the event.
+        productRepository.flush();
+
+        eventPublisher.publishEvent(new ProductUpdatedEvent(
+            product.getId(),
+            previousExternalId,
+            product.getExternalId(),
+            product.getSku(),
+            product.getName(),
+            Set.copyOf(product.getCategoryIds()),
+            product.getStorefrontId(),
+            product.getUpdatedAt()
+        ));
     }
 
     @Transactional(readOnly = true)
