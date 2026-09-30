@@ -4,11 +4,14 @@ import com.promox.core.product.DefaultProductDto;
 import com.promox.core.product.internal.ProductMapper;
 import com.promox.core.product.internal.dto.CreateMultipleProductsRequest;
 import com.promox.core.product.internal.dto.CreateProductRequest;
+import com.promox.core.product.internal.dto.UpdateProductRequest;
 
 import com.promox.core.product.internal.exception.ProductBusinessException;
 import com.promox.core.storefront.StorefrontLookupApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 
 @Service
@@ -63,5 +66,19 @@ public class ProductCommandHandler {
         productCategoryValidator.validateCategoryIdsExistenceForBulk(creationRequest.items(), storefrontId);
         productValidator.validateExternalIdsUniquenessForBulk(creationRequest.items(), storefrontId);
         productService.createMultipleProducts(storefrontId, creationRequest.items());
+    }
+
+    @Transactional
+    public Optional<DefaultProductDto> updateById(Long productId, UpdateProductRequest updateRequest) {
+        return productService.findById(productId)
+            .map(product -> {
+                productCategoryValidator.validateCategoryIdsExistence(
+                    updateRequest.categoryIds(),
+                    product.getStorefrontId(),
+                    "categoryIds"
+                );
+                productService.update(product, updateRequest);
+                return ProductMapper.toDto(product);
+            });
     }
 }
