@@ -1,0 +1,155 @@
+name: promo-x-core CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Superseded PR runs are cancelled; every master commit is still tested.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  # The workflow always runs so required checks never get stuck in "pending" on PRs that
+  # don't touch promo-x-core; the jobs below are skipped instead, which counts as passing.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.filter.outputs.core }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            core:
+              - 'promo-x-core/**'
+              - '.github/workflows/promo-x-core-ci.yml'
+
+  smoke-test:
+    name: Smoke test
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: promo-x-core
+
+    # Throwaway values for the disposable CI containers; not real credentials.
+    env:
+      POSTGRES_PASSWORD: ci_postgres_password
+      SQL_HOST: localhost:5432
+      SQL_DATABASE: promox_ci
+      SQL_USER: promox_ci
+      SQL_PASSWORD: ci_sql_password
+      REDIS_HOST: localhost:6379
+      REDIS_PASSWORD: ci_redis_password
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      # Same containers as local development; the compose file reads the env values above.
+      - name: Start PostgreSQL and Redis
+        run: |
+          docker compose -f docker-compose-dev.yaml up -d
+
+          for _ in $(seq 1 60); do
+            # -h localhost: the init script's temporary server only listens on the Unix socket,
+            # so a TCP connection succeeds only once the real server is up with the app user.
+            if docker exec promox-psql-db psql -h localhost -U "$SQL_USER" -d "$SQL_DATABASE" -c 'SELECT 1' > /dev/null 2>&1 \
+              && docker exec promox-redis-db redis-cli ping | grep -qE 'PONG|NOAUTH'; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "::error::PostgreSQL or Redis did not become ready"
+          docker compose -f docker-compose-dev.yaml logs
+          exit 1
+
+      # Flyway is disabled at runtime and Hibernate only validates the schema, so migrate first.
+      - name: Apply database migrations
+        run: ./mvnw -B -ntp flyway:migrate
+
+      - name: Build application
+        run: ./mvnw -B -ntp -DskipTests package
+
+      - name: Start application and wait until it serves requests
+        run: |
+          java -jar target/promox-core.jar > app.log 2>&1 &
+          APP_PID=$!
+
+          for attempt in $(seq 1 60); do
+            if ! kill -0 "$APP_PID" 2>/dev/null; then
+              echo "::error::Application exited during startup"
+              cat app.log
+              exit 1
+            fi
+
+            # Any answer below 500 means the app started and is serving requests ("000" = not listening yet).
+            status=$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Storefront-Id: 1' http://localhost:8000/promotion/ || true)
+            if [ "$status" != "000" ] && [ "$status" -lt 500 ]; then
+              echo "Application is up after ~$((attempt * 2))s (HTTP $status)"
+              kill "$APP_PID"
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "::error::Application did not respond successfully within 120s (last status: $status)"
+          cat app.log
+          kill "$APP_PID"
+          exit 1
+
+  tests:
+    name: Tests
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: promo-x-core
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      # Integration tests start PostgreSQL and Redis through Testcontainers (Docker is available on the runner).
+      - name: Run tests
+        run: ./mvnw -B -ntp test
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: promo-x-core/target/surefire-reports/
+          retention-days: 7
