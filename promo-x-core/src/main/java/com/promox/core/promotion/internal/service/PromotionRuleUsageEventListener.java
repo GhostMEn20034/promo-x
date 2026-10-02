@@ -1,5 +1,6 @@
 package com.promox.core.promotion.internal.service;
 
+import com.promox.core.promotion.event.PromotionRuleUsageExpiredEvent;
 import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
@@ -15,5 +16,10 @@ public class PromotionRuleUsageEventListener {
     @ApplicationModuleListener
     public void on(PromotionRulesAppliedEvent event) {
         promotionService.reduceRemainingUses(event.appliedRuleIds());
+    }
+
+    @ApplicationModuleListener
+    public void on(PromotionRuleUsageExpiredEvent event) {
+        promotionService.restoreRemainingUses(event.limitedRuleIds());
     }
 }

@@ -41,3 +41,6 @@ promox:
     ttls:
       promotion-rules: 1h
       products-with-categories: 1h
+  promotion:
+    # How long a reserved rule usage may wait to be confirmed (stored as the usage's expires_at)
+    usage-reservation-ttl: 15m

@@ -5,6 +5,7 @@ import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
 import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
 import com.promox.core.promotion.internal.exception.PromotionNotFoundException;
+import com.promox.core.promotion.internal.exception.PromotionRuleUsageNotFoundException;
 import com.promox.core.promotion.internal.service.PromotionCommandHandler;
 
 import jakarta.validation.Valid;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 
 @RestController
@@ -97,5 +100,17 @@ public class PromotionController {
             @Valid @RequestBody PromotionEvaluationRequest evaluationRequest
     ) {
         return promotionCommandHandler.evaluate(storefrontId, evaluationRequest);
+    }
+
+    @PostMapping("/usage/{usageId}/confirm")
+    public PromotionRuleUsageDto confirmPromotionRuleUsage(@PathVariable UUID usageId) {
+        return promotionCommandHandler.confirmUsage(usageId)
+                .orElseThrow(() -> new PromotionRuleUsageNotFoundException(usageId));
+    }
+
+    @PostMapping("/usage/{usageId}/cancel")
+    public PromotionRuleUsageDto cancelPromotionRuleUsage(@PathVariable UUID usageId) {
+        return promotionCommandHandler.cancelUsage(usageId)
+                .orElseThrow(() -> new PromotionRuleUsageNotFoundException(usageId));
     }
 }

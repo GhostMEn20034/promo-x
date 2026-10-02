@@ -1,5 +1,7 @@
 package com.promox.core.promotion.internal.dto;
 
+import jakarta.annotation.Nullable;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -22,7 +24,10 @@ public record PromotionEvaluationResponse(
 
         List<LineItemResult> items,
         List<RuleResult> matchedRules,
-        List<RuleResult> appliedRules
+        List<RuleResult> appliedRules,
+
+        // Null when no rule was applied, since nothing was used then.
+        @Nullable PromotionRuleUsageDto usage
 ) {
     public record LineItemResult(
             String productExternalId,

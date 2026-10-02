@@ -7,6 +7,9 @@ import com.promox.core.promotion.internal.service.condition.ConditionNode;
  * Flat projection of {@link PromotionRule} carrying only what the rule engine reads.
  * A concrete record (not an interface-based Spring Data projection) so it serializes
  * cleanly as a future Redis cache value.
+ * <p>
+ * Only the {@code hasUsageLimit} flag is included, never the remaining uses: the counter
+ * changes on every application and would make the cached value stale immediately.
  */
 public record PromotionRuleBaseProjection(
     Long id,
@@ -14,6 +17,7 @@ public record PromotionRuleBaseProjection(
     String name,
     int priority,
     boolean isShortCircuit,
+    boolean hasUsageLimit,
     ConditionNode conditionTree,
     ActionStrategy action
 ) {
@@ -24,6 +28,7 @@ public record PromotionRuleBaseProjection(
             rule.getName(),
             rule.getPriority(),
             rule.isShortCircuit(),
+            rule.hasUsageLimit(),
             rule.getConditionTree(),
             rule.getAction()
         );

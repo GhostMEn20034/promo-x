@@ -40,8 +40,8 @@ public class EngineWorkspace {
         this.shippingCostDiscount = BigDecimal.ZERO;
     }
 
-    public void logAppliedRule(Long ruleId, String ruleName) {
-        this.appliedRules.add(new AppliedRuleLog(ruleId, ruleName));
+    public void logAppliedRule(Long ruleId, String ruleName, boolean hasUsageLimit) {
+        this.appliedRules.add(new AppliedRuleLog(ruleId, ruleName, hasUsageLimit));
     }
 
     public void logMatchedRule(Long ruleId, String ruleName) {
@@ -102,6 +102,14 @@ public class EngineWorkspace {
     public List<String> getPromoCodes() { return promoCodes; }
     public List<WorkspaceLineItem> getLineItems() { return lineItems; }
     public List<AppliedRuleLog> getAppliedRules() { return appliedRules; }
+
+    /** Applied rules that consumed one of their limited uses. */
+    public List<Long> getUsageLimitedAppliedRuleIds() {
+        return appliedRules.stream()
+                .filter(AppliedRuleLog::hasUsageLimit)
+                .map(AppliedRuleLog::ruleId)
+                .toList();
+    }
     public List<MatchedRuleLog> getMatchedRules() { return matchedRules; }
     public BigDecimal getShippingCost() { return shippingCost; }
     public BigDecimal getShippingCostDiscount() { return shippingCostDiscount; }
