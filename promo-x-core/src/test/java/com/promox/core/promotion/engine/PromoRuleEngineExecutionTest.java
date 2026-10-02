@@ -12,6 +12,7 @@ import com.promox.core.promotion.internal.context.AppliedRuleLog;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.context.MatchedRuleLog;
 import com.promox.core.promotion.internal.service.engine.PromoRuleEngine;
+import com.promox.core.promotion.internal.service.engine.RuleUsageLimiter;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.persistence.PromotionRuleBaseProjection;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +27,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PromoRuleEngineExecutionTest {
 
     private static final Long STOREFRONT_ID = 123L;
-    private final PromoRuleEngine engine = new PromoRuleEngine();
+    // None of these rules has a usage limit, so the limiter is never consulted.
+    private final PromoRuleEngine engine = new PromoRuleEngine(new RuleUsageLimiter() {
+        @Override
+        public boolean tryAcquire(Long ruleId) {
+            return true;
+        }
+
+        @Override
+        public void release(Long ruleId) {
+        }
+    });
 
     @Test
     @DisplayName("Should execute rules in descending priority order and short-circuit pipeline when high-priority rule applies")

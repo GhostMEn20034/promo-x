@@ -36,4 +36,23 @@ public class PromotionExceptionHandler {
 
         return problem;
     }
+
+    @ExceptionHandler(PromotionRuleUsageNotFoundException.class)
+    public ProblemDetail handlePromotionRuleUsageNotFound(
+        PromotionRuleUsageNotFoundException ex,
+        HttpServletRequest request
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+
+        problem.setType(URI.create("https://api.example.com/problems/promotion-rule-usage-not-found"));
+        problem.setTitle("Promotion rule usage not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+
+        problem.setProperty("timestamp", Instant.now());
+        problem.setProperty("code", ex.getCode());
+        problem.setProperty("errors", ApiErrorMapper.from(ex.getErrors()));
+
+        return problem;
+    }
 }

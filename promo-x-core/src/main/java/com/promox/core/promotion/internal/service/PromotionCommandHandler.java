@@ -5,6 +5,7 @@ import com.promox.core.product.ProductWithCategoriesDto;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.PromotionMapper;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsage;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,15 +24,18 @@ import java.util.stream.Stream;
 public class PromotionCommandHandler {
     private final PromotionMapper promotionMapper;
     private final PromotionService promotionService;
+    private final PromotionRuleUsageService promotionRuleUsageService;
     private final PromotionProductValidator promotionProductValidator;
 
     public PromotionCommandHandler(
             PromotionMapper promotionMapper,
             PromotionService promotionService,
+            PromotionRuleUsageService promotionRuleUsageService,
             PromotionProductValidator promotionProductValidator
     ) {
         this.promotionMapper = promotionMapper;
         this.promotionService = promotionService;
+        this.promotionRuleUsageService = promotionRuleUsageService;
         this.promotionProductValidator = promotionProductValidator;
     }
 
@@ -101,9 +106,26 @@ public class PromotionCommandHandler {
         );
 
         EngineWorkspace workspace = buildWorkspace(storefrontId, evaluationRequest, products);
-        promotionService.applyRules(storefrontId, workspace);
+        Optional<PromotionRuleUsage> usage = promotionService.applyRules(
+                storefrontId,
+                workspace,
+                products,
+                evaluationRequest.reserveUsage()
+        );
 
-        return promotionMapper.toEvaluationResponse(workspace);
+        return promotionMapper.toEvaluationResponse(workspace, usage.orElse(null));
+    }
+
+    @Transactional
+    public Optional<PromotionRuleUsageDto> confirmUsage(UUID usageId) {
+        return promotionRuleUsageService.confirm(usageId)
+                .map(promotionMapper::toUsageDto);
+    }
+
+    @Transactional
+    public Optional<PromotionRuleUsageDto> cancelUsage(UUID usageId) {
+        return promotionRuleUsageService.cancel(usageId)
+                .map(promotionMapper::toUsageDto);
     }
 
     private EngineWorkspace buildWorkspace(

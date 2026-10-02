@@ -3,6 +3,7 @@ package com.promox.core.promotion.internal.persistence;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +16,7 @@ public interface PromotionRepository extends JpaRepository<PromotionRule, Long>,
 
     @Query("""
         SELECT new com.promox.core.promotion.internal.persistence.PromotionRuleBaseProjection(
-            p.id, p.storefrontId, p.name, p.priority, p.isShortCircuit, p.conditionTree, p.action
+            p.id, p.storefrontId, p.name, p.priority, p.isShortCircuit, p.hasUsageLimit, p.conditionTree, p.action
         )
         FROM PromotionRule p
         WHERE p.storefrontId = :storefrontId AND p.isActive = true
@@ -24,6 +25,23 @@ public interface PromotionRepository extends JpaRepository<PromotionRule, Long>,
     List<PromotionRuleBaseProjection> findAllActiveProjectionsByStorefrontIdOrderByPriorityDesc(
         @Param("storefrontId") Long storefrontId
     );
+
+    /**
+     * Empty when the rule doesn't exist or has no usage limit.
+     */
+    @Query("SELECT p.remainingUses FROM PromotionRule p WHERE p.id = :id AND p.hasUsageLimit = true")
+    Optional<Integer> findRemainingUsesOfLimitedRule(@Param("id") Long id);
+
+    /**
+     * Gives one use back to each of the rules, never exceeding the rule's usage limit.
+     */
+    @Modifying
+    @Query("""
+        UPDATE PromotionRule p
+        SET p.remainingUses = p.remainingUses + 1
+        WHERE p.id IN :ids AND p.hasUsageLimit = true AND p.remainingUses < p.usageLimit
+    """)
+    int restoreRemainingUses(@Param("ids") Collection<Long> ids);
 
     @Modifying
     @Query("DELETE FROM PromotionRule p WHERE p.id = :id")

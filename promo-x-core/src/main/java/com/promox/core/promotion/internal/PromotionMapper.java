@@ -8,6 +8,8 @@ import com.promox.core.promotion.internal.infrastructure.registry.ConditionNodeR
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsage;
+import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -66,7 +68,18 @@ public final class PromotionMapper {
         );
     }
 
-    public PromotionEvaluationResponse toEvaluationResponse(EngineWorkspace workspace) {
+    public PromotionRuleUsageDto toUsageDto(PromotionRuleUsage usage) {
+        return new PromotionRuleUsageDto(
+            usage.getId(),
+            usage.getStatus(),
+            usage.getExpiresAt()
+        );
+    }
+
+    public PromotionEvaluationResponse toEvaluationResponse(
+        EngineWorkspace workspace,
+        @Nullable PromotionRuleUsage usage
+    ) {
         List<PromotionEvaluationResponse.LineItemResult> items = workspace.getLineItems().stream()
             .map(item -> new PromotionEvaluationResponse.LineItemResult(
                 item.getProductExternalId(),
@@ -106,7 +119,8 @@ public final class PromotionMapper {
             workspace.getNetShippingCost(),
             items,
             matchedRules,
-            appliedRules
+            appliedRules,
+            usage == null ? null : toUsageDto(usage)
         );
     }
 
