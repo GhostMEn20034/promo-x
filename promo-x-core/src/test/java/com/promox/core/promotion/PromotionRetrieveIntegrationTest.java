@@ -1,5 +1,6 @@
 package com.promox.core.promotion;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
@@ -9,6 +10,7 @@ import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.SingleProductConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.util.Set;
 
-
+@WithMockJwt(roles = {Roles.PROMOTION_MANAGER})
 public class PromotionRetrieveIntegrationTest extends IntegrationTestBase {
     private static final String DETAILS_URL_PATH = "/promotion/{promotionRuleId}";
     private static final String LIST_URL_PATH = "/promotion/";
@@ -158,6 +160,53 @@ public class PromotionRetrieveIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(get(LIST_URL_PATH)
                     .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("Authorization")
+    class Authorization {
+
+        @Test
+        @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
+        @DisplayName("Should return 200 OK with the promotion rule when the user is a promotion manager")
+        void getPromotionRuleById_promotionManager_returnsOk() throws Exception {
+            mockMvc.perform(get(DETAILS_URL_PATH, existingRule.getId())
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingRule.getId()));
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.AUDITOR)
+        @DisplayName("Should return 200 OK with the promotion rule when the user is an auditor")
+        void getPromotionRuleById_auditor_returnsOk() throws Exception {
+            mockMvc.perform(get(DETAILS_URL_PATH, existingRule.getId())
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingRule.getId()));
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
+        @DisplayName("Should return 200 OK with promotion summaries when the user is a promotion manager")
+        void getPromotionRules_promotionManager_returnsOk() throws Exception {
+            mockMvc.perform(get(LIST_URL_PATH)
+                    .header("X-Storefront-Id", 100L)
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(existingRule.getId()));
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.AUDITOR)
+        @DisplayName("Should return 200 OK with promotion summaries when the user is an auditor")
+        void getPromotionRules_auditor_returnsOk() throws Exception {
+            mockMvc.perform(get(LIST_URL_PATH)
+                    .header("X-Storefront-Id", 100L)
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(existingRule.getId()));
         }
     }
 }

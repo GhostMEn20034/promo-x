@@ -6,15 +6,18 @@ import com.promox.core.category.internal.exception.CategoryNotFoundException;
 import com.promox.core.category.internal.service.CategoryCommandHandler;
 import com.promox.core.category.CategoryDto;
 import com.promox.core.category.internal.dto.CreateCategoryRequest;
+import com.promox.core.infrastructure.security.Roles;
 
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequestMapping("/category")
+@PreAuthorize("hasRole('" + Roles.EMPLOYEE + "')")
 public class CategoryController {
     private final CategoryCommandHandler categoryCommandHandler;
     private final CategoryLookupApi categoryLookupApi;
@@ -34,6 +37,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{categoryId}")
+    @PreAuthorize("hasAnyRole('" + Roles.EMPLOYEE + "', '" + Roles.AUDITOR + "')")
     public CategoryDto getById(@PathVariable Long categoryId) {
         return categoryLookupApi.findById(categoryId)
                 .orElseThrow(() ->

@@ -1,5 +1,6 @@
 package com.promox.core.storefront.internal.web;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.storefront.StorefrontLookupApi;
 import com.promox.core.storefront.internal.dto.CreateStorefrontRequest;
 import com.promox.core.storefront.StorefrontDto;
@@ -11,10 +12,12 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 @RestController
 @RequestMapping("/storefront")
+@PreAuthorize("hasRole('" + Roles.ADMIN + "')")
 public class StorefrontController {
     private final StorefrontCommandHandler storefrontCommandHandler;
     private final StorefrontLookupApi storefrontLookupApi;
@@ -36,6 +39,7 @@ public class StorefrontController {
     }
 
     @GetMapping("/{storefrontId}")
+    @PreAuthorize("isAuthenticated()")
     public StorefrontDto getStorefrontById(@PathVariable Long storefrontId) {
         return storefrontLookupApi.findById(storefrontId)
                 .orElseThrow(() ->

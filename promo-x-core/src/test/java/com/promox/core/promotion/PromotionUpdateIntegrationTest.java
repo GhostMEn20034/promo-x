@@ -1,5 +1,6 @@
 package com.promox.core.promotion;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.internal.dto.UpdatePromotionRuleRequest;
@@ -11,6 +12,7 @@ import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.SingleProductConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,7 +30,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
+@WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
     private static final String UPDATE_PROMOTION_RULE_URL = "/promotion/{promotionRuleId}";
     private static final String UPDATE_USAGE_LIMITS_URL = "/promotion/{promotionRuleId}/usage-limits";
@@ -362,6 +364,50 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                     .andExpect(jsonPath("$.errors[*].path", containsInAnyOrder("hasUsageLimit")));
+        }
+    }
+
+    @Nested
+    @DisplayName("Authorization")
+    class Authorization {
+
+        @Test
+        @WithMockJwt(roles = {Roles.ADMIN, Roles.EMPLOYEE, Roles.AUDITOR, Roles.INTEGRATION_CLIENT})
+        @DisplayName("Should return 403 FORBIDDEN and leave the rule unchanged when the user is not a promotion manager")
+        void updatePromotionRule_userIsNotPromotionManager_returnsForbidden() throws Exception {
+            UpdatePromotionRuleRequest request = new UpdatePromotionRuleRequest(
+                "Updated Black Friday Sale",
+                10,
+                true,
+                true,
+                new SingleProductConditionNode("PROD-OLD", Operator.EQUALS),
+                new OrderDiscountAction(new BigDecimal("25.00"))
+            );
+
+            mockMvc.perform(put(UPDATE_PROMOTION_RULE_URL, existingRule.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+            PromotionRule reloaded = promotionRepository.findById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.getName()).isEqualTo("Old Summer Sale");
+            assertThat(reloaded.getPriority()).isEqualTo(5);
+            assertThat(reloaded.isShortCircuit()).isFalse();
+        }
+
+        @Test
+        @WithMockJwt(roles = {Roles.ADMIN, Roles.EMPLOYEE, Roles.AUDITOR, Roles.INTEGRATION_CLIENT})
+        @DisplayName("Should return 403 FORBIDDEN and leave usage limits unchanged when the user is not a promotion manager")
+        void updateUsageLimits_userIsNotPromotionManager_returnsForbidden() throws Exception {
+            var request = new UpdateUsageLimitsRequest(true, 50, 30, true);
+
+            mockMvc.perform(patch(UPDATE_USAGE_LIMITS_URL, existingRule.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden());
+
+            PromotionRule reloaded = promotionRepository.findById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.hasUsageLimit()).isFalse();
         }
     }
 }

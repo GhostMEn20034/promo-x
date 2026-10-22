@@ -1,9 +1,13 @@
 package com.promox.core.storefront;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.dto.CreateStorefrontRequest;
+import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -13,16 +17,21 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@WithMockJwt(roles = Roles.ADMIN)
 public class StorefrontCreationIntegrationTest extends IntegrationTestBase {
     private static final String BASE_URL = "/storefront";
     private static final String STOREFRONT_CREATE_URL = BASE_URL + "/";
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private StorefrontRepository storefrontRepository;
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("provideValidStorefrontRequests")
@@ -51,6 +60,20 @@ public class StorefrontCreationIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockJwt(roles = {Roles.EMPLOYEE, Roles.AUDITOR, Roles.PROMOTION_MANAGER})
+    @DisplayName("Should return 403 Forbidden and create nothing when the user is not an admin")
+    void createStorefront_ShouldReturn403_WhenUserIsNotAdmin() throws Exception {
+        CreateStorefrontRequest request = new CreateStorefrontRequest("Electronics Hub", "https://electronicshub.com");
+
+        mockMvc.perform(post(STOREFRONT_CREATE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        assertThat(storefrontRepository.count()).isZero();
     }
 
     private static Stream<Arguments> provideValidStorefrontRequests() {

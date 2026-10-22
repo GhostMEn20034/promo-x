@@ -3,9 +3,11 @@ package com.promox.core.category;
 import com.promox.core.category.internal.dto.CreateCategoryRequest;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,10 +20,12 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@WithMockJwt(roles = Roles.EMPLOYEE)
 public class CategoryCreationIntegrationTest extends IntegrationTestBase {
     private static final String BASE_URL = "/category";
     private static final String STOREFRONT_HEADER = "X-Storefront-Id";
@@ -201,6 +205,21 @@ public class CategoryCreationIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    @WithMockJwt(roles = Roles.AUDITOR)
+    @DisplayName("Should return 403 Forbidden and create nothing when the user has no employee role")
+    void createCategory_ShouldReturn403_WhenUserIsNotEmployee() throws Exception {
+        var request = new CreateCategoryRequest("Electronics", "EXT-ELEC-01", null);
+
+        mockMvc.perform(post(BASE_URL + "/")
+                        .header(STOREFRONT_HEADER, activeStorefront.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        assertThat(categoryRepository.count()).isZero();
     }
 
     private static Stream<Arguments> provideInvalidCategoryRequests() {

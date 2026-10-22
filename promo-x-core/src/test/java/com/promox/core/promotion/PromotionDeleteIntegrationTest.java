@@ -1,5 +1,6 @@
 package com.promox.core.promotion;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.service.action.OrderDiscountAction;
@@ -7,6 +8,7 @@ import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.SingleProductConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.util.Set;
 
-
+@WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 public class PromotionDeleteIntegrationTest extends IntegrationTestBase {
     private static final String DELETE_URL_PATH = "/promotion/{promotionRuleId}";
 
@@ -74,6 +76,34 @@ public class PromotionDeleteIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(delete("/promotion/{promotionRuleId}", "invalid-id-format")
                     .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("Authorization")
+    class Authorization {
+
+        @Test
+        @WithMockJwt(roles = {Roles.ADMIN, Roles.EMPLOYEE, Roles.AUDITOR, Roles.INTEGRATION_CLIENT})
+        @DisplayName("Should return 403 FORBIDDEN and keep the promotion rule when the user is not a promotion manager")
+        void deletePromotionRule_userIsNotPromotionManager_returnsForbidden() throws Exception {
+            PromotionRule rule = new PromotionRule();
+            rule.setStorefrontId(100L);
+            rule.setName("Protected Promotion");
+            rule.setPriority(1);
+            rule.setShortCircuit(false);
+            rule.setActive(true);
+            rule.setConditionTree(new SingleProductConditionNode("PROD-001", Operator.EQUALS));
+            rule.setAction(new OrderDiscountAction(BigDecimal.TEN));
+            rule.setProductExternalIds(Set.of("PROD-001"));
+
+            PromotionRule savedRule = promotionRepository.saveAndFlush(rule);
+
+            mockMvc.perform(delete(DELETE_URL_PATH, savedRule.getId())
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+
+            assertThat(promotionRepository.findById(savedRule.getId())).isPresent();
         }
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +23,7 @@ import java.sql.Statement;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({PostgresTestConfiguration.class, RedisTestConfiguration.class})
+@ActiveProfiles("test")
 public abstract class IntegrationTestBase {
 
     @Autowired

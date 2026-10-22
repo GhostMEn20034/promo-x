@@ -4,11 +4,13 @@ import com.promox.core.category.CategoryDto;
 import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.product.internal.service.ProductLookupApiImpl;
 import com.promox.core.shared.IntegrationTestBase;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
+@WithMockJwt(roles = Roles.EMPLOYEE)
 @EnableScenarios
 public class ProductLookupCacheIntegrationTest extends IntegrationTestBase {
     private static final Long STOREFRONT_ID = 100L;

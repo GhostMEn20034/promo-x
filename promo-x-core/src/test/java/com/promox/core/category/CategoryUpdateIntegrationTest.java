@@ -4,10 +4,12 @@ import com.promox.core.category.event.CategoryUpdatedEvent;
 import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,10 +26,12 @@ import org.springframework.modulith.test.PublishedEventsExtension;
 import tools.jackson.databind.ObjectMapper;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@WithMockJwt(roles = Roles.EMPLOYEE)
 public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
     private static final String BASE_URL = "/category";
 
@@ -213,6 +217,34 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    @WithMockJwt(roles = Roles.AUDITOR)
+    @DisplayName("Should return 403 Forbidden and leave the category unchanged when the user has no employee role")
+    @ExtendWith(PublishedEventsExtension.class)
+    void updateCategory_ShouldReturn403_WhenUserIsNotEmployee(
+            AssertablePublishedEvents events
+    ) throws Exception {
+        Category existing = categoryRepository.save(
+                Category.builder()
+                        .name("Old Name")
+                        .externalId("OLD-EXT")
+                        .storefrontId(activeStorefront.getId())
+                        .build()
+        );
+
+        var updateRequest = new UpdateCategoryRequest("Updated Name", "NEW-EXT", null);
+
+        mockMvc.perform(put(BASE_URL + "/{categoryId}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isForbidden());
+
+        Category reloaded = categoryRepository.findById(existing.getId()).orElseThrow();
+        assertThat(reloaded.getName()).isEqualTo("Old Name");
+        assertThat(reloaded.getExternalId()).isEqualTo("OLD-EXT");
+        assertThat(events.ofType(CategoryUpdatedEvent.class)).isEmpty();
     }
 
 

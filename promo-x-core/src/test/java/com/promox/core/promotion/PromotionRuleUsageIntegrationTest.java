@@ -2,6 +2,7 @@ package com.promox.core.promotion;
 
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
@@ -21,6 +22,7 @@ import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.PromoCodeConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,6 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // Each test evaluates a storefront at most once, so every rule lookup is a cache miss.
+@WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 @EnableScenarios
 public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
     private static final String EVALUATE_URL_PATH = "/promotion/evaluate";
@@ -413,6 +416,59 @@ public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(post(CANCEL_URL_PATH, UUID.randomUUID()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("PROMOTION_RULE_USAGE_NOT_FOUND"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Usage Authorization Tests")
+    class UsageAuthorizationTests {
+
+        @Test
+        @WithMockJwt(roles = Roles.INTEGRATION_CLIENT)
+        @DisplayName("Should let an integration client confirm a reserved usage")
+        void confirm_integrationClient_marksUsed() throws Exception {
+            confirmsReservedUsage();
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
+        @DisplayName("Should let a promotion manager confirm a reserved usage")
+        void confirm_promotionManager_marksUsed() throws Exception {
+            confirmsReservedUsage();
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.INTEGRATION_CLIENT)
+        @DisplayName("Should let an integration client cancel a reserved usage")
+        void cancel_integrationClient_marksCanceled() throws Exception {
+            cancelsReservedUsage();
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
+        @DisplayName("Should let a promotion manager cancel a reserved usage")
+        void cancel_promotionManager_marksCanceled() throws Exception {
+            cancelsReservedUsage();
+        }
+
+        private void confirmsReservedUsage() throws Exception {
+            saveLimitedRule("20% off keyboards", 100, 5, keyboardDiscount());
+            UUID usageId = usageId(evaluate(null).path("usage"));
+
+            mockMvc.perform(post(CONFIRM_URL_PATH, usageId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("USED"));
+
+            assertThat(usageStatus(usageId)).isEqualTo(PromotionRuleUsageStatus.USED);
+        }
+
+        private void cancelsReservedUsage() throws Exception {
+            saveLimitedRule("20% off keyboards", 100, 5, keyboardDiscount());
+            UUID usageId = usageId(evaluate(null).path("usage"));
+
+            cancelOk(usageId);
+
+            assertThat(usageStatus(usageId)).isEqualTo(PromotionRuleUsageStatus.CANCELED);
         }
     }
 

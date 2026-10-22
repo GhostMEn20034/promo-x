@@ -2,6 +2,11 @@ spring:
   application:
     name: promo-x-core
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${IDP_ISSUER_URL}
 
   datasource:
     url: jdbc:postgresql://${SQL_HOST}/${SQL_DATABASE}?reWriteBatchedInserts=true

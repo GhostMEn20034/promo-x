@@ -2,6 +2,7 @@ package com.promox.core.promotion;
 
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
@@ -16,6 +17,7 @@ import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.PromoCodeConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -44,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 @EnableScenarios
 public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
     private static final String EVALUATE_URL_PATH = "/promotion/evaluate";
@@ -474,6 +477,29 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(cartPayload(NO_PROMO_CODES)))
                 .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("Authorization Tests")
+    class AuthorizationTests {
+
+        @Test
+        @WithMockJwt(roles = Roles.INTEGRATION_CLIENT)
+        @DisplayName("Should evaluate the order when the caller is an integration client")
+        void evaluate_integrationClient_returnsOk() throws Exception {
+            JsonNode response = evaluateOk(cartPayload(NO_PROMO_CODES));
+
+            assertThat(decimal(response, "oldTotal")).isEqualByComparingTo("265.00");
+        }
+
+        @Test
+        @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
+        @DisplayName("Should evaluate the order when the caller is a promotion manager")
+        void evaluate_promotionManager_returnsOk() throws Exception {
+            JsonNode response = evaluateOk(cartPayload(NO_PROMO_CODES));
+
+            assertThat(decimal(response, "oldTotal")).isEqualByComparingTo("265.00");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.promox.core.promotion;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.internal.dto.CreatePromotionRuleRequest;
@@ -9,6 +10,7 @@ import com.promox.core.promotion.internal.service.condition.CompositeConditionNo
 import com.promox.core.promotion.internal.service.condition.Operator;
 import com.promox.core.promotion.internal.service.condition.SingleProductConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 public class PromotionCreationIntegrationTest extends IntegrationTestBase {
     private static final Long STOREFRONT_ID = 100L;
     private static final String EXISTING_PRODUCT_1 = "PROD-KB-01";
@@ -514,6 +517,42 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonPayload))
                     .andExpect(status().isBadRequest());
+
+            assertThat(promotionRepository.count()).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("Authorization Tests")
+    class AuthorizationTests {
+
+        @Test
+        @WithMockJwt(roles = {Roles.ADMIN, Roles.EMPLOYEE, Roles.AUDITOR, Roles.INTEGRATION_CLIENT})
+        @DisplayName("Should return 403 Forbidden and create nothing when the user is not a promotion manager")
+        void createPromotionRule_userIsNotPromotionManager_returnsForbidden() throws Exception {
+            String jsonPayload = """
+            {
+              "name": "Forbidden Rule",
+              "priority": 50,
+              "isShortCircuit": false,
+              "hasUsageLimit": "false",
+              "conditionTree": {
+                "type": "SINGLE_PRODUCT_EXTERNAL_ID_MATCH",
+                "productExternalId": "%s",
+                "operator": "EQUALS"
+              },
+              "action": {
+                "type": "ORDER_FLAT_DISCOUNT",
+                "discountAmount": 10.00
+              }
+            }
+            """.formatted(EXISTING_PRODUCT_1);
+
+            mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonPayload))
+                .andExpect(status().isForbidden());
 
             assertThat(promotionRepository.count()).isZero();
         }
