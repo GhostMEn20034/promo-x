@@ -2,10 +2,12 @@ package com.promox.core.category;
 
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@WithMockJwt(roles = {Roles.EMPLOYEE})
 public class CategoryRetrieveIntegrationTest extends IntegrationTestBase {
     private static final String BASE_URL = "/category";
 
@@ -92,5 +95,37 @@ public class CategoryRetrieveIntegrationTest extends IntegrationTestBase {
 
         mockMvc.perform(get(BASE_URL + "/{categoryId}", nonExistentId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockJwt(roles = Roles.EMPLOYEE)
+    @DisplayName("Should return 200 OK when the user is an employee")
+    void getById_ShouldReturn200_WhenUserIsEmployee() throws Exception {
+        Category category = saveRootCategory();
+
+        mockMvc.perform(get(BASE_URL + "/{categoryId}", category.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(category.getId()));
+    }
+
+    @Test
+    @WithMockJwt(roles = Roles.AUDITOR)
+    @DisplayName("Should return 200 OK when the user is an auditor")
+    void getById_ShouldReturn200_WhenUserIsAuditor() throws Exception {
+        Category category = saveRootCategory();
+
+        mockMvc.perform(get(BASE_URL + "/{categoryId}", category.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(category.getId()));
+    }
+
+    private Category saveRootCategory() {
+        return categoryRepository.save(
+                Category.builder()
+                        .name("Electronics")
+                        .externalId("EXT-ELEC")
+                        .storefrontId(activeStorefront.getId())
+                        .build()
+        );
     }
 }

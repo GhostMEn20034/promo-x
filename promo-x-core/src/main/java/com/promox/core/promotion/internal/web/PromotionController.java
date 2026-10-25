@@ -1,5 +1,6 @@
 package com.promox.core.promotion.internal.web;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.promotion.PromotionLookupApi;
 import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,6 +24,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/promotion")
+@PreAuthorize("hasRole('" + Roles.PROMOTION_MANAGER + "')")
 public class PromotionController {
     private final PromotionWebMapper promotionWebMapper;
     private final PromotionCommandHandler promotionCommandHandler;
@@ -71,6 +74,7 @@ public class PromotionController {
     }
 
     @GetMapping("/{promotionRuleId}")
+    @PreAuthorize("hasAnyRole('" + Roles.PROMOTION_MANAGER + "', '" + Roles.AUDITOR + "', '" + Roles.EMPLOYEE + "')")
     public DetailedPromotionWebResponseDto getPromotionRuleById(@PathVariable Long promotionRuleId) {
         var promotionRule = promotionLookupApi.findById(promotionRuleId)
             .orElseThrow(() -> new PromotionNotFoundException(promotionRuleId));
@@ -79,6 +83,7 @@ public class PromotionController {
     }
 
     @GetMapping("/")
+    @PreAuthorize("hasAnyRole('" + Roles.PROMOTION_MANAGER + "', '" + Roles.AUDITOR + "', '" + Roles.EMPLOYEE + "')")
     public Page<PromotionSummaryDto> getPromotionRules(
         @RequestHeader("X-Storefront-Id") Long storefrontId,
         PromotionFilterRequest filter,
@@ -95,6 +100,7 @@ public class PromotionController {
     }
 
     @PostMapping("/evaluate")
+    @PreAuthorize("hasAnyRole('" + Roles.INTEGRATION_CLIENT + "', '" + Roles.PROMOTION_MANAGER + "')")
     public PromotionEvaluationResponse evaluatePromotionRules(
             @RequestHeader("X-Storefront-Id") Long storefrontId,
             @Valid @RequestBody PromotionEvaluationRequest evaluationRequest
@@ -103,12 +109,14 @@ public class PromotionController {
     }
 
     @PostMapping("/usage/{usageId}/confirm")
+    @PreAuthorize("hasAnyRole('" + Roles.INTEGRATION_CLIENT + "', '" + Roles.PROMOTION_MANAGER + "')")
     public PromotionRuleUsageDto confirmPromotionRuleUsage(@PathVariable UUID usageId) {
         return promotionCommandHandler.confirmUsage(usageId)
                 .orElseThrow(() -> new PromotionRuleUsageNotFoundException(usageId));
     }
 
     @PostMapping("/usage/{usageId}/cancel")
+    @PreAuthorize("hasAnyRole('" + Roles.INTEGRATION_CLIENT + "', '" + Roles.PROMOTION_MANAGER + "')")
     public PromotionRuleUsageDto cancelPromotionRuleUsage(@PathVariable UUID usageId) {
         return promotionCommandHandler.cancelUsage(usageId)
                 .orElseThrow(() -> new PromotionRuleUsageNotFoundException(usageId));

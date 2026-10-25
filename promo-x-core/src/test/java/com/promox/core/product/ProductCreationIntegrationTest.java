@@ -2,6 +2,7 @@ package com.promox.core.product;
 
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.dto.CreateProductRequest;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
@@ -9,6 +10,7 @@ import com.promox.core.shared.IntegrationTestBase;
 
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
+@WithMockJwt(roles = Roles.EMPLOYEE)
 public class ProductCreationIntegrationTest extends IntegrationTestBase {
     private static final String STOREFRONT_HEADER = "X-Storefront-Id";
     private static final String BASE_URL = "/product";
@@ -240,6 +242,28 @@ public class ProductCreationIntegrationTest extends IntegrationTestBase {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("Authorization Scenarios")
+    class AuthorizationTests {
+
+        @Test
+        @WithMockJwt(roles = {Roles.ADMIN, Roles.AUDITOR, Roles.PROMOTION_MANAGER})
+        @DisplayName("Should return 403 and create nothing when the user has no employee role")
+        void shouldFail_whenUserIsNotEmployee() throws Exception {
+            CreateProductRequest request = new CreateProductRequest(
+                "EXT-1001", "SKU-IPHONE-15", "iPhone 15 Pro", Set.of()
+            );
+
+            mockMvc.perform(post(BASE_URL + "/")
+                    .header(STOREFRONT_HEADER, activeStorefront.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+            assertThat(productRepository.count()).isZero();
         }
     }
 

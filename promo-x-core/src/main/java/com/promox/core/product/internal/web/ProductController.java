@@ -1,5 +1,6 @@
 package com.promox.core.product.internal.web;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.DefaultProductDto;
 import com.promox.core.product.ProductLookupApi;
 import com.promox.core.product.ProductWithCategoriesDto;
@@ -13,10 +14,12 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 @RestController
 @RequestMapping("/product")
+@PreAuthorize("hasRole('" + Roles.EMPLOYEE + "')")
 public class ProductController {
     private final ProductCommandHandler productCommandHandler;
     private final ProductLookupApi productLookupApi;
@@ -45,6 +48,7 @@ public class ProductController {
     }
 
     @PutMapping("/{productId}")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     public DefaultProductDto updateProduct(
         @PathVariable Long productId,
         @Valid @RequestBody UpdateProductRequest updateRequest
@@ -54,6 +58,7 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
+    @PreAuthorize("hasAnyRole('" + Roles.EMPLOYEE + "', '" + Roles.AUDITOR + "')")
     public ProductWithCategoriesDto getProductById(@PathVariable Long productId) {
         return productLookupApi.findWithCategoriesById(productId)
             .orElseThrow(() -> new ProductNotFoundException(productId));

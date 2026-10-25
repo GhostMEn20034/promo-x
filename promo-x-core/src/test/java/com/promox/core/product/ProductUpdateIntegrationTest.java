@@ -3,6 +3,7 @@ package com.promox.core.product;
 import com.promox.core.category.CategoryDto;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.event.ProductUpdatedEvent;
 import com.promox.core.product.internal.dto.UpdateProductRequest;
 import com.promox.core.product.internal.persistence.Product;
@@ -12,6 +13,7 @@ import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,7 +40,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
+@WithMockJwt(roles = Roles.ADMIN)
 @EnableScenarios
 public class ProductUpdateIntegrationTest extends IntegrationTestBase {
     private static final String UPDATE_URL = "/product/{productId}";
@@ -260,6 +262,24 @@ public class ProductUpdateIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.code").value("CATEGORY_IDS_NOT_FOUND"));
 
             assertThat(reload(existingProduct).getCategoryIds()).containsExactly(keyboards.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("Product Update Authorization Scenarios")
+    class AuthorizationTests {
+
+        @Test
+        @WithMockJwt(roles = {Roles.EMPLOYEE, Roles.AUDITOR, Roles.PROMOTION_MANAGER})
+        @DisplayName("Should return 403 and leave the product unchanged when the user is not an admin")
+        void shouldFail_whenUserIsNotAdmin() throws Exception {
+            update(existingProduct.getId(), new UpdateProductRequest("EXT-MS-01", "SKU-MOUSE", "Gaming Mouse", Set.of()))
+                .andExpect(status().isForbidden());
+
+            Product unchanged = reload(existingProduct);
+            assertThat(unchanged.getExternalId()).isEqualTo("EXT-KB-01");
+            assertThat(unchanged.getName()).isEqualTo("Product EXT-KB-01");
+            assertThat(unchanged.getCategoryIds()).containsExactly(keyboards.getId());
         }
     }
 

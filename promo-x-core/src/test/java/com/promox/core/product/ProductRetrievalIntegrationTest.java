@@ -2,12 +2,14 @@ package com.promox.core.product;
 
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
 
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +24,7 @@ import java.util.Set;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
+@WithMockJwt(roles = {Roles.EMPLOYEE})
 public class ProductRetrievalIntegrationTest extends IntegrationTestBase {
     private static final String BASE_URL = "/product";
 
@@ -124,6 +126,29 @@ public class ProductRetrievalIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(get(BASE_URL + "/{productId}", "not-a-number")
                     .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("Product Retrieval Authorization Scenarios")
+    class AuthorizationTests {
+
+        @Test
+        @WithMockJwt(roles = Roles.AUDITOR)
+        @DisplayName("Should return 200 OK when the user is an auditor")
+        void shouldReturnProduct_whenUserIsAuditor() throws Exception {
+            Product product = productRepository.save(Product.builder()
+                .externalId("EXT-AUDIT")
+                .sku("SKU-AUDIT")
+                .name("Audited Product")
+                .storefrontId(activeStorefront.getId())
+                .categoryIds(Set.of())
+                .build());
+
+            mockMvc.perform(get(BASE_URL + "/{productId}", product.getId())
+                    .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(product.getId()));
         }
     }
 

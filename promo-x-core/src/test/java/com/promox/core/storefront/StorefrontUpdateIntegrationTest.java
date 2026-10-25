@@ -1,9 +1,11 @@
 package com.promox.core.storefront;
 
+import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.shared.IntegrationTestBase;
 import com.promox.core.storefront.internal.dto.UpdateStorefrontRequest;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
+import com.promox.core.testfixtures.security.WithMockJwt;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,11 +17,13 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
+@WithMockJwt(roles = Roles.ADMIN)
 public class StorefrontUpdateIntegrationTest extends IntegrationTestBase {
     private static final String BASE_URL = "/storefront";
 
@@ -89,6 +93,25 @@ public class StorefrontUpdateIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockJwt(roles = {Roles.EMPLOYEE, Roles.AUDITOR, Roles.PROMOTION_MANAGER})
+    @DisplayName("Should return 403 Forbidden and leave the storefront unchanged when the user is not an admin")
+    void updateStorefront_ShouldReturn403_WhenUserIsNotAdmin() throws Exception {
+        Storefront existing = storefrontRepository.save(
+                new Storefront(null, "Initial Store Name", "https://initial-website.com")
+        );
+        UpdateStorefrontRequest request = new UpdateStorefrontRequest("Updated Electronics", "https://new-electronics.com");
+
+        mockMvc.perform(put(BASE_URL + "/{storefrontId}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+
+        Storefront reloaded = storefrontRepository.findById(existing.getId()).orElseThrow();
+        assertThat(reloaded.getName()).isEqualTo("Initial Store Name");
+        assertThat(reloaded.getWebsite()).isEqualTo("https://initial-website.com");
     }
 
     // --- Data Providers ---
