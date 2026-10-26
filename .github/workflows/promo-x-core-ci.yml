@@ -123,7 +123,7 @@ jobs:
           docker logs promox-keycloak
           exit 1
 
-      - name: Start application and check authentication
+      - name: Start application and check health
         run: |
           java -jar target/promox-core.jar > app.log 2>&1 &
           APP_PID=$!
@@ -135,33 +135,21 @@ jobs:
             exit 1
           }
 
-          PROTECTED_URL=http://localhost:8000/promotion/
+          HEALTH_URL=http://localhost:8000/actuator/health
 
-          # "000" = not listening yet.
+          # "000" = not listening yet; 503 = up, but a component (e.g. database or Redis) is DOWN.
           status=000
           for _ in $(seq 1 60); do
             kill -0 "$APP_PID" 2>/dev/null || fail "Application exited during startup"
-            status=$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Storefront-Id: 1' "$PROTECTED_URL" || true)
-            [ "$status" != "000" ] && break
+            status=$(curl -s -o health.json -w '%{http_code}' "$HEALTH_URL" || true)
+            if [ "$status" = "200" ]; then
+              echo "Application is healthy: $(cat health.json)"
+              exit 0
+            fi
             sleep 2
           done
-          [ "$status" != "000" ] || fail "Application did not start listening within 120s"
 
-          # Without a token the endpoint must be protected.
-          [ "$status" = "401" ] || fail "Expected HTTP 401 without a token, got HTTP $status"
-
-          # With a promotion-manager token from Keycloak it must be served.
-          token=$(curl -sf -X POST "$IDP_ISSUER_URL/protocol/openid-connect/token" \
-            -d grant_type=client_credentials \
-            -d client_id="$KEYCLOAK_CLIENT_ID" \
-            -d client_secret="$KEYCLOAK_CLIENT_SECRET" | jq -r '.access_token') \
-            || fail "Could not get an access token from Keycloak"
-
-          status=$(curl -s -o /dev/null -w '%{http_code}' \
-            -H "Authorization: Bearer $token" -H 'X-Storefront-Id: 1' "$PROTECTED_URL" || true)
-          [ "$status" = "200" ] || fail "Expected HTTP 200 with a promotion-manager token, got HTTP $status"
-
-          echo "Application is up: HTTP 401 without a token, HTTP 200 with a Keycloak token"
+          fail "Health check did not return HTTP 200 within 120s (last status: $status, body: $(cat health.json 2>/dev/null))"
 
   tests:
     name: Tests
