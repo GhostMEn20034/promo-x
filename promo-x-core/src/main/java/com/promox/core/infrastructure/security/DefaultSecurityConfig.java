@@ -1,5 +1,6 @@
 package com.promox.core.infrastructure.security;
 
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -20,7 +21,10 @@ public class DefaultSecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(a -> a.anyRequest().authenticated())
+            .authorizeHttpRequests(a -> a
+                    .requestMatchers(EndpointRequest.to("health")).permitAll()
+                    .anyRequest().authenticated()
+            )
             .oauth2ResourceServer(o -> o
                 .jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter)));
 
