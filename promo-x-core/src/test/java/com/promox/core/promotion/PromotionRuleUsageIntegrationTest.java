@@ -560,22 +560,16 @@ public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
 
         @Test
         @DisplayName("Should evict the cached rules and drop the Redis counter when a rule's usage limits change")
-        void updateUsageLimits_evictsRulesCacheAndResetsCounter() throws Exception {
+        void updateUsageLimits_evictsRulesCacheAndResetsCounter(Scenario scenario) throws Exception {
             PromotionRule limited = saveLimitedRule("20% off keyboards", 100, 5, keyboardDiscount());
             evaluate(null);
             assertThat(redisTemplate.hasKey(rulesCacheKey())).isTrue();
             assertThat(counter(limited)).isEqualTo("4");
 
-            mockMvc.perform(patch("/promotion/{promotionRuleId}/usage-limits", limited.getId())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("""
-                        {"hasUsageLimit": false, "mutateRemainingUses": false}
-                        """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.hasUsageLimit").value(false));
-
-            assertThat(redisTemplate.hasKey(rulesCacheKey())).isFalse();
-            assertThat(counter(limited)).isNull();
+            // The cache is evicted by an event listener after the commit.
+            scenario.stimulate(() -> disableUsageLimit(limited))
+                .andWaitForStateChange(() -> redisTemplate.hasKey(rulesCacheKey()), exists -> !exists)
+                .andVerify(_ -> assertThat(counter(limited)).isNull());
         }
     }
 
@@ -642,6 +636,20 @@ public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(post(CANCEL_URL_PATH, usageId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELED"));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void disableUsageLimit(PromotionRule rule) {
+        try {
+            mockMvc.perform(patch("/promotion/{promotionRuleId}/usage-limits", rule.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {"hasUsageLimit": false, "mutateRemainingUses": false}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasUsageLimit").value(false));
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }

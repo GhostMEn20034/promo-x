@@ -34,7 +34,7 @@ public class PromotionLookupApiImpl implements PromotionLookupApi {
 
     @Override
     public Optional<DetailedPromotionDto> findById(Long promotionId) {
-        return promotionService.findById(promotionId).map(promotion -> {
+        return promotionService.findWithProductsById(promotionId).map(promotion -> {
             List<DefaultProductDto> products = productLookupApi.findAllByExternalIds(
                 promotion.getProductExternalIds(),
                 promotion.getStorefrontId()

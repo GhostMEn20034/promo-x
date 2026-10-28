@@ -14,8 +14,11 @@ import com.promox.core.promotion.internal.persistence.PromotionRuleSpecification
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
 import com.promox.core.promotion.internal.persistence.PromotionRuleUsage;
 import com.promox.core.promotion.internal.service.engine.PromoRuleEngine;
+import com.promox.core.promotion.event.PromotionRuleCreatedEvent;
+import com.promox.core.promotion.event.PromotionRuleDeleteEvent;
+import com.promox.core.promotion.event.PromotionRuleUpdatedEvent;
+import com.promox.core.promotion.event.PromotionRuleUsageUpdatedEvent;
 import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -74,7 +77,10 @@ public class PromotionService {
         return promotionRepository.findById(promotionRuleId);
     }
 
-    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, key = "#storefrontId")
+    public Optional<PromotionRule> findWithProductsById(Long promotionRuleId) {
+        return promotionRepository.findWithProductsById(promotionRuleId);
+    }
+
     @Transactional
     public PromotionRule create(
         CreatePromotionRuleRequest request,
@@ -94,12 +100,31 @@ public class PromotionService {
             .conditionTree(request.conditionTree())
             .action(request.action())
             .productExternalIds(productExternalIds)
+            .categoryExternalIds(new HashSet<>(request.conditionTree().getCategoryIds()))
             .build();
 
-        return promotionRepository.save(promotionRule);
+        // Flush so the timestamps are set before they go into the event.
+        promotionRepository.saveAndFlush(promotionRule);
+
+        eventPublisher.publishEvent(new PromotionRuleCreatedEvent(
+            promotionRule.getId(),
+            promotionRule.getStorefrontId(),
+            promotionRule.getName(),
+            promotionRule.getPriority(),
+            promotionRule.isShortCircuit(),
+            promotionRule.isActive(),
+            promotionRule.hasUsageLimit(),
+            promotionRule.getUsageLimit(),
+            promotionRule.getRemainingUses(),
+            Set.copyOf(promotionRule.getProductExternalIds()),
+            Set.copyOf(promotionRule.getCategoryExternalIds()),
+            promotionRule.getCreatedAt(),
+            promotionRule.getUpdatedAt()
+        ));
+
+        return promotionRule;
     }
 
-    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, key = "#promotionRule.storefrontId")
     @Transactional
     public void update(
         UpdatePromotionRuleRequest request,
@@ -113,10 +138,33 @@ public class PromotionService {
         promotionRule.setConditionTree(request.conditionTree());
         promotionRule.setAction(request.action());
         promotionRule.setProductExternalIds(new HashSet<>(productExternalIds));
+        promotionRule.setCategoryExternalIds(new HashSet<>(request.conditionTree().getCategoryIds()));
+
+        // Flush so @UpdateTimestamp has set the new updatedAt before it goes into the event.
+        promotionRepository.flush();
+
+        publishRuleUpdated(promotionRule);
     }
 
-    // The cached projection carries hasUsageLimit, so enabling or disabling limits must evict it.
-    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, key = "#promotionRule.storefrontId")
+    /**
+     * Deactivates the storefront's active rules that reference the category. Their conditions still hold
+     * this external ID, so they can no longer match once the category has changed it.
+     */
+    @Transactional
+    public void deactivateRulesReferencingCategory(Long storefrontId, String categoryExternalId) {
+        List<PromotionRule> rules = promotionRepository.findActiveByStorefrontIdAndCategoryExternalId(
+            storefrontId,
+            categoryExternalId
+        );
+
+        rules.forEach(rule -> rule.setActive(false));
+
+        // Flush so @UpdateTimestamp has set the new updatedAt before it goes into the events.
+        promotionRepository.flush();
+
+        rules.forEach(this::publishRuleUpdated);
+    }
+
     @Transactional
     public void updateUsageLimits(
         UpdateUsageLimitsRequest request,
@@ -129,7 +177,21 @@ public class PromotionService {
             promotionRule.setRemainingUses(request.remainingUses());
         }
 
+        // Flush so @UpdateTimestamp has set the new updatedAt before it goes into the event.
+        promotionRepository.flush();
+
         promotionRuleUsageService.resetCounterAfterCommit(promotionRule.getId());
+
+        // The cached projection carries hasUsageLimit, so enabling or disabling limits must evict it.
+        eventPublisher.publishEvent(new PromotionRuleUsageUpdatedEvent(
+            promotionRule.getId(),
+            promotionRule.getStorefrontId(),
+            promotionRule.hasUsageLimit(),
+            promotionRule.getUsageLimit(),
+            promotionRule.getRemainingUses(),
+            request.mutateRemainingUses(),
+            promotionRule.getUpdatedAt()
+        ));
     }
 
     @Transactional
@@ -158,8 +220,18 @@ public class PromotionService {
     }
 
     /**
-     * Applies the storefront's active rules to the workspace and records the usage of the applied ones.
+     * Returns the storefront's active rules, sorted by priority. On a cache miss this may wait for another
+     * thread or node to load them, so call it outside a transaction: a waiting caller would otherwise hold
+     * a database connection for the whole wait.
+     */
+    public List<PromotionRuleBaseProjection> findActiveRules(Long storefrontId) {
+        return promotionRuleCacheReader.findAllActiveSortedByPriority(storefrontId);
+    }
+
+    /**
+     * Applies the given rules to the workspace and records the usage of the applied ones.
      *
+     * @param rules        the storefront's active rules, sorted by priority
      * @param products     the products of the order, recorded in the usage audit
      * @param reserveUsage whether uses of limited rules are reserved until confirmed, or counted as used right away
      * @return the recorded usage; empty when no rule was applied
@@ -167,12 +239,11 @@ public class PromotionService {
     @Transactional
     public Optional<PromotionRuleUsage> applyRules(
         Long storefrontId,
+        List<PromotionRuleBaseProjection> rules,
         EngineWorkspace workspace,
         List<ProductWithCategoriesDto> products,
         boolean reserveUsage
     ) {
-        List<PromotionRuleBaseProjection> rules = promotionRuleCacheReader.findAllActiveSortedByPriority(storefrontId);
-
         promotionRuleUsageService.releaseAcquiredUsesOnRollback(workspace);
         promoRuleEngine.calculate(workspace, rules);
 
@@ -191,16 +262,53 @@ public class PromotionService {
         return Optional.of(usage);
     }
 
-    @CacheEvict(cacheNames = PromotionRuleCacheReader.RULES_CACHE_NAME, allEntries = true)
     @Transactional
     public Optional<Long> deleteById(Long promotionRuleId) {
-        int rowsDeleted = promotionRepository.deletePromotionRuleById(promotionRuleId);
-        if (rowsDeleted == 0) {
-            return Optional.empty();
-        }
+        return promotionRepository.findWithProductsById(promotionRuleId)
+            .flatMap(promotionRule -> {
+                // Zero rows means a concurrent request deleted it after the lookup above.
+                if (promotionRepository.deletePromotionRuleById(promotionRuleId) == 0) {
+                    return Optional.empty();
+                }
 
-        promotionRuleUsageService.resetCounterAfterCommit(promotionRuleId);
-        return Optional.of(promotionRuleId);
+                promotionRuleUsageService.resetCounterAfterCommit(promotionRuleId);
+
+                eventPublisher.publishEvent(new PromotionRuleDeleteEvent(
+                    promotionRule.getId(),
+                    promotionRule.getStorefrontId(),
+                    promotionRule.getName(),
+                    promotionRule.getPriority(),
+                    promotionRule.isShortCircuit(),
+                    promotionRule.isActive(),
+                    promotionRule.hasUsageLimit(),
+                    promotionRule.getUsageLimit(),
+                    promotionRule.getRemainingUses(),
+                    Set.copyOf(promotionRule.getProductExternalIds()),
+                    Set.copyOf(promotionRule.getCategoryExternalIds()),
+                    promotionRule.getCreatedAt(),
+                    promotionRule.getUpdatedAt()
+                ));
+
+                return Optional.of(promotionRuleId);
+            });
+    }
+
+    private void publishRuleUpdated(PromotionRule promotionRule) {
+        eventPublisher.publishEvent(new PromotionRuleUpdatedEvent(
+            promotionRule.getId(),
+            promotionRule.getStorefrontId(),
+            promotionRule.getName(),
+            promotionRule.getPriority(),
+            promotionRule.isShortCircuit(),
+            promotionRule.isActive(),
+            promotionRule.hasUsageLimit(),
+            promotionRule.getUsageLimit(),
+            promotionRule.getRemainingUses(),
+            Set.copyOf(promotionRule.getProductExternalIds()),
+            Set.copyOf(promotionRule.getCategoryExternalIds()),
+            promotionRule.getCreatedAt(),
+            promotionRule.getUpdatedAt()
+        ));
     }
 
     private void validateSort(Sort sort) {

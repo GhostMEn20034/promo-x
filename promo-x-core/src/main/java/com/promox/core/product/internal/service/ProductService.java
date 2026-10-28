@@ -62,7 +62,7 @@ public class ProductService {
     }
 
     /**
-     * Updates a managed product in place; changes are persisted through dirty checking.
+     * Updates a managed product in place; changes are persisted through dirty checking.<br>
      * <b>Precondition:</b> all referenced category IDs exist for the product's storefront.
      */
     @Transactional

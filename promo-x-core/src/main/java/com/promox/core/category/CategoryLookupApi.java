@@ -8,5 +8,9 @@ import java.util.Set;
 public interface CategoryLookupApi {
     Optional<CategoryDto> findById(Long categoryId);
     CategoryIdsExistenceResult checkExistenceByIdsAndStorefront(Set<Long> categoryIds, Long storefrontId);
+    CategoryExternalIdsExistenceResult checkExistenceByExternalIdsAndStorefront(
+        Set<String> categoryExternalIds,
+        Long storefrontId
+    );
     List<CategoryDto> getListById(Collection<Long> categoryIds, Long storefrontId);
 }

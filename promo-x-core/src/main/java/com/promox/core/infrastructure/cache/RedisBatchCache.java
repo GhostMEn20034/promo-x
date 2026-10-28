@@ -29,7 +29,7 @@ import java.util.function.Function;
  * prefix and TTL, so {@code @CacheEvict} and {@code Cache#clear()} work on these entries.
  */
 @Component
-public class RedisBatchCache {
+public class RedisBatchCache implements BatchCacheManager {
     private final RedisConnectionFactory connectionFactory;
     private final RedisCacheManager cacheManager;
     private final ObjectMapper objectMapper;

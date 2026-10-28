@@ -9,6 +9,7 @@ import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
 import com.promox.core.promotion.internal.service.action.OrderDiscountAction;
 import com.promox.core.promotion.internal.service.condition.Operator;
+import com.promox.core.promotion.internal.service.condition.SingleProductCategoryConditionNode;
 import com.promox.core.promotion.internal.service.condition.SingleProductConditionNode;
 import com.promox.core.shared.IntegrationTestBase;
 
@@ -218,6 +219,30 @@ public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
     @Nested
     @DisplayName("Business Errors")
     class BusinessErrors {
+
+        @Test
+        @DisplayName("Should return 409 CONFLICT and leave the rule unchanged when a category does not exist")
+        void updatePromotionRule_CategoriesNotFound() throws Exception {
+            UpdatePromotionRuleRequest request = new UpdatePromotionRuleRequest(
+                "Updated Black Friday Sale",
+                10,
+                true,
+                true,
+                new SingleProductCategoryConditionNode("CAT-MISSING", Operator.EQUALS),
+                new OrderDiscountAction(new BigDecimal("25.00"))
+            );
+
+            mockMvc.perform(put(UPDATE_PROMOTION_RULE_URL, existingRule.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errors[0].code").value("CATEGORY_EXTERNAL_IDS_NOT_FOUND"))
+                .andExpect(jsonPath("$.errors[0].errorContext.missingCategoryExternalIds[0]").value("CAT-MISSING"));
+
+            PromotionRule reloaded = promotionRepository.findWithProductsById(existingRule.getId()).orElseThrow();
+            assertThat(reloaded.getName()).isEqualTo("Old Summer Sale");
+            assertThat(reloaded.getCategoryExternalIds()).isEmpty();
+        }
 
         @Test
         @DisplayName("Should return 404 NOT FOUND when promotion rule ID does not exist")

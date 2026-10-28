@@ -1,6 +1,7 @@
 package com.promox.core.category.internal.service;
 
 import com.promox.core.category.CategoryDto;
+import com.promox.core.category.CategoryExternalIdsExistenceResult;
 import com.promox.core.category.CategoryIdsExistenceResult;
 import com.promox.core.category.CategoryLookupApi;
 import com.promox.core.category.internal.CategoryMapper;
@@ -27,6 +28,13 @@ public class CategoryLookupApiImpl implements CategoryLookupApi {
 
     public CategoryIdsExistenceResult checkExistenceByIdsAndStorefront(Set<Long> categoryIds, Long storefrontId) {
         return categoryService.checkExistenceByIdsAndStorefront(categoryIds, storefrontId);
+    }
+
+    public CategoryExternalIdsExistenceResult checkExistenceByExternalIdsAndStorefront(
+        Set<String> categoryExternalIds,
+        Long storefrontId
+    ) {
+        return categoryService.checkExistenceByExternalIdsAndStorefront(categoryExternalIds, storefrontId);
     }
 
     public List<CategoryDto> getListById(Collection<Long> categoryIds, Long storefrontId) {

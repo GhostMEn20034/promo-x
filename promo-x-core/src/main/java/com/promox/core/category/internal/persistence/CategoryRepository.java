@@ -22,6 +22,12 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c.id FROM Category c WHERE c.id IN :ids AND c.storefrontId = :storefrontId")
     Set<Long> findExistingIds(@Param("ids") Set<Long> ids, @Param("storefrontId") Long storefrontId);
 
+    @Query("SELECT c.externalId FROM Category c WHERE c.externalId IN :externalIds AND c.storefrontId = :storefrontId")
+    Set<String> findExistingExternalIds(
+        @Param("externalIds") Set<String> externalIds,
+        @Param("storefrontId") Long storefrontId
+    );
+
     @Query("SELECT c.id FROM Category c WHERE c.id IN :ids")
     Set<Long> findExistingIds(@Param("ids") Set<Long> ids);
 

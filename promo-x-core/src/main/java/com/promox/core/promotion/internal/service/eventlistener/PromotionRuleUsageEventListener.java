@@ -1,9 +1,11 @@
-package com.promox.core.promotion.internal.service;
+package com.promox.core.promotion.internal.service.eventlistener;
 
 import com.promox.core.promotion.event.PromotionRuleUsageExpiredEvent;
 import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
+import com.promox.core.promotion.internal.service.PromotionService;
 import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
+
 
 @Component
 public class PromotionRuleUsageEventListener {
