@@ -89,6 +89,33 @@ public class CategoryRetrieveIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Should return the parent's own parent ID when the parent is not a root category")
+    void getById_ShouldReturnParentsParentId_WhenCategoryIsTwoLevelsDeep() throws Exception {
+        Category root = saveRootCategory();
+
+        Category parent = Category.builder()
+                .name("Smartphones")
+                .externalId("EXT-SMART")
+                .storefrontId(activeStorefront.getId())
+                .build();
+        parent.setParent(root);
+        Category savedParent = categoryRepository.save(parent);
+
+        Category child = Category.builder()
+                .name("Android")
+                .externalId("EXT-ANDROID")
+                .storefrontId(activeStorefront.getId())
+                .build();
+        child.setParent(savedParent);
+        Category savedChild = categoryRepository.save(child);
+
+        mockMvc.perform(get(BASE_URL + "/{categoryId}", savedChild.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.parent.id").value(savedParent.getId()))
+                .andExpect(jsonPath("$.parent.parentId").value(root.getId()));
+    }
+
+    @Test
     @DisplayName("Should return 404 Not Found when category does not exist")
     void getById_ShouldReturn404_WhenCategoryDoesNotExist() throws Exception {
         Long nonExistentId = 99999L;

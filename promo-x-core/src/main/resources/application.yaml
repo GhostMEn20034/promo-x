@@ -15,6 +15,9 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    # Off, so a connection is returned when its transaction ends instead of being held until the response is sent.
+    # Load what a response needs inside the transaction: lazy reads outside one fail.
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: true
@@ -53,6 +56,8 @@ promox:
     ttls:
       promotion-rules: 1h
       products-with-categories: 1h
+    # How long the per-entry lock of @Cacheable(sync = true) lives in Redis; keep above the slowest value load
+    lock-ttl: 30s
   promotion:
     # How long a reserved rule usage may wait to be confirmed (stored as the usage's expires_at)
     usage-reservation-ttl: 15m

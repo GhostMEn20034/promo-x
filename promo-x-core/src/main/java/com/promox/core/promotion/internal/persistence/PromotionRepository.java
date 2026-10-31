@@ -26,6 +26,17 @@ public interface PromotionRepository extends JpaRepository<PromotionRule, Long>,
         @Param("storefrontId") Long storefrontId
     );
 
+    @Query("""
+        SELECT p
+        FROM PromotionRule p
+        JOIN p.categoryExternalIds category
+        WHERE p.storefrontId = :storefrontId AND p.isActive = true AND category = :categoryExternalId
+    """)
+    List<PromotionRule> findActiveByStorefrontIdAndCategoryExternalId(
+        @Param("storefrontId") Long storefrontId,
+        @Param("categoryExternalId") String categoryExternalId
+    );
+
     /**
      * Empty when the rule doesn't exist or has no usage limit.
      */

@@ -1,5 +1,6 @@
 package com.promox.core.category.internal.service;
 
+import com.promox.core.category.CategoryExternalIdsExistenceResult;
 import com.promox.core.category.CategoryIdsExistenceResult;
 import com.promox.core.category.event.CategoryUpdatedEvent;
 import com.promox.core.category.internal.dto.CreateCategoryRequest;
@@ -81,9 +82,30 @@ public class CategoryService {
         return new CategoryIdsExistenceResult(existingIds, missingIds);
     }
 
+    @Transactional(readOnly = true)
+    public CategoryExternalIdsExistenceResult checkExistenceByExternalIdsAndStorefront(
+        Set<String> categoryExternalIds,
+        Long storefrontId
+    ) {
+        if (categoryExternalIds.isEmpty()) {
+            return new CategoryExternalIdsExistenceResult(Set.of(), Set.of());
+        }
+
+        Set<String> existingIds = categoryRepository.findExistingExternalIds(categoryExternalIds, storefrontId);
+        // Derive missing IDs via set difference
+        Set<String> missingIds = new HashSet<>(categoryExternalIds);
+        missingIds.removeAll(existingIds);
+
+        return new CategoryExternalIdsExistenceResult(existingIds, missingIds);
+    }
+
     @Transactional
     public void updateCategory(Category categoryToUpdate, UpdateCategoryRequest updateRequest) {
-        validateExternalIdUniqueness(categoryToUpdate.getStorefrontId(), updateRequest.externalId());
+        String previousExternalId = categoryToUpdate.getExternalId();
+        // Checked only on a change: otherwise the category would conflict with itself.
+        if (!updateRequest.externalId().equals(previousExternalId)) {
+            validateExternalIdUniqueness(categoryToUpdate.getStorefrontId(), updateRequest.externalId());
+        }
 
         Category parent = fetchAndValidateParent(updateRequest.parentId(), categoryToUpdate.getStorefrontId());
 
@@ -93,6 +115,7 @@ public class CategoryService {
 
         eventPublisher.publishEvent(new CategoryUpdatedEvent(
                 categoryToUpdate.getId(),
+                previousExternalId,
                 categoryToUpdate.getExternalId(),
                 categoryToUpdate.getName(),
                 categoryToUpdate.getParentId(),

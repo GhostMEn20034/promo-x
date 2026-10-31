@@ -81,7 +81,9 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.parent").isEmpty());
 
         events.assertThat()
-                .contains(CategoryUpdatedEvent.class);
+                .contains(CategoryUpdatedEvent.class)
+                .matching(CategoryUpdatedEvent::previousExternalId, "OLD-EXT")
+                .matching(CategoryUpdatedEvent::externalId, "NEW-EXT");
     }
 
     @Test
@@ -156,6 +158,67 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Should save the new values and parent in the database, not only return them")
+    void updateCategory_ShouldPersistChanges_WhenRequestIsValid() throws Exception {
+        Category parent = categoryRepository.save(
+                Category.builder()
+                        .name("Parent Category")
+                        .externalId("EXT-PARENT")
+                        .storefrontId(activeStorefront.getId())
+                        .build()
+        );
+        Category existing = categoryRepository.save(
+                Category.builder()
+                        .name("Old Name")
+                        .externalId("OLD-EXT")
+                        .storefrontId(activeStorefront.getId())
+                        .build()
+        );
+
+        var updateRequest = new UpdateCategoryRequest("Updated Name", "NEW-EXT", parent.getId());
+
+        mockMvc.perform(put(BASE_URL + "/{categoryId}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk());
+
+        Category reloaded = categoryRepository.findByIdWithParent(existing.getId()).orElseThrow();
+        assertThat(reloaded.getName()).isEqualTo("Updated Name");
+        assertThat(reloaded.getExternalId()).isEqualTo("NEW-EXT");
+        assertThat(reloaded.getParentId()).isEqualTo(parent.getId());
+    }
+
+    @Test
+    @DisplayName("Should update the category when its externalId stays the same")
+    @ExtendWith(PublishedEventsExtension.class)
+    void updateCategory_ShouldReturn200_WhenExternalIdIsUnchanged(
+            AssertablePublishedEvents events
+    ) throws Exception {
+        Category existing = categoryRepository.save(
+                Category.builder()
+                        .name("Old Name")
+                        .externalId("SAME-EXT")
+                        .storefrontId(activeStorefront.getId())
+                        .build()
+        );
+
+        var updateRequest = new UpdateCategoryRequest("Updated Name", "SAME-EXT", null);
+
+        mockMvc.perform(put(BASE_URL + "/{categoryId}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Name"))
+                .andExpect(jsonPath("$.externalId").value("SAME-EXT"));
+
+        assertThat(categoryRepository.findById(existing.getId()).orElseThrow().getName()).isEqualTo("Updated Name");
+        events.assertThat()
+                .contains(CategoryUpdatedEvent.class)
+                .matching(CategoryUpdatedEvent::previousExternalId, "SAME-EXT")
+                .matching(CategoryUpdatedEvent::externalId, "SAME-EXT");
     }
 
     @Test

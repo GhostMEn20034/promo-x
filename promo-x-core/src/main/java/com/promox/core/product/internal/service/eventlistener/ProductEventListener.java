@@ -1,6 +1,6 @@
 package com.promox.core.product.internal.service.eventlistener;
 
-import com.promox.core.infrastructure.cache.RedisBatchCache;
+import com.promox.core.infrastructure.cache.BatchCacheManager;
 import com.promox.core.product.event.ProductUpdatedEvent;
 import com.promox.core.product.internal.service.ProductLookupApiImpl;
 
@@ -12,16 +12,16 @@ import java.util.List;
 
 @Component
 public class ProductEventListener {
-    private final RedisBatchCache redisBatchCache;
+    private final BatchCacheManager batchCacheManager;
 
-    public ProductEventListener(RedisBatchCache redisBatchCache) {
-        this.redisBatchCache = redisBatchCache;
+    public ProductEventListener(BatchCacheManager batchCacheManager) {
+        this.batchCacheManager = batchCacheManager;
     }
 
     // Cache keys are external IDs, so a changed external ID leaves the entry under the previous one.
     @ApplicationModuleListener
     public void on(ProductUpdatedEvent event) {
-        redisBatchCache.evictAll(
+        batchCacheManager.evictAll(
             ProductLookupApiImpl.PRODUCTS_WITH_CATEGORIES_CACHE,
             List.of(event.previousExternalId(), event.externalId()),
             externalId -> ProductLookupApiImpl.productCacheKey(event.storefrontId(), externalId)

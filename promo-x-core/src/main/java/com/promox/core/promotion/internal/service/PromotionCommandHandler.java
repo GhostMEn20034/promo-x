@@ -5,6 +5,7 @@ import com.promox.core.product.ProductWithCategoriesDto;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.PromotionMapper;
+import com.promox.core.promotion.internal.persistence.PromotionRuleBaseProjection;
 import com.promox.core.promotion.internal.persistence.PromotionRuleUsage;
 
 import org.springframework.stereotype.Service;
@@ -26,17 +27,20 @@ public class PromotionCommandHandler {
     private final PromotionService promotionService;
     private final PromotionRuleUsageService promotionRuleUsageService;
     private final PromotionProductValidator promotionProductValidator;
+    private final PromotionCategoryValidator promotionCategoryValidator;
 
     public PromotionCommandHandler(
             PromotionMapper promotionMapper,
             PromotionService promotionService,
             PromotionRuleUsageService promotionRuleUsageService,
-            PromotionProductValidator promotionProductValidator
+            PromotionProductValidator promotionProductValidator,
+            PromotionCategoryValidator promotionCategoryValidator
     ) {
         this.promotionMapper = promotionMapper;
         this.promotionService = promotionService;
         this.promotionRuleUsageService = promotionRuleUsageService;
         this.promotionProductValidator = promotionProductValidator;
+        this.promotionCategoryValidator = promotionCategoryValidator;
     }
 
     @Transactional
@@ -48,6 +52,11 @@ public class PromotionCommandHandler {
 
         promotionProductValidator.validateProductExternalIdsExistence(
                 productExternalIds,
+                storefrontId,
+                null
+        );
+        promotionCategoryValidator.validateCategoryExternalIdsExistence(
+                request.conditionTree().getCategoryIds(),
                 storefrontId,
                 null
         );
@@ -68,6 +77,11 @@ public class PromotionCommandHandler {
 
                     promotionProductValidator.validateProductExternalIdsExistence(
                             productExternalIds,
+                            promotionRule.getStorefrontId(),
+                            null
+                    );
+                    promotionCategoryValidator.validateCategoryExternalIdsExistence(
+                            request.conditionTree().getCategoryIds(),
                             promotionRule.getStorefrontId(),
                             null
                     );
@@ -93,7 +107,6 @@ public class PromotionCommandHandler {
         return promotionService.deleteById(promotionRuleId);
     }
 
-    @Transactional
     public PromotionEvaluationResponse evaluate(Long storefrontId, PromotionEvaluationRequest evaluationRequest) {
         Set<String> productExternalIds = evaluationRequest.items().stream()
                 .map(PromotionEvaluationItem::productExternalId)
@@ -106,8 +119,10 @@ public class PromotionCommandHandler {
         );
 
         EngineWorkspace workspace = buildWorkspace(storefrontId, evaluationRequest, products);
+        List<PromotionRuleBaseProjection> rules = promotionService.findActiveRules(storefrontId);
         Optional<PromotionRuleUsage> usage = promotionService.applyRules(
                 storefrontId,
+                rules,
                 workspace,
                 products,
                 evaluationRequest.reserveUsage()

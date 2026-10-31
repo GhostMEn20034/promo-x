@@ -25,7 +25,7 @@ public class PromotionRuleCacheReader {
         this.promotionRepository = promotionRepository;
     }
 
-    @Cacheable(cacheNames = RULES_CACHE_NAME, key = "#storefrontId")
+    @Cacheable(cacheNames = RULES_CACHE_NAME, key = "#storefrontId", sync = true)
     @Transactional(readOnly = true)
     public List<PromotionRuleBaseProjection> findAllActiveSortedByPriority(Long storefrontId) {
         return promotionRepository.findAllActiveProjectionsByStorefrontIdOrderByPriorityDesc(storefrontId);

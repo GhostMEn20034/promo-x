@@ -84,6 +84,24 @@ public class StorefrontUpdateIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Should save the new values in the database, not only return them")
+    void updateStorefront_ShouldPersistChanges_WhenRequestIsValid() throws Exception {
+        Storefront existing = storefrontRepository.save(
+                new Storefront(null, "Initial Store Name", "https://initial-website.com")
+        );
+        UpdateStorefrontRequest request = new UpdateStorefrontRequest("Updated Electronics", "https://new-electronics.com");
+
+        mockMvc.perform(put(BASE_URL + "/{storefrontId}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        Storefront reloaded = storefrontRepository.findById(existing.getId()).orElseThrow();
+        assertThat(reloaded.getName()).isEqualTo("Updated Electronics");
+        assertThat(reloaded.getWebsite()).isEqualTo("https://new-electronics.com");
+    }
+
+    @Test
     @DisplayName("Should return 404 Not Found when attempting to update non-existent storefront")
     void updateStorefront_ShouldReturn404_WhenStorefrontDoesNotExist() throws Exception {
         Long nonExistentId = 99999L;

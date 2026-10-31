@@ -37,6 +37,7 @@ public class CategoryCommandHandler {
         return CategoryMapper.toDto(category);
     }
 
+    @Transactional
     public Optional<CategoryDto> updateCategoryById(
             Long categoryId,
             UpdateCategoryRequest updateRequest

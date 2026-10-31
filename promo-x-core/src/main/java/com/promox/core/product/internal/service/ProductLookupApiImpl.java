@@ -2,7 +2,7 @@ package com.promox.core.product.internal.service;
 
 import com.promox.core.category.CategoryDto;
 import com.promox.core.category.CategoryLookupApi;
-import com.promox.core.infrastructure.cache.RedisBatchCache;
+import com.promox.core.infrastructure.cache.BatchCacheManager;
 import com.promox.core.product.*;
 import com.promox.core.product.internal.ProductMapper;
 import com.promox.core.product.internal.persistence.Product;
@@ -28,16 +28,16 @@ public class ProductLookupApiImpl implements ProductLookupApi {
 
     private final ProductService productService;
     private final CategoryLookupApi categoryLookupApi;
-    private final RedisBatchCache redisBatchCache;
+    private final BatchCacheManager batchCacheManager;
 
     public ProductLookupApiImpl(
         ProductService productService,
         CategoryLookupApi categoryLookupApi,
-        RedisBatchCache redisBatchCache
+        BatchCacheManager batchCacheManager
     ) {
         this.productService = productService;
         this.categoryLookupApi = categoryLookupApi;
-        this.redisBatchCache = redisBatchCache;
+        this.batchCacheManager = batchCacheManager;
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ProductLookupApiImpl implements ProductLookupApi {
 
     @Override
     public List<ProductWithCategoriesDto> findAllWithCategoriesByExternalIds(Set<String> externalIds, Long storefrontId) {
-        Map<String, ProductWithCategoriesDto> products = redisBatchCache.getAll(
+        Map<String, ProductWithCategoriesDto> products = batchCacheManager.getAll(
             PRODUCTS_WITH_CATEGORIES_CACHE,
             externalIds,
             externalId -> productCacheKey(storefrontId, externalId),

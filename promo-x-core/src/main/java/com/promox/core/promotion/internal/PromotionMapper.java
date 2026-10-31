@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 
 @Component
@@ -57,7 +58,8 @@ public final class PromotionMapper {
     public DefaultPromotionDto toDto(PromotionRule rule) {
         return new DefaultPromotionDto(
             toBaseDto(rule),
-            rule.getProductExternalIds()
+            // A copy, so the DTO never carries a lazy collection past the end of the transaction
+            Set.copyOf(rule.getProductExternalIds())
         );
     }
 

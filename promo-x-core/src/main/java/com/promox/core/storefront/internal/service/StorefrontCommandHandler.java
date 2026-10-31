@@ -5,6 +5,7 @@ import com.promox.core.storefront.StorefrontDto;
 import com.promox.core.storefront.internal.StorefrontMapper;
 import com.promox.core.storefront.internal.dto.UpdateStorefrontRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ public class StorefrontCommandHandler {
         return StorefrontMapper.toDto(storefrontService.createStorefront(creationRequest));
     }
 
+    @Transactional
     public Optional<StorefrontDto> updateStorefrontById(
             Long storefrontId,
             UpdateStorefrontRequest updateRequest

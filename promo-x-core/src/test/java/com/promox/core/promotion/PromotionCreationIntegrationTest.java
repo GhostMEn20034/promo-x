@@ -1,5 +1,7 @@
 package com.promox.core.promotion;
 
+import com.promox.core.category.internal.persistence.Category;
+import com.promox.core.category.internal.persistence.CategoryRepository;
 import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.product.internal.persistence.Product;
 import com.promox.core.product.internal.persistence.ProductRepository;
@@ -43,6 +45,9 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @BeforeEach
     void setUp() {
@@ -295,6 +300,88 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             assertThat(missingIds).containsExactlyInAnyOrder(nonExistentProduct);
             assertThat(existingIds).containsExactlyInAnyOrder(EXISTING_PRODUCT_1);
             assertThat(promotionRepository.count()).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("Category Validation Tests")
+    class CategoryValidationTests {
+
+        @Test
+        @DisplayName("Should create the rule when every category in its conditions exists in the storefront")
+        void createPromotionRule_existingCategories_success() throws Exception {
+            saveCategory("CAT-KEYBOARDS", STOREFRONT_ID);
+
+            mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(ruleWithCategories("CAT-KEYBOARDS")))
+                .andExpect(status().isCreated());
+
+            assertThat(promotionRepository.findAllWithProductsBy().getFirst().getCategoryExternalIds())
+                .containsExactly("CAT-KEYBOARDS");
+        }
+
+        @Test
+        @DisplayName("Should return 409 Conflict, listing the missing and existing categories, and save nothing")
+        void createPromotionRule_nonExistentCategory_throwsBusinessException() throws Exception {
+            saveCategory("CAT-KEYBOARDS", STOREFRONT_ID);
+
+            MvcResult result = mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(ruleWithCategories("CAT-KEYBOARDS", "CAT-MISSING")))
+                .andExpect(status().isConflict())
+                .andReturn();
+
+            JsonNode errorNode = objectMapper.readTree(result.getResponse().getContentAsString()).path("errors").get(0);
+            assertThat(errorNode.path("code").asString()).isEqualTo("CATEGORY_EXTERNAL_IDS_NOT_FOUND");
+            assertThat(extractStringList(errorNode.path("errorContext"), "missingCategoryExternalIds"))
+                .containsExactly("CAT-MISSING");
+            assertThat(extractStringList(errorNode.path("errorContext"), "existingCategoryExternalIds"))
+                .containsExactly("CAT-KEYBOARDS");
+            assertThat(promotionRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should reject a category that only exists in another storefront")
+        void createPromotionRule_categoryFromAnotherStorefront_throwsBusinessException() throws Exception {
+            saveCategory("CAT-FOREIGN", STOREFRONT_ID + 1);
+
+            mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(ruleWithCategories("CAT-FOREIGN")))
+                .andExpect(status().isConflict());
+
+            assertThat(promotionRepository.count()).isZero();
+        }
+
+        private void saveCategory(String externalId, Long storefrontId) {
+            categoryRepository.save(Category.builder()
+                .storefrontId(storefrontId)
+                .externalId(externalId)
+                .name("Category " + externalId)
+                .build());
+        }
+
+        private String ruleWithCategories(String... categories) {
+            String categoryList = String.join("\", \"", categories);
+            return """
+            {
+              "name": "Keyboard category rule",
+              "priority": 10,
+              "isShortCircuit": false,
+              "isActive": true,
+              "hasUsageLimit": false,
+              "conditionTree": {
+                "type": "PRODUCT_CATEGORY_ANY_MATCH",
+                "categories": ["%s"],
+                "operator": "EQUALS"
+              },
+              "action": {"type": "ORDER_FLAT_DISCOUNT", "discountAmount": 10.00}
+            }
+            """.formatted(categoryList);
         }
     }
 

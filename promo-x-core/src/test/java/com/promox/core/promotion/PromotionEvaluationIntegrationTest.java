@@ -1,5 +1,7 @@
 package com.promox.core.promotion;
 
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
 import com.promox.core.infrastructure.security.Roles;
@@ -8,6 +10,7 @@ import com.promox.core.product.internal.persistence.ProductRepository;
 import com.promox.core.promotion.event.PromotionRulesAppliedEvent;
 import com.promox.core.promotion.internal.persistence.PromotionRepository;
 import com.promox.core.promotion.internal.persistence.PromotionRule;
+import com.promox.core.promotion.internal.service.PromotionRuleCacheReader;
 import com.promox.core.promotion.internal.service.action.ActionStrategy;
 import com.promox.core.promotion.internal.service.action.FreeShippingAction;
 import com.promox.core.promotion.internal.service.action.OrderDiscountAction;
@@ -26,23 +29,34 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.springframework.modulith.test.EnableScenarios;
 import org.springframework.modulith.test.Scenario;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,6 +84,12 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private RedisLockRegistry cacheLockRegistry;
+
+    @Autowired
+    private DataSource dataSource;
 
     @BeforeEach
     void setUp() {
@@ -500,6 +520,56 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
             JsonNode response = evaluateOk(cartPayload(NO_PROMO_CODES));
 
             assertThat(decimal(response, "oldTotal")).isEqualByComparingTo("265.00");
+        }
+    }
+
+    @Nested
+    @DisplayName("Transaction Boundary Tests")
+    class TransactionBoundaryTests {
+
+        @Test
+        @DisplayName("Should not hold a database connection while waiting for another caller to load the rules")
+        void evaluate_waitingForRulesLock_holdsNoDatabaseConnection() throws Exception {
+            // Held by the test, as if another caller were loading this storefront's rules right now.
+            Lock rulesLock = cacheLockRegistry.obtain(PromotionRuleCacheReader.RULES_CACHE_NAME + "::" + STOREFRONT_ID);
+            // The evaluation runs on another thread, which doesn't see the test's @WithMockJwt context.
+            SecurityContext callerContext = SecurityContextHolder.getContext();
+            HikariPoolMXBean connectionPool = dataSource.unwrap(HikariDataSource.class).getHikariPoolMXBean();
+
+            rulesLock.lock();
+            try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
+                Future<Integer> evaluation = executor.submit(() -> mockMvc.perform(post(EVALUATE_URL_PATH)
+                        .with(securityContext(callerContext))
+                        .header("X-Storefront-Id", STOREFRONT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cartPayload(NO_PROMO_CODES)))
+                    .andReturn()
+                    .getResponse()
+                    .getStatus());
+
+                try {
+                    // Enough for the evaluation to pass product validation and reach the lock.
+                    Thread.sleep(1_000);
+
+                    assertThat(evaluation).isNotDone();
+                    assertThat(allConnectionsReturned(connectionPool)).isTrue();
+                } finally {
+                    rulesLock.unlock();
+                }
+
+                assertThat(evaluation.get(10, TimeUnit.SECONDS)).isEqualTo(HttpStatus.OK.value());
+            }
+        }
+
+        /** Polls, because background work such as the usage expiration job may hold a connection for a moment. */
+        private boolean allConnectionsReturned(HikariPoolMXBean connectionPool) throws InterruptedException {
+            for (int attempt = 0; attempt < 100; attempt++) {
+                if (connectionPool.getActiveConnections() == 0) {
+                    return true;
+                }
+                Thread.sleep(20);
+            }
+            return false;
         }
     }
 
