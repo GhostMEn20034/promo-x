@@ -12,7 +12,9 @@ import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializ
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,11 +27,31 @@ public class RedisCacheConfig {
     static final String CACHE_LOCK_REGISTRY_KEY = "promox:cache-lock";
 
     @Bean
-    public RedisCacheConfiguration cacheConfiguration(ObjectMapper objectMapper) {
+    public RedisCacheConfiguration cacheConfiguration(JsonMapper jsonMapper) {
         return RedisCacheConfiguration.defaultCacheConfig()
             .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                new GenericJacksonJsonRedisSerializer(objectMapper)))
+                cacheValueSerializer(jsonMapper)))
             .disableCachingNullValues();
+    }
+
+    /**
+     * Writes the class of every value into the JSON, so a cache hit is read back as the type that was cached;
+     * without it, records come back as {@code LinkedHashMap}s. Only application and JDK classes may be named
+     * in the JSON, so a tampered entry can't make Jackson instantiate an arbitrary class.
+     * <p>
+     * Final classes get no type, so a cached method must return a record, an application class or a mutable
+     * collection such as {@code ArrayList}: a {@code List.of(...)} or {@code Stream.toList()} result can't be
+     * read back, and a {@code Long} comes back as an {@code Integer}. Inside a record any field type works.
+     */
+    static GenericJacksonJsonRedisSerializer cacheValueSerializer(JsonMapper jsonMapper) {
+        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
+            .allowIfSubType("com.promox.")
+            .allowIfSubType("java.")
+            .build();
+
+        return GenericJacksonJsonRedisSerializer.builder(jsonMapper::rebuild)
+            .enableDefaultTyping(typeValidator)
+            .build();
     }
 
     @Bean

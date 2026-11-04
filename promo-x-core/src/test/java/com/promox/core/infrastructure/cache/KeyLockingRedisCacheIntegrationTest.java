@@ -121,7 +121,7 @@ class KeyLockingRedisCacheIntegrationTest extends IntegrationTestBase {
                 assertThat(loading.await(5, TimeUnit.SECONDS)).isTrue();
 
                 // Key 1's lock is held until finishLoading opens, so this only finishes if key 2 has its own lock.
-                Object otherKey = executor.submit(() -> cache.get(2L, () -> List.of("rules-2"))).get(5, TimeUnit.SECONDS);
+                Object otherKey = executor.submit(() -> cache.get(2L, () -> cachedValue("rules-2"))).get(5, TimeUnit.SECONDS);
 
                 assertThat(otherKey).isEqualTo(List.of("rules-2"));
                 assertThat(blocked).isNotDone();
@@ -160,12 +160,12 @@ class KeyLockingRedisCacheIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should return a cached entry without calling the loader")
     void get_cachedEntry_skipsLoader() {
-        cache.put(1L, List.of("cached"));
+        cache.put(1L, cachedValue("cached"));
         AtomicInteger loads = new AtomicInteger();
 
         Object value = cache.get(1L, () -> {
             loads.incrementAndGet();
-            return List.of("loaded");
+            return cachedValue("loaded");
         });
 
         assertThat(value).isEqualTo(List.of("cached"));
@@ -185,7 +185,7 @@ class KeyLockingRedisCacheIntegrationTest extends IntegrationTestBase {
 
         assertThat(cache.get(1L)).isNull();
         // Would block forever if the failed call had kept the lock.
-        assertThat(cache.get(1L, () -> List.of("rules-1"))).isEqualTo(List.of("rules-1"));
+        assertThat(cache.get(1L, () -> cachedValue("rules-1"))).isEqualTo(List.of("rules-1"));
     }
 
     /** Runs {@code call} on {@code callers} threads released at the same moment and returns their results. */
@@ -214,7 +214,7 @@ class KeyLockingRedisCacheIntegrationTest extends IntegrationTestBase {
         return () -> {
             loads.incrementAndGet();
             Thread.sleep(LOAD_MILLIS);
-            return List.of(value);
+            return cachedValue(value);
         };
     }
 
@@ -227,7 +227,12 @@ class KeyLockingRedisCacheIntegrationTest extends IntegrationTestBase {
         return () -> {
             loading.countDown();
             assertThat(finishLoading.await(10, TimeUnit.SECONDS)).isTrue();
-            return List.of(value);
+            return cachedValue(value);
         };
+    }
+
+    // An ArrayList, not List.of: the cache can't read back an immutable JDK list stored as the whole value.
+    private static List<String> cachedValue(String value) {
+        return new ArrayList<>(List.of(value));
     }
 }

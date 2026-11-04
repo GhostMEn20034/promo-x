@@ -9,6 +9,8 @@ import com.promox.core.promotion.internal.persistence.PromotionRule;
 
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
 import com.promox.core.promotion.internal.persistence.PromotionRuleUsage;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsageDailyCount;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsageStats;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
@@ -137,5 +139,21 @@ public final class PromotionMapper {
             projection.getCreatedAt(),
             projection.getUpdatedAt()
         );
+    }
+
+    public PromotionRuleUsageStatsDto toUsageStatsDto(PromotionRuleUsageStats stats) {
+        return new PromotionRuleUsageStatsDto(
+            stats.usageCount(),
+            stats.enteredPromoCodeCount(),
+            stats.registeredCustomerUsageCount(),
+            stats.anonymousCustomerUsageCount(),
+            stats.averageTotalDiscount(),
+            stats.averageSubtotalDiscount(),
+            stats.averageShippingDiscount()
+        );
+    }
+
+    public PromotionRuleUsageDailyCountDto toUsageDailyCountDto(PromotionRuleUsageDailyCount dailyCount) {
+        return new PromotionRuleUsageDailyCountDto(dailyCount.date(), dailyCount.usageCount());
     }
 }
