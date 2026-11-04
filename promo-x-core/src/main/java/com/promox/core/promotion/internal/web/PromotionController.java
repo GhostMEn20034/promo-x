@@ -2,6 +2,7 @@ package com.promox.core.promotion.internal.web;
 
 import com.promox.core.infrastructure.security.Roles;
 import com.promox.core.promotion.PromotionLookupApi;
+import com.promox.core.promotion.TimestampRange;
 import com.promox.core.promotion.internal.dto.*;
 import com.promox.core.promotion.internal.dto.web.DefaultPromotionWebResponseDto;
 import com.promox.core.promotion.internal.dto.web.DetailedPromotionWebResponseDto;
@@ -120,5 +121,14 @@ public class PromotionController {
     public PromotionRuleUsageDto cancelPromotionRuleUsage(@PathVariable UUID usageId) {
         return promotionCommandHandler.cancelUsage(usageId)
                 .orElseThrow(() -> new PromotionRuleUsageNotFoundException(usageId));
+    }
+
+    @GetMapping("/usage/stats")
+    @PreAuthorize("hasAnyRole('" + Roles.AUDITOR + "', '" + Roles.PROMOTION_MANAGER + "', '" + Roles.ADMIN + "')")
+    public PromotionRuleUsageStatsResponse getUsageStats(
+            @RequestHeader("X-Storefront-Id") Long storefrontId,
+            @Valid TimestampRange timestampRange
+            ) {
+        return promotionLookupApi.getUsageStats(storefrontId, timestampRange);
     }
 }

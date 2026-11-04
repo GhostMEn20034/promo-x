@@ -53,7 +53,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// Each test evaluates a storefront at most once, so every rule lookup is a cache miss.
+// Each test evaluates a storefront at most once, so every rule lookup is a cache miss; only
+// evaluate_rulesCacheHit_appliesSameRules evaluates twice, to read the rules from the cache.
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 @EnableScenarios
 public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
@@ -191,6 +192,20 @@ public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
 
             assertThat(response.path("usage").isNull()).isTrue();
             assertThat(usageRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should apply the same rules when they are read from the rules cache")
+        void evaluate_rulesCacheHit_appliesSameRules() throws Exception {
+            PromotionRule rule = saveRule("20% off keyboards", 100, keyboardDiscount());
+
+            JsonNode fromDatabase = evaluate(false);
+            JsonNode fromCache = evaluate(false);
+
+            assertThat(ruleIds(fromDatabase, "appliedRules")).containsExactly(rule.getId());
+            assertThat(ruleIds(fromCache, "appliedRules")).containsExactly(rule.getId());
+            assertThat(fromCache.path("totalDiscount").decimalValue())
+                .isEqualByComparingTo(fromDatabase.path("totalDiscount").decimalValue());
         }
 
         @Test
