@@ -44,6 +44,7 @@ import tools.jackson.databind.ObjectMapper;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,11 +52,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.securityContext;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -536,23 +539,32 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
             SecurityContext callerContext = SecurityContextHolder.getContext();
             HikariPoolMXBean connectionPool = dataSource.unwrap(HikariDataSource.class).getHikariPoolMXBean();
 
+            AtomicReference<Thread> evaluatingThread = new AtomicReference<>();
+
             rulesLock.lock();
             try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
-                Future<Integer> evaluation = executor.submit(() -> mockMvc.perform(post(EVALUATE_URL_PATH)
-                        .with(securityContext(callerContext))
-                        .header("X-Storefront-Id", STOREFRONT_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(cartPayload(NO_PROMO_CODES)))
-                    .andReturn()
-                    .getResponse()
-                    .getStatus());
+                Future<Integer> evaluation = executor.submit(() -> {
+                    evaluatingThread.set(Thread.currentThread());
+                    return mockMvc.perform(post(EVALUATE_URL_PATH)
+                            .with(securityContext(callerContext))
+                            .header("X-Storefront-Id", STOREFRONT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(cartPayload(NO_PROMO_CODES)))
+                        .andReturn()
+                        .getResponse()
+                        .getStatus();
+                });
 
                 try {
-                    // Enough for the evaluation to pass product validation and reach the lock.
-                    Thread.sleep(1_000);
+                    await("evaluation waiting for the rules lock")
+                        .atMost(10, TimeUnit.SECONDS)
+                        .until(() -> isWaitingForCacheLock(evaluatingThread.get()));
 
                     assertThat(evaluation).isNotDone();
-                    assertThat(allConnectionsReturned(connectionPool)).isTrue();
+                    // Awaited, because background work such as the usage expiration job may hold a connection for a moment.
+                    await("all database connections returned to the pool")
+                        .atMost(2, TimeUnit.SECONDS)
+                        .until(() -> connectionPool.getActiveConnections() == 0);
                 } finally {
                     rulesLock.unlock();
                 }
@@ -561,15 +573,10 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
             }
         }
 
-        /** Polls, because background work such as the usage expiration job may hold a connection for a moment. */
-        private boolean allConnectionsReturned(HikariPoolMXBean connectionPool) throws InterruptedException {
-            for (int attempt = 0; attempt < 100; attempt++) {
-                if (connectionPool.getActiveConnections() == 0) {
-                    return true;
-                }
-                Thread.sleep(20);
-            }
-            return false;
+        /** True once the thread is inside {@link RedisLockRegistry}'s lock, which the test holds, so it can't get past it. */
+        private boolean isWaitingForCacheLock(Thread thread) {
+            return thread != null && Arrays.stream(thread.getStackTrace())
+                .anyMatch(frame -> frame.getClassName().startsWith(RedisLockRegistry.class.getName()));
         }
     }
 
