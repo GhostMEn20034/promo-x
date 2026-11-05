@@ -1,5 +1,6 @@
 package com.promox.core.promotion.internal.dto;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -9,4 +10,4 @@ import java.util.List;
 public record PromotionRuleUsageStatsResponse(
     PromotionRuleUsageStatsDto totals,
     List<PromotionRuleUsageDailyCountDto> dailyCounts
-) {}
+) implements Serializable {}
