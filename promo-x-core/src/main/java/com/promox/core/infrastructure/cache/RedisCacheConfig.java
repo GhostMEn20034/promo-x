@@ -4,17 +4,12 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.integration.redis.util.RedisLockRegistry;
-
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,32 +21,17 @@ public class RedisCacheConfig {
     // Lock keys in Redis are "<registry key>:<cache key>", e.g. "promox:cache-lock:promotion-rules::42".
     static final String CACHE_LOCK_REGISTRY_KEY = "promox:cache-lock";
 
-    @Bean
-    public RedisCacheConfiguration cacheConfiguration(JsonMapper jsonMapper) {
-        return RedisCacheConfiguration.defaultCacheConfig()
-            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
-                cacheValueSerializer(jsonMapper)))
-            .disableCachingNullValues();
-    }
-
     /**
-     * Writes the class of every value into the JSON, so a cache hit is read back as the type that was cached;
-     * without it, records come back as {@code LinkedHashMap}s. Only application and JDK classes may be named
-     * in the JSON, so a tampered entry can't make Jackson instantiate an arbitrary class.
+     * Values use the default Java serialization, which keeps their exact types, so every cached value and
+     * everything it holds must be {@link java.io.Serializable}.
      * <p>
-     * Final classes get no type, so a cached method must return a record, an application class or a mutable
-     * collection such as {@code ArrayList}: a {@code List.of(...)} or {@code Stream.toList()} result can't be
-     * read back, and a {@code Long} comes back as an {@code Integer}. Inside a record any field type works.
+     * Classes are read back with the application's class loader, as Boot's own Redis cache configuration does,
+     * so DevTools' restart class loader doesn't turn a cache hit into a {@code ClassCastException}.
      */
-    static GenericJacksonJsonRedisSerializer cacheValueSerializer(JsonMapper jsonMapper) {
-        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
-            .allowIfSubType("com.promox.")
-            .allowIfSubType("java.")
-            .build();
-
-        return GenericJacksonJsonRedisSerializer.builder(jsonMapper::rebuild)
-            .enableDefaultTyping(typeValidator)
-            .build();
+    @Bean
+    public RedisCacheConfiguration cacheConfiguration(ResourceLoader resourceLoader) {
+        return RedisCacheConfiguration.defaultCacheConfig(resourceLoader.getClassLoader())
+            .disableCachingNullValues();
     }
 
     @Bean

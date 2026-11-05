@@ -3,6 +3,8 @@ package com.promox.core.promotion.internal.persistence;
 import com.promox.core.promotion.internal.service.action.ActionStrategy;
 import com.promox.core.promotion.internal.service.condition.ConditionNode;
 
+import java.io.Serializable;
+
 /**
  * Flat projection of {@link PromotionRule} carrying only what the rule engine reads.
  * A concrete record (not an interface-based Spring Data projection) so it serializes
@@ -20,7 +22,7 @@ public record PromotionRuleBaseProjection(
     boolean hasUsageLimit,
     ConditionNode conditionTree,
     ActionStrategy action
-) {
+) implements Serializable {
     public static PromotionRuleBaseProjection from(PromotionRule rule) {
         return new PromotionRuleBaseProjection(
             rule.getId(),

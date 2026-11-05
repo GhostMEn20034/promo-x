@@ -5,11 +5,13 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 
+import java.io.Serializable;
 import java.util.Set;
 
 
+// Serializable because rules are cached with Java serialization; implementations' fields must be serializable too.
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-public interface ActionStrategy {
+public interface ActionStrategy extends Serializable {
     @JsonIgnore
     String getTypeName();
 

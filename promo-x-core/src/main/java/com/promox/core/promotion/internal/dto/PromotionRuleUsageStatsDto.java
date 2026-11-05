@@ -2,6 +2,7 @@ package com.promox.core.promotion.internal.dto;
 
 import jakarta.annotation.Nullable;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -15,4 +16,4 @@ public record PromotionRuleUsageStatsDto(
     @Nullable BigDecimal averageTotalDiscount,
     @Nullable BigDecimal averageSubtotalDiscount,
     @Nullable BigDecimal averageShippingDiscount
-) {}
+) implements Serializable {}
