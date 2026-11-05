@@ -2,6 +2,10 @@ spring:
   application:
     name: promo-x-core
 
+  threads:
+    virtual:
+      enabled: true
+
   security:
     oauth2:
       resourceserver:
@@ -13,6 +17,11 @@ spring:
     username: ${SQL_USER}
     password: ${SQL_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Size for the database server, not this app: about (DB server cores * 2) + disks, shared by every app instance.
+      maximum-pool-size: ${SQL_POOL_MAX_SIZE:10}
+      # Defaults to the max size, a fixed-size pool as HikariCP recommends; lower it to close idle connections.
+      minimum-idle: ${SQL_POOL_MIN_IDLE:${SQL_POOL_MAX_SIZE:10}}
 
   jpa:
     # Off, so a connection is returned when its transaction ends instead of being held until the response is sent.
