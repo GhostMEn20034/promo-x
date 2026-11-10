@@ -17,12 +17,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class DefaultSecurityConfig {
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(a -> a
                     .requestMatchers(EndpointRequest.to("health")).permitAll()
+                    .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
             )
             .oauth2ResourceServer(o -> o

@@ -3,3 +3,9 @@ logging:
     org.hibernate.engine.jdbc.batch.internal.BatchingBatch: TRACE
     org.hibernate.orm.jdbc.batch: TRACE
     org.springframework.security: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
