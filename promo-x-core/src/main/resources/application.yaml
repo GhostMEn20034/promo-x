@@ -59,6 +59,12 @@ management:
       cache:
         time-to-live: "10s"
 
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 # Application-specific properties
 promox:
   cache:
