@@ -145,7 +145,7 @@ public class PromotionUsageStatsIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(statsRequest(TO, FROM))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-            .andExpect(jsonPath("$.errors[?(@.path == 'validRange' && @.code == 'ASSERT_TRUE')]").exists());
+            .andExpect(jsonPath("$.errors[?(@.path == 'validRange' && @.code == 'ASSERT_TRUE' && @.source == 'QUERY_PARAMETER')]").exists());
     }
 
     @Test
@@ -155,7 +155,7 @@ public class PromotionUsageStatsIntegrationTest extends IntegrationTestBase {
                 .header("X-Storefront-Id", STOREFRONT_ID)
                 .param("to", TO.toString()))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.errors[?(@.path == 'from' && @.code == 'NOT_NULL')]").exists());
+            .andExpect(jsonPath("$.errors[?(@.path == 'from' && @.code == 'NOT_NULL' && @.source == 'QUERY_PARAMETER')]").exists());
     }
 
     @Test
@@ -165,7 +165,7 @@ public class PromotionUsageStatsIntegrationTest extends IntegrationTestBase {
                 .header("X-Storefront-Id", STOREFRONT_ID)
                 .param("from", FROM.toString()))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.errors[?(@.path == 'to' && @.code == 'NOT_NULL')]").exists());
+            .andExpect(jsonPath("$.errors[?(@.path == 'to' && @.code == 'NOT_NULL' && @.source == 'QUERY_PARAMETER')]").exists());
     }
 
     @Test

@@ -339,7 +339,7 @@ public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
 
             JsonNode response = evaluateOk(payload);
 
-            assertThat(extractStringList(line(response, "PROD-KB-CAT"), "categories")).containsExactly("Keyboards");
+            assertThat(extractStringList(line(response, "PROD-KB-CAT"), "categories")).containsExactly("CAT-KEYBOARDS");
             assertThat(extractStringList(line(response, MOUSE), "categories")).isEmpty();
         }
 

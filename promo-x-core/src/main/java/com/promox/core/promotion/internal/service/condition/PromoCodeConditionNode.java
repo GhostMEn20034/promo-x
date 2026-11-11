@@ -39,6 +39,9 @@ public record PromoCodeConditionNode(
         if (code == null || code.isBlank()) {
             throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Promo code value cannot be null or blank.");
         }
+        if (operator == null) {
+            throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Operator is required.");
+        }
         if (!ALLOWED_OPERATORS.contains(operator)) {
             throw new InvalidConditionNodeException(UNSUPPORTED_OPERATOR, "Operator '" + operator + "' is not supported by PromoCodeConditionNode.");
         }

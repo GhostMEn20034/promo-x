@@ -158,14 +158,14 @@ public class PromotionCommandHandler {
         List<LineItemRequest> lineItems = evaluationRequest.items().stream()
                 .map(item -> {
                     ProductWithCategoriesDto product = productsByExternalId.get(item.productExternalId());
-                    List<String> categories = product.categories().stream()
-                            .map(CategoryDto::name)
+                    List<String> categoryExternalIds = product.categories().stream()
+                            .map(CategoryDto::externalId)
                             .toList();
 
                     return new LineItemRequest(
                             item.productExternalId(),
                             product.base().sku(),
-                            categories,
+                            categoryExternalIds,
                             List.of(),
                             item.quantity(),
                             item.unitPrice()

@@ -20,8 +20,9 @@ public record UpdatePromotionRuleRequest(
     int priority,
 
     @NotNull
-    boolean isShortCircuit,
+    Boolean isShortCircuit,
 
+    @NotNull
     Boolean isActive,
 
     @NotNull(message = "Condition tree is required")

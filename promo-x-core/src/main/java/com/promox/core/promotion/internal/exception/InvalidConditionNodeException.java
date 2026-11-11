@@ -1,15 +1,10 @@
 package com.promox.core.promotion.internal.exception;
 
-public class InvalidConditionNodeException extends RuntimeException {
+import com.promox.core.infrastructure.exception.InvalidValueException;
 
-    private final String errorCode;
+public class InvalidConditionNodeException extends InvalidValueException {
 
     public InvalidConditionNodeException(String errorCode, String message) {
-        super(message);
-        this.errorCode = errorCode;
-    }
-
-    public String getErrorCode() {
-        return errorCode;
+        super(errorCode, message);
     }
 }

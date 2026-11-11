@@ -45,6 +45,9 @@ public record ProductSkuAnyMatchConditionNode(
                 "Target SKU list cannot be null or empty."
             );
         }
+        if (operator == null) {
+            throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Operator is required.");
+        }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
                 UNSUPPORTED_OPERATOR,

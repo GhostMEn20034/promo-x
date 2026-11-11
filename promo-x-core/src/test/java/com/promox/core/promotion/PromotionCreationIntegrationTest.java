@@ -17,6 +17,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -26,9 +29,12 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
@@ -606,6 +612,171 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                     .andExpect(status().isBadRequest());
 
             assertThat(promotionRepository.count()).isZero();
+        }
+
+        @ParameterizedTest(name = "[{index}] {0}")
+        @MethodSource("invalidConditionsAndActions")
+        @DisplayName("Should explain which condition or action value is invalid instead of reporting malformed JSON")
+        void createPromotionRule_invalidConditionOrAction_returnsSpecificError(
+            String testName,
+            String conditionTree,
+            String action,
+            String expectedPath,
+            String expectedCode,
+            String expectedMessage
+        ) throws Exception {
+            String payload = """
+                {
+                  "name": "Rule with an invalid value",
+                  "priority": 50,
+                  "hasUsageLimit": false,
+                  "conditionTree": %s,
+                  "action": %s
+                }
+                """.formatted(conditionTree, action);
+
+            mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].category").value("VALIDATION"))
+                .andExpect(jsonPath("$.errors[0].source").value("REQUEST_BODY"))
+                .andExpect(jsonPath("$.errors[0].path").value(expectedPath))
+                .andExpect(jsonPath("$.errors[0].code").value(expectedCode))
+                .andExpect(jsonPath("$.errors[0].message").value(expectedMessage));
+
+            assertThat(promotionRepository.count()).isZero();
+        }
+
+        @Test
+        @DisplayName("Should list the known types when a condition type is unknown")
+        void createPromotionRule_unknownConditionType_listsAllowedTypes() throws Exception {
+            String payload = """
+                {
+                  "name": "Rule with an unknown condition",
+                  "priority": 50,
+                  "hasUsageLimit": false,
+                  "conditionTree": { "type": "NOPE" },
+                  "action": { "type": "FREE_SHIPPING_ACTION" }
+                }
+                """;
+
+            mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].code").value("UNKNOWN_TYPE"))
+                .andExpect(jsonPath("$.errors[0].errorContext.allowedTypes", hasItems("PROMO_CODE", "COMPOSITE", "SUBTOTAL")));
+        }
+
+        @Test
+        @DisplayName("Should list the allowed values when an operator isn't one of them")
+        void createPromotionRule_unknownOperator_listsAllowedValues() throws Exception {
+            String payload = """
+                {
+                  "name": "Rule with an unknown operator",
+                  "priority": 50,
+                  "hasUsageLimit": false,
+                  "conditionTree": { "type": "PROMO_CODE", "code": "SUMMER", "operator": "LIKE" },
+                  "action": { "type": "FREE_SHIPPING_ACTION" }
+                }
+                """;
+
+            mockMvc.perform(post("/promotion/")
+                    .header("X-Storefront-Id", STOREFRONT_ID)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].path").value("conditionTree.operator"))
+                .andExpect(jsonPath("$.errors[0].code").value("TYPE_MISMATCH"))
+                .andExpect(jsonPath("$.errors[0].message").value("Invalid value 'LIKE'."))
+                .andExpect(jsonPath("$.errors[0].errorContext.allowedValues", hasItems("EQUALS", "NOT_EQUALS", "GREATER_THAN_OR_EQUAL")));
+        }
+
+        static Stream<Arguments> invalidConditionsAndActions() {
+            String validCondition = """
+                { "type": "PROMO_CODE", "code": "SUMMER", "operator": "EQUALS" }""";
+            String validAction = """
+                { "type": "FREE_SHIPPING_ACTION" }""";
+
+            return Stream.of(
+                Arguments.of(
+                    "Operator the condition doesn't support",
+                    """
+                    { "type": "PROMO_CODE", "code": "SUMMER", "operator": "GREATER_THAN_OR_EQUAL" }""",
+                    validAction,
+                    "conditionTree",
+                    "UNSUPPORTED_OPERATOR",
+                    "Operator 'GREATER_THAN_OR_EQUAL' is not supported by PromoCodeConditionNode."
+                ),
+                Arguments.of(
+                    "Missing operator in a composite's child",
+                    """
+                    { "type": "COMPOSITE", "operator": "AND", "children": [ { "type": "PROMO_CODE", "code": "SUMMER" } ] }""",
+                    validAction,
+                    "conditionTree.children.[0]",
+                    "MISSING_REQUIRED_FIELD",
+                    "Operator is required."
+                ),
+                Arguments.of(
+                    "Blank promo code",
+                    """
+                    { "type": "PROMO_CODE", "code": "", "operator": "EQUALS" }""",
+                    validAction,
+                    "conditionTree",
+                    "MISSING_REQUIRED_FIELD",
+                    "Promo code value cannot be null or blank."
+                ),
+                Arguments.of(
+                    "Unknown condition type",
+                    """
+                    { "type": "NOPE" }""",
+                    validAction,
+                    "conditionTree",
+                    "UNKNOWN_TYPE",
+                    "Unknown type 'NOPE'."
+                ),
+                Arguments.of(
+                    "Condition without a type",
+                    """
+                    { "code": "SUMMER", "operator": "EQUALS" }""",
+                    validAction,
+                    "conditionTree",
+                    "MISSING_TYPE",
+                    "The 'type' property is required."
+                ),
+                Arguments.of(
+                    "Percentage above 1",
+                    validCondition,
+                    """
+                    { "type": "ORDER_PERCENTAGE_DISCOUNT", "discountPercentage": 1.5 }""",
+                    "action",
+                    "INVALID_VALUE_RANGE",
+                    "Percentage must be from 0.0 to 1"
+                ),
+                Arguments.of(
+                    "Missing discount amount",
+                    validCondition,
+                    """
+                    { "type": "ORDER_FLAT_DISCOUNT" }""",
+                    "action",
+                    "MISSING_REQUIRED_FIELD",
+                    "Discount amount cannot be null"
+                ),
+                Arguments.of(
+                    "Unknown action type",
+                    validCondition,
+                    """
+                    { "type": "NOPE" }""",
+                    "action",
+                    "UNKNOWN_TYPE",
+                    "Unknown type 'NOPE'."
+                )
+            );
         }
     }
 

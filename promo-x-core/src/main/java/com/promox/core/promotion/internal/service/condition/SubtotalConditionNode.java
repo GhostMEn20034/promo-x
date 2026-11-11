@@ -52,6 +52,9 @@ public record SubtotalConditionNode(
         if (threshold.compareTo(BigDecimal.ZERO) < 0) {
             throw new InvalidConditionNodeException(INVALID_VALUE_RANGE, "Subtotal threshold cannot be negative.");
         }
+        if (operator == null) {
+            throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Operator is required.");
+        }
         if (!ALLOWED_OPERATORS.contains(operator)) {
             throw new InvalidConditionNodeException(UNSUPPORTED_OPERATOR, "Operator '" + operator + "' is not supported by SubtotalConditionNode.");
         }

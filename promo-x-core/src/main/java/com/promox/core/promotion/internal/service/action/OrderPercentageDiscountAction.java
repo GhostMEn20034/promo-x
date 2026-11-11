@@ -11,7 +11,6 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Objects;
 
 
 /**
@@ -38,7 +37,9 @@ public record OrderPercentageDiscountAction(
     );
 
     public OrderPercentageDiscountAction {
-        Objects.requireNonNull(discountPercentage, "Discount percentage cannot be null");
+        if (discountPercentage == null) {
+            throw new InvalidActionStrategyException(ActionStrategyErrorCodes.MISSING_REQUIRED_FIELD, "Discount percentage cannot be null");
+        }
         if (discountPercentage.compareTo(BigDecimal.ZERO) < 0 || discountPercentage.compareTo(BigDecimal.ONE) > 0) {
             throw new InvalidActionStrategyException(
                 ActionStrategyErrorCodes.INVALID_VALUE_RANGE,

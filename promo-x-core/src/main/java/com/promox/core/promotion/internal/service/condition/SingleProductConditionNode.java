@@ -45,6 +45,9 @@ public record SingleProductConditionNode(
                 "Target Product External ID cannot be null or blank."
             );
         }
+        if (operator == null) {
+            throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Operator is required.");
+        }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
                 UNSUPPORTED_OPERATOR,

@@ -12,7 +12,6 @@ The HTTP API of promo-x-core. The concepts behind it (storefronts, rules, usages
 - [Products](#products)
 - [Storefronts](#storefronts)
 - [Health](#health)
-- [Known issues](#known-issues)
 
 ## Conventions
 
@@ -135,8 +134,28 @@ is malformed. `code` is always `VALIDATION_ERROR`, and every item has `category:
 | `MIN` | Below the minimum |
 | `DECIMAL_MIN`, `DECIMAL_MAX` | Decimal below the minimum or above the maximum |
 | `ASSERT_TRUE` | A check across fields failed, e.g. `validRange` when `from` is after `to` |
-| `TYPE_MISMATCH` | The value has the wrong type, e.g. text where a number is expected, or a path ID that isn't a number |
-| `INVALID_JSON` | The body isn't valid JSON, or a condition or action in it is invalid (see [Known issues](#known-issues)). `path` is null |
+| `TYPE_MISMATCH` | The value has the wrong type, e.g. text where a number is expected, or a path ID that isn't a number. For a value that must be one of a fixed set, such as an operator, `errorContext.allowedValues` lists them |
+| `MISSING_REQUIRED_FIELD` | A condition or action is missing a value it needs, or the value is blank |
+| `UNSUPPORTED_OPERATOR` | The condition doesn't support this operator (see each condition's operators below) |
+| `INVALID_VALUE_RANGE` | A condition or action value is out of range, e.g. a percentage above 1 |
+| `UNKNOWN_TYPE` | A condition or action has a `type` that doesn't exist. `errorContext.allowedTypes` lists the valid ones |
+| `MISSING_TYPE` | A condition or action has no `type` |
+| `INVALID_VALUE` | An object couldn't be built from the given values, for another reason |
+| `INVALID_JSON` | The body isn't valid JSON. `path` is null |
+
+For errors in a condition or action, `path` points at the object that rejected the value, such as `conditionTree`,
+`conditionTree.children.[0]` or `action`, and `message` says what's wrong:
+
+```json
+{
+  "category": "VALIDATION",
+  "source": "REQUEST_BODY",
+  "path": "conditionTree.children.[0]",
+  "code": "UNSUPPORTED_OPERATOR",
+  "message": "Operator 'GREATER_THAN_OR_EQUAL' is not supported by PromoCodeConditionNode.",
+  "errorContext": null
+}
+```
 
 ### Business errors (409)
 
@@ -296,7 +315,7 @@ Response `200`:
     {
       "productExternalId": "PROD-KB-01",
       "productSku": "SKU-KB-01",
-      "categories": ["Keyboards"],
+      "categories": ["CAT-KEYBOARDS"],
       "collections": [],
       "quantity": 2,
       "unitPrice": 100.0,
@@ -339,8 +358,8 @@ Response `200`:
 | `totalDiscount` | `itemsDiscount + shippingDiscount` |
 | `newTotal` | `itemsTotal + newShippingCost`: what the customer pays |
 | `items[].productSku` | The product's SKU from the catalog |
-| `items[].categories` | The product's categories from the catalog (see [Known issues](#known-issues)) |
-| `items[].collections` | The product's collections. Always empty for now |
+| `items[].categories` | External IDs of the product's categories, from the catalog. Category conditions match against these |
+| `items[].collections` | The product's collections. Always empty, as collections aren't implemented yet |
 | `items[].priceBeforeDiscount` | `quantity × unitPrice` |
 | `items[].discountAmount` | Discount on this line, from all applied rules |
 | `items[].priceAfterDiscount` | `priceBeforeDiscount − discountAmount` |
@@ -434,7 +453,8 @@ Response `200`:
 Averages are rounded to 4 decimal places. Responses are cached for 30 minutes per storefront and period, so recent
 usages can take that long to appear.
 
-Errors: `400` validation (`from`/`to` missing: `NOT_NULL`; `from` after `to`: `ASSERT_TRUE` with `path: validRange`).
+Errors: `400` validation with `source: QUERY_PARAMETER` (`from`/`to` missing: `NOT_NULL`; `from` after `to`:
+`ASSERT_TRUE` with `path: validRange`).
 
 ## Promotion rules
 
@@ -576,10 +596,13 @@ Replaces a rule's name, priority, flags, conditions and action. Usage limits are
 |---|---|---|---|
 | `name` | string | yes, ≤ 255 | Display name |
 | `priority` | integer | yes, > 0 | Higher is evaluated first |
-| `isShortCircuit` | boolean | no, default `false` | As for create |
-| `isActive` | boolean | **yes** | Whether the rule is evaluated. Leaving it out currently fails with 500, see [Known issues](#known-issues) |
+| `isShortCircuit` | boolean | yes | Stop evaluating lower-priority rules once this one changes the cart |
+| `isActive` | boolean | yes | Whether the rule is evaluated |
 | `conditionTree` | object | yes | A [condition](#conditions) |
 | `action` | object | yes | An [action](#actions) |
+
+Unlike create, every field is required: a missing `isShortCircuit` or `isActive` fails with `NOT_NULL` instead of
+taking a default.
 
 Response `200`, the [rule object](#the-rule-object). Errors: `400`, `404` `PROMOTION_NOT_FOUND`, `409` as for create.
 
@@ -712,7 +735,8 @@ Operators: `EQUALS`, `NOT_EQUALS`, `GREATER_THAN_OR_EQUAL`. Each condition suppo
 | `SINGLE_PRODUCT_COLLECTION_MATCH` | `collection` | `EQUALS`, `NOT_EQUALS` | A product from the collection is (isn't) in the cart |
 | `PRODUCT_COLLECTION_ANY_MATCH` | `collections`: string[], not empty | (none) | A product from any of the collections is in the cart |
 
-Category and collection conditions currently don't match as intended; see [Known issues](#known-issues).
+Product collections aren't implemented yet: products have no collections, so the collection conditions don't match
+anything for now.
 
 ### Actions
 
@@ -912,18 +936,3 @@ Public; no token needed.
 
 `status` is `UP` when the application and its dependencies (database, Redis) are healthy, and the response is `503`
 when one is down. Callers with a valid token also get the details of each component.
-
-## Known issues
-
-Current behavior that differs from what the API intends:
-
-- **Category conditions don't match external IDs.** Rules refer to categories by external ID, but evaluation fills
-  each line's `categories` with the category **names**. `SINGLE_PRODUCT_CATEGORY_MATCH` and
-  `PRODUCT_CATEGORY_ANY_MATCH` only match when a category's name equals its external ID.
-- **Collections are never set.** `items[].collections` is always empty, so collection conditions never match.
-- **Invalid conditions and actions return a generic error.** An unknown `type`, an unsupported operator or a value out
-  of range in a condition or action returns `INVALID_JSON` with "Malformed JSON request." instead of saying what's
-  wrong.
-- **Updating a rule without `isActive` returns 500.** Send `isActive` on `PUT /promotion/{id}`.
-- **Query parameter errors report `source: REQUEST_BODY`.** Validation errors for `from`/`to` on the stats endpoint are
-  reported as body errors.

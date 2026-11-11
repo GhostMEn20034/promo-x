@@ -57,11 +57,13 @@ public class OrderDiscountActionTest {
     class ConstructorValidationTests {
 
         @Test
-        @DisplayName("Throws NullPointerException when discountAmount is null")
-        void constructor_ShouldThrowNullPointerException_WhenDiscountAmountIsNull() {
+        @DisplayName("Throws InvalidActionStrategyException when discountAmount is null")
+        void constructor_ShouldThrowInvalidActionStrategyException_WhenDiscountAmountIsNull() {
             assertThatThrownBy(() -> new OrderDiscountAction(null))
-                    .isInstanceOf(NullPointerException.class)
-                    .hasMessage("Discount amount cannot be null");
+                    .isInstanceOf(InvalidActionStrategyException.class)
+                    .hasMessage("Discount amount cannot be null")
+                    .extracting(ex -> ((InvalidActionStrategyException) ex).getErrorCode())
+                    .isEqualTo(ActionStrategyErrorCodes.MISSING_REQUIRED_FIELD);
         }
 
         @ParameterizedTest
