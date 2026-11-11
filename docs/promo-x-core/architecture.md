@@ -207,12 +207,20 @@ Error responses are built in one place per kind:
 
 | Class | Handles | Response |
 |---|---|---|
-| `ApiValidationExceptionHandler` | Bean Validation failures, wrong value types, unreadable JSON | 400, `code: VALIDATION_ERROR` |
+| `ApiValidationExceptionHandler` | Bean Validation failures, wrong value types, unknown or missing `type`s, values rejected while the body is read, unreadable JSON | 400, `code: VALIDATION_ERROR` |
 | `ApiExceptionHandler` | Any `BusinessException` | 409, `title: Business rule violation` |
 | `<Module>ExceptionHandler` (`@Order(HIGHEST_PRECEDENCE)`) | The module's `*NotFoundException`s | 404 |
 
 A business error is a `BusinessException` subclass carrying a `code` and a list of `BusinessError`s (`path`, `code`,
 `message`, `errorContext`), so validators and services report problems without knowing about HTTP.
+
+Conditions and actions check their own values in their constructors, which run while Jackson reads the body. They
+throw an `InvalidValueException` subclass (`InvalidConditionNodeException`, `InvalidActionStrategyException`) with a
+code such as `UNSUPPORTED_OPERATOR`, and `ApiValidationExceptionHandler` reports it as a validation error at the
+path of the object, with the exception's message. A new kind of object that validates itself the same way only needs
+its own `InvalidValueException` subclass. The base class lives in `infrastructure`, so the handler doesn't depend on
+any module.
+
 Errors outside the application's handlers, such as 401 and 403 from Spring Security or 404 for an unknown path, keep
 the framework's own responses.
 

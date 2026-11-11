@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Objects;
 
 
 public record OrderDiscountAction(
@@ -31,7 +30,9 @@ public record OrderDiscountAction(
     );
 
     public OrderDiscountAction {
-        Objects.requireNonNull(discountAmount, "Discount amount cannot be null");
+        if (discountAmount == null) {
+            throw new InvalidActionStrategyException(ActionStrategyErrorCodes.MISSING_REQUIRED_FIELD, "Discount amount cannot be null");
+        }
         if (discountAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidActionStrategyException(
                     ActionStrategyErrorCodes.INVALID_VALUE_RANGE,

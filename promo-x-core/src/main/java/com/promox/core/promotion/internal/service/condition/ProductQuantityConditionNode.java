@@ -54,6 +54,9 @@ public record ProductQuantityConditionNode(
                 "Required quantity must be greater than zero."
             );
         }
+        if (operator == null) {
+            throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Operator is required.");
+        }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
                 UNSUPPORTED_OPERATOR,

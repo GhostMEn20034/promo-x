@@ -57,9 +57,11 @@ public class OrderPercentageDiscountActionTest {
     class ConstructorValidationTests {
 
         @Test
-        void validate_ShouldThrowNullPoException_WhenDiscountPercentageIsNull() {
+        void validate_ShouldThrowInvalidActionStrategyException_WhenDiscountPercentageIsNull() {
             assertThatThrownBy(() -> new OrderPercentageDiscountAction(null))
-                    .isInstanceOf(NullPointerException.class);
+                    .isInstanceOf(InvalidActionStrategyException.class)
+                    .extracting(ex -> ((InvalidActionStrategyException) ex).getErrorCode())
+                    .isEqualTo(MISSING_REQUIRED_FIELD);
         }
 
         @Test

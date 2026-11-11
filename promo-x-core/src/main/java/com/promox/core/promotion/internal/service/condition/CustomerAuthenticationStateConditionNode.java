@@ -2,6 +2,7 @@ package com.promox.core.promotion.internal.service.condition;
 
 import com.promox.core.promotion.internal.context.EngineWorkspace;
 import com.promox.core.promotion.internal.exception.InvalidConditionNodeException;
+import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.MISSING_REQUIRED_FIELD;
 import static com.promox.core.promotion.internal.exception.ConditionNodeErrorCodes.UNSUPPORTED_OPERATOR;
 
 import jakarta.validation.constraints.NotNull;
@@ -40,6 +41,9 @@ public record CustomerAuthenticationStateConditionNode(
     );
 
     public CustomerAuthenticationStateConditionNode {
+        if (operator == null) {
+            throw new InvalidConditionNodeException(MISSING_REQUIRED_FIELD, "Operator is required.");
+        }
         if (!ALLOWED.contains(operator)) {
             throw new InvalidConditionNodeException(
                 UNSUPPORTED_OPERATOR,

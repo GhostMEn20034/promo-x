@@ -1,16 +1,10 @@
 package com.promox.core.promotion.internal.exception;
 
-public class InvalidActionStrategyException extends RuntimeException {
+import com.promox.core.infrastructure.exception.InvalidValueException;
 
-    private final String errorCode;
+public class InvalidActionStrategyException extends InvalidValueException {
 
     public InvalidActionStrategyException(String errorCode, String message) {
-        super(message);
-        this.errorCode = errorCode;
+        super(errorCode, message);
     }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
 }
