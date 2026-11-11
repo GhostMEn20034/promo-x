@@ -25,10 +25,11 @@ import java.util.List;
 public class ApiValidationExceptionHandler {
 
     /**
-     * Handles validation errors for @Valid @RequestBody.
+     * Handles validation errors of objects bound from the request: {@code @Valid @RequestBody} and
+     * {@code @Valid} objects bound from query parameters, such as a date range.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleRequestBodyValidation(
+    public ProblemDetail handleBoundObjectValidation(
             MethodArgumentNotValidException ex,
             HttpServletRequest request
     ) {
@@ -37,17 +38,18 @@ public class ApiValidationExceptionHandler {
 
         problem.setProperty("timestamp", Instant.now());
         List<ApiError> errors = new ArrayList<>();
+        ErrorSource source = resolveBoundObjectSource(ex.getParameter());
 
         ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(this::toRequestBodyError)
+                .map(error -> toBoundObjectError(error, source))
                 .forEach(errors::add);
 
         ex.getBindingResult()
                 .getGlobalErrors()
                 .stream()
-                .map(this::toRequestBodyError)
+                .map(error -> toBoundObjectError(error, source))
                 .forEach(errors::add);
 
         problem.setProperty("errors", errors);
@@ -116,9 +118,6 @@ public class ApiValidationExceptionHandler {
         problem.setProperty("timestamp", Instant.now());
 
         ErrorSource source = resolveSource(ex.getParameter());
-
-        String expectedType = ex.getRequiredType() != null
-                ? ex.getRequiredType().getSimpleName() : "Unknown";
 
         List<ApiError> errors = List.of(
                 new ApiError(
@@ -216,10 +215,20 @@ public class ApiValidationExceptionHandler {
     }
 
 
-    private ApiError toRequestBodyError(FieldError error) {
+    /**
+     * A {@code @RequestBody} object comes from the body; any other bound object (no annotation, or
+     * {@code @ModelAttribute}) is bound from the query parameters.
+     */
+    private static ErrorSource resolveBoundObjectSource(MethodParameter parameter) {
+        return parameter.hasParameterAnnotation(RequestBody.class)
+                ? ErrorSource.REQUEST_BODY
+                : ErrorSource.QUERY_PARAMETER;
+    }
+
+    private ApiError toBoundObjectError(FieldError error, ErrorSource source) {
         return new ApiError(
                 ErrorCategory.VALIDATION,
-                ErrorSource.REQUEST_BODY,
+                source,
                 error.getField(),
                 ValidationErrorCodes.resolve(error),
                 error.getDefaultMessage(),
@@ -227,10 +236,10 @@ public class ApiValidationExceptionHandler {
         );
     }
 
-    private ApiError toRequestBodyError(ObjectError error) {
+    private ApiError toBoundObjectError(ObjectError error, ErrorSource source) {
         return new ApiError(
                 ErrorCategory.VALIDATION,
-                ErrorSource.REQUEST_BODY,
+                source,
                 null,
                 ValidationErrorCodes.resolve(error),
                 error.getDefaultMessage(),
