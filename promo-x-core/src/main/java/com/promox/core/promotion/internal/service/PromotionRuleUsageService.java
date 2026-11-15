@@ -62,7 +62,7 @@ public class PromotionRuleUsageService implements RuleUsageLimiter {
         PromotionRuleUsageCounterRepository counterRepository,
         PromotionRepository promotionRepository,
         ApplicationEventPublisher eventPublisher,
-        @Value("${promox.promotion.usage-reservation-ttl}") Duration reservationTtl
+        @Value("${app.promotion.usage-reservation-ttl}") Duration reservationTtl
     ) {
         this.usageRepository = usageRepository;
         this.auditRepository = auditRepository;

@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Service
 public class PromotionRuleCacheReader {
-    // Must match the promox.cache.ttls key in application.yaml
+    // Must match the app.cache.ttls key in application.yaml
     public static final String RULES_CACHE_NAME = "promotion-rules";
 
     private final PromotionRepository promotionRepository;

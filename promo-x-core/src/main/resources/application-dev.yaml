@@ -9,3 +9,8 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+app:
+  cors:
+    allowed-origins:
+      - https://localhost:9000

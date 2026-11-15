@@ -170,7 +170,7 @@ waits and then sees the new status instead of handling the usage twice.
 ## Caching
 
 All caches are in Redis. `RedisCacheConfig` replaces Boot's cache manager, so `spring.cache.redis.*` properties
-don't apply; TTLs are set per cache in `promox.cache.ttls`.
+don't apply; TTLs are set per cache in `app.cache.ttls`.
 
 | Cache | Key | Value | TTL | Evicted by |
 |---|---|---|---|---|
@@ -180,7 +180,7 @@ don't apply; TTLs are set per cache in `promox.cache.ttls`.
 
 - **Locking on a miss:** `@Cacheable(sync = true)` goes through `KeyLockingRedisCache`. On a miss it takes a lock for
   that one cache entry from `RedisLockRegistry`, on this instance and across instances, so only one caller loads the
-  value and the others wait for it. The lock's TTL is `promox.cache.lock-ttl` (30s) and must stay longer than the
+  value and the others wait for it. The lock's TTL is `app.cache.lock-ttl` (30s) and must stay longer than the
   slowest load.
 - **Writes are immediate:** the cache writer sends `put`/`evict` to Redis before returning, so a value loaded under
   the lock is stored before the lock is released.

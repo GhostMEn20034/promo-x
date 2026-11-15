@@ -14,7 +14,7 @@ import java.util.Map;
  * @param lockTtl how long the per-entry lock taken by {@code @Cacheable(sync = true)} lives in Redis; must be
  *                longer than the slowest value load, or another node may load the same entry concurrently
  */
-@ConfigurationProperties(prefix = "promox.cache")
+@ConfigurationProperties(prefix = "app.cache")
 public record PromoxCacheProperties(Map<String, Duration> ttls, @DefaultValue("30s") Duration lockTtl) {
     public PromoxCacheProperties {
         ttls = ttls == null ? Map.of() : Map.copyOf(ttls);

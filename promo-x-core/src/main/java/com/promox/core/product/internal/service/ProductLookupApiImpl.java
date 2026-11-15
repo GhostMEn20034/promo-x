@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProductLookupApiImpl implements ProductLookupApi {
-    // Must match the promox.cache.ttls key in application.yaml
+    // Must match the app.cache.ttls key in application.yaml
     public static final String PRODUCTS_WITH_CATEGORIES_CACHE = "products-with-categories";
 
     // External IDs are only unique per storefront.
