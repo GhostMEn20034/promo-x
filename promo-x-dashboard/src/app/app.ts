@@ -1,12 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Header } from './layout';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, Header],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-h-screen bg-gray-50 text-gray-900' },
+  template: `
+    <app-header />
+    <main>
+      <router-outlet />
+    </main>
+  `,
 })
-export class App {
-  protected readonly title = signal('promo-x-dashboard');
-}
+export class App {}
