@@ -1,0 +1,65 @@
+<dialog
+  #dialog
+  class="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
+  aria-labelledby="storefront-edit-title"
+  (close)="closed.emit()"
+  (cancel)="onCancel($event)"
+>
+  <form class="p-6" novalidate [formGroup]="form" (ngSubmit)="submit()">
+    <h2 id="storefront-edit-title" class="text-lg font-semibold text-gray-900">Edit storefront</h2>
+
+    <label class="mt-5 block text-sm font-medium text-gray-700" for="storefront-name">Name</label>
+    <input
+      id="storefront-name"
+      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:outline-none aria-invalid:border-red-500"
+      formControlName="name"
+      autocomplete="off"
+      [attr.aria-invalid]="errorOf('name') ? true : null"
+      aria-describedby="storefront-name-error"
+    />
+    @if (errorOf('name'); as message) {
+      <p id="storefront-name-error" class="mt-1 text-sm text-red-600">{{ message }}</p>
+    }
+
+    <label class="mt-4 block text-sm font-medium text-gray-700" for="storefront-website">
+      Website <span class="font-normal text-gray-500">(optional)</span>
+    </label>
+    <input
+      id="storefront-website"
+      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:outline-none aria-invalid:border-red-500"
+      formControlName="website"
+      inputmode="url"
+      autocomplete="url"
+      placeholder="https://shop.example.com"
+      [attr.aria-invalid]="errorOf('website') ? true : null"
+      aria-describedby="storefront-website-error"
+    />
+    @if (errorOf('website'); as message) {
+      <p id="storefront-website-error" class="mt-1 text-sm text-red-600">{{ message }}</p>
+    }
+
+    @if (formError(); as message) {
+      <p role="alert" class="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        {{ message }}
+      </p>
+    }
+
+    <div class="mt-6 flex justify-end gap-3">
+      <button
+        type="button"
+        class="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+        [disabled]="saving()"
+        (click)="cancel()"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        [disabled]="saving()"
+      >
+        {{ saving() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </form>
+</dialog>

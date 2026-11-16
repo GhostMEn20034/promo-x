@@ -924,6 +924,40 @@ Response `200`, the storefront. Errors: `400`, `404` `STOREFRONT_NOT_FOUND`.
 
 Response `200`, the storefront. Errors: `404` `STOREFRONT_NOT_FOUND`.
 
+### `GET /storefront/`
+
+Lists all storefronts, sorted by ID (oldest first).
+
+- **Roles:** any authenticated caller
+
+| Query parameter | Meaning |
+|---|---|
+| `page`, `size` | Paging; `page` starts at 1 |
+
+A `sort` parameter is ignored: the order is always by ID.
+
+Response `200`, a page of storefronts:
+
+```json
+{
+  "content": [
+    { "id": 1, "name": "Main Store", "website": "https://shop.example.com" }
+  ],
+  "number": 0,
+  "size": 20,
+  "numberOfElements": 1,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "empty": false,
+  "pageable": { "...": "..." },
+  "sort": { "empty": false, "sorted": true, "unsorted": false }
+}
+```
+
+The page fields mean the same as in [`GET /promotion/`](#get-promotion).
+
 ## Health
 
 ### `GET /actuator/health`
