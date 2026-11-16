@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 
 @Configuration
@@ -38,5 +40,20 @@ public class DefaultSecurityConfig {
         var converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(new JwtAuthoritiesConverter());
         return converter;
+    }
+
+    @Bean
+    public UrlBasedCorsConfigurationSource corsConfigurationSource(CorsProperties properties) {
+        var c = new CorsConfiguration();
+        c.setAllowedOrigins(properties.allowedOrigins());
+        c.setAllowedMethods(properties.allowedMethods());
+        c.setAllowedHeaders(properties.allowedHeaders());
+        c.setAllowCredentials(properties.allowCredentials());
+        c.setMaxAge(properties.maxAge());
+
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", c);
+
+        return source;
     }
 }

@@ -45,7 +45,7 @@ public class RedisBatchCache implements BatchCacheManager {
     }
 
     /**
-     * @param cacheName  cache configured in the cache manager (e.g. via {@code promox.cache.ttls})
+     * @param cacheName  cache configured in the cache manager (e.g. via {@code app.cache.ttls})
      * @param ids        identifiers to resolve
      * @param keyMapper  maps an identifier to its cache key
      * @param valueType  type the cached values are deserialized to

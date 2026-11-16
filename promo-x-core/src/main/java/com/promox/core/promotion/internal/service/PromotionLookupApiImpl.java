@@ -23,7 +23,7 @@ import java.util.Optional;
 
 @Service
 public class PromotionLookupApiImpl implements PromotionLookupApi {
-    // Must match the promox.cache.ttls key in application.yaml
+    // Must match the app.cache.ttls key in application.yaml
     public static final String USAGE_STATS_CACHE_NAME = "promotion-usage-stats";
 
     private final PromotionService promotionService;
