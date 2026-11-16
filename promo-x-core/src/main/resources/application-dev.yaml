@@ -13,4 +13,4 @@ springdoc:
 app:
   cors:
     allowed-origins:
-      - https://localhost:9000
+      - http://localhost:4200
