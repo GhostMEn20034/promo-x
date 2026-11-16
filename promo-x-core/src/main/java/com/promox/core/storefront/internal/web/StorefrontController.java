@@ -10,6 +10,10 @@ import com.promox.core.storefront.internal.service.StorefrontCommandHandler;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,6 +49,20 @@ public class StorefrontController {
                 .orElseThrow(() ->
                         new StorefrontNotFoundException(storefrontId)
                 );
+    }
+
+    @GetMapping("/")
+    @PreAuthorize("isAuthenticated()")
+    public Page<StorefrontDto> getStorefronts(
+            Pageable pageable
+    ) {
+        // Strip client-supplied sort parameters to prevent Sort Field Injection
+        Pageable pageSortedById = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by("id")
+        );
+        return storefrontLookupApi.findAll(pageSortedById);
     }
 
     @PutMapping("/{storefrontId}")

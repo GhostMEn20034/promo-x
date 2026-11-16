@@ -4,6 +4,8 @@ import com.promox.core.storefront.internal.dto.CreateStorefrontRequest;
 import com.promox.core.storefront.internal.dto.UpdateStorefrontRequest;
 import com.promox.core.storefront.internal.persistence.Storefront;
 import com.promox.core.storefront.internal.persistence.StorefrontRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,5 +47,10 @@ public class StorefrontService {
     ) {
         storefrontToUpdate.setName(dataToApply.name());
         storefrontToUpdate.setWebsite(dataToApply.website());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Storefront> findAll(Pageable page) {
+        return storefrontRepository.findAll(page);
     }
 }
