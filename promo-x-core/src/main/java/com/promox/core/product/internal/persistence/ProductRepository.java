@@ -1,5 +1,7 @@
 package com.promox.core.product.internal.persistence;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +15,12 @@ import java.util.Set;
 public interface ProductRepository extends JpaRepository<Product, Long>, ProductRepositoryCustom {
     @EntityGraph(attributePaths = "categoryIds")
     Optional<Product> findWithCategoryById(Long id);
+
+    // No entity graph: fetching the categoryIds collection with a page would make Hibernate page in memory
+    Page<Product> findAllByStorefrontId(Long storefrontId, Pageable pageable);
+
+    @EntityGraph(attributePaths = "categoryIds")
+    List<Product> findAllWithCategoryIdsByIdIn(Collection<Long> ids);
 
     boolean existsByExternalIdAndStorefrontId(String externalId, Long storefrontId);
 

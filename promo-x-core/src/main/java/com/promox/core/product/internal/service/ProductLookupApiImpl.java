@@ -6,8 +6,11 @@ import com.promox.core.infrastructure.cache.BatchCacheManager;
 import com.promox.core.product.*;
 import com.promox.core.product.internal.ProductMapper;
 import com.promox.core.product.internal.persistence.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -77,27 +80,45 @@ public class ProductLookupApiImpl implements ProductLookupApi {
             return Map.of();
         }
 
-        Set<Long> categoryIds = products.stream()
-            .flatMap(product -> product.getCategoryIds().stream())
-            .collect(Collectors.toSet());
-
-        Map<Long, CategoryDto> categoriesById = categoryIds.isEmpty()
-            ? Map.of()
-            : categoryLookupApi.getListById(categoryIds, storefrontId).stream()
-                .collect(Collectors.toMap(CategoryDto::id, Function.identity()));
+        Map<Long, CategoryDto> categoriesById = findCategoriesById(products, storefrontId);
 
         return products.stream()
             .collect(Collectors.toMap(
                 Product::getExternalId,
-                product -> {
-                    List<CategoryDto> categories = product.getCategoryIds().stream()
-                        .map(categoriesById::get)
-                        .filter(Objects::nonNull)
-                        .toList();
-
-                    return ProductMapper.toDto(product, categories);
-                }
+                product -> toDtoWithCategories(product, categoriesById)
             ));
+    }
+
+    @Override
+    public Page<ProductWithCategoriesDto> findAllWithCategories(Long storefrontId, Pageable pageable) {
+        Page<Product> products = productService.findAllByStorefront(storefrontId, pageable);
+        Map<Long, CategoryDto> categoriesById = findCategoriesById(products.getContent(), storefrontId);
+
+        return products.map(product -> toDtoWithCategories(product, categoriesById));
+    }
+
+    /** The categories of all these products, looked up in one call. */
+    private Map<Long, CategoryDto> findCategoriesById(Collection<Product> products, Long storefrontId) {
+        Set<Long> categoryIds = products.stream()
+            .flatMap(product -> product.getCategoryIds().stream())
+            .collect(Collectors.toSet());
+
+        return categoryIds.isEmpty()
+            ? Map.of()
+            : categoryLookupApi.getListById(categoryIds, storefrontId).stream()
+                .collect(Collectors.toMap(CategoryDto::id, Function.identity()));
+    }
+
+    private static ProductWithCategoriesDto toDtoWithCategories(
+        Product product,
+        Map<Long, CategoryDto> categoriesById
+    ) {
+        List<CategoryDto> categories = product.getCategoryIds().stream()
+            .map(categoriesById::get)
+            .filter(Objects::nonNull)
+            .toList();
+
+        return ProductMapper.toDto(product, categories);
     }
 
     @Override
