@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockJwt(roles = Roles.EMPLOYEE)
 public class ProductCreationIntegrationTest extends IntegrationTestBase {
     private static final String STOREFRONT_HEADER = "X-Storefront-Id";
-    private static final String BASE_URL = "/product";
+    private static final String BASE_URL = "/api/product";
 
     @Autowired
     private ObjectMapper objectMapper;

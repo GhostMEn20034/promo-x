@@ -106,7 +106,7 @@ which loads the rule through `PromotionService` and its products through `Produc
 
 ## Evaluating a cart
 
-`POST /promotion/evaluate` is handled by `PromotionCommandHandler.evaluate`. It's deliberately **not** one
+`POST /api/promotion/evaluate` is handled by `PromotionCommandHandler.evaluate`. It's deliberately **not** one
 transaction: waiting for the rules cache must not hold a database connection.
 
 1. **Resolve the products**: `PromotionProductValidator` checks every cart line's product exists in the storefront
@@ -202,6 +202,10 @@ don't apply; TTLs are set per cache in `app.cache.ttls`.
 ## HTTP API
 
 The endpoints, request and response fields and error formats are documented in [api.md](api.md).
+
+Controllers map paths without a prefix (`/storefront`), and `ApiPathConfig` serves them all under `/api`
+(`/api/storefront`). The prefix only applies to `@RestController`s in `com.promox.core`, so Actuator
+(`/actuator/health`) and the API docs (`/swagger-ui`, `/v3/api-docs`) keep their paths.
 
 Error responses are built in one place per kind:
 

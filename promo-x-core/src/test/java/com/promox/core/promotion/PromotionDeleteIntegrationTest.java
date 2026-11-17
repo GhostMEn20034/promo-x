@@ -24,7 +24,7 @@ import java.util.Set;
 
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 public class PromotionDeleteIntegrationTest extends IntegrationTestBase {
-    private static final String DELETE_URL_PATH = "/promotion/{promotionRuleId}";
+    private static final String DELETE_URL_PATH = "/api/promotion/{promotionRuleId}";
 
     @Autowired
     private PromotionRepository promotionRepository;
@@ -73,7 +73,7 @@ public class PromotionDeleteIntegrationTest extends IntegrationTestBase {
         @Test
         @DisplayName("Should return 400 BAD REQUEST when path variable ID is malformed")
         void deletePromotionRule_InvalidIdFormat() throws Exception {
-            mockMvc.perform(delete("/promotion/{promotionRuleId}", "invalid-id-format")
+            mockMvc.perform(delete("/api/promotion/{promotionRuleId}", "invalid-id-format")
                     .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
         }

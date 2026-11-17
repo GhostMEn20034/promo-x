@@ -82,7 +82,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
             List<CreateProductRequest> items = generateProductRequests(totalProducts);
             var request = new CreateMultipleProductsRequest(items);
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -107,7 +107,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
             List<CreateProductRequest> items = generateProductRequests(2);
             var request = new CreateMultipleProductsRequest(items);
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, missingStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -127,7 +127,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
             );
             var request = new CreateMultipleProductsRequest(items);
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -157,7 +157,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
             );
             var request = new CreateMultipleProductsRequest(items);
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -179,7 +179,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
             );
             var request = new CreateMultipleProductsRequest(items);
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -203,7 +203,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
             );
             var request = new CreateMultipleProductsRequest(items);
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -217,7 +217,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
         void createMultipleProducts_emptyItemsList_returnsBadRequest() throws Exception {
             var request = new CreateMultipleProductsRequest(List.of());
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -237,7 +237,7 @@ public class ProductBulkInsertIntegrationTest extends IntegrationTestBase {
         void createMultipleProducts_userIsNotEmployee_returnsForbidden() throws Exception {
             var request = new CreateMultipleProductsRequest(generateProductRequests(2));
 
-            mockMvc.perform(post("/product" + BULK_INSERT_URL)
+            mockMvc.perform(post("/api/product" + BULK_INSERT_URL)
                     .header(STOREFRONT_HEADER, defaultStorefrontId)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))

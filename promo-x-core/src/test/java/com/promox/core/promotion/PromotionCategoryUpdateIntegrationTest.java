@@ -142,7 +142,7 @@ class PromotionCategoryUpdateIntegrationTest extends IntegrationTestBase {
 
     private void changeCategoryExternalId() {
         try {
-            mockMvc.perform(put("/category/{categoryId}", category.getId())
+            mockMvc.perform(put("/api/category/{categoryId}", category.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
                         {"name": "Keyboards", "externalId": "%s"}

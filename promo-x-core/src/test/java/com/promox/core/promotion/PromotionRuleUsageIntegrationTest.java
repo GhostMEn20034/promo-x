@@ -58,9 +58,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 @EnableScenarios
 public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
-    private static final String EVALUATE_URL_PATH = "/promotion/evaluate";
-    private static final String CONFIRM_URL_PATH = "/promotion/usage/{usageId}/confirm";
-    private static final String CANCEL_URL_PATH = "/promotion/usage/{usageId}/cancel";
+    private static final String EVALUATE_URL_PATH = "/api/promotion/evaluate";
+    private static final String CONFIRM_URL_PATH = "/api/promotion/usage/{usageId}/confirm";
+    private static final String CANCEL_URL_PATH = "/api/promotion/usage/{usageId}/cancel";
 
     private static final Long STOREFRONT_ID = 100L;
     private static final String KEYBOARD = "PROD-KB-01";
@@ -658,7 +658,7 @@ public class PromotionRuleUsageIntegrationTest extends IntegrationTestBase {
 
     private void disableUsageLimit(PromotionRule rule) {
         try {
-            mockMvc.perform(patch("/promotion/{promotionRuleId}/usage-limits", rule.getId())
+            mockMvc.perform(patch("/api/promotion/{promotionRuleId}/usage-limits", rule.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
                         {"hasUsageLimit": false, "mutateRemainingUses": false}

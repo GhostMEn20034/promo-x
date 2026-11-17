@@ -66,7 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 @EnableScenarios
 public class PromotionEvaluationIntegrationTest extends IntegrationTestBase {
-    private static final String EVALUATE_URL_PATH = "/promotion/evaluate";
+    private static final String EVALUATE_URL_PATH = "/api/promotion/evaluate";
     private static final Long STOREFRONT_ID = 100L;
     private static final Long OTHER_STOREFRONT_ID = 200L;
 

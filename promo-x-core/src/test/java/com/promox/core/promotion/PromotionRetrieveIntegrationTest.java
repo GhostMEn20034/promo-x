@@ -29,8 +29,8 @@ import java.util.Set;
 
 @WithMockJwt(roles = {Roles.PROMOTION_MANAGER})
 public class PromotionRetrieveIntegrationTest extends IntegrationTestBase {
-    private static final String DETAILS_URL_PATH = "/promotion/{promotionRuleId}";
-    private static final String LIST_URL_PATH = "/promotion/";
+    private static final String DETAILS_URL_PATH = "/api/promotion/{promotionRuleId}";
+    private static final String LIST_URL_PATH = "/api/promotion/";
 
     @Autowired
     private PromotionRepository promotionRepository;

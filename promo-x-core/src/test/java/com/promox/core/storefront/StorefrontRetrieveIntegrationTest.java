@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt
 public class StorefrontRetrieveIntegrationTest extends IntegrationTestBase {
-    private static final String BASE_URL = "/storefront";
+    private static final String BASE_URL = "/api/storefront";
 
     @Autowired
     private StorefrontRepository storefrontRepository;

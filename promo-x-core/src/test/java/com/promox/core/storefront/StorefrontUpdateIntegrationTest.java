@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt(roles = Roles.ADMIN)
 public class StorefrontUpdateIntegrationTest extends IntegrationTestBase {
-    private static final String BASE_URL = "/storefront";
+    private static final String BASE_URL = "/api/storefront";
 
     @Autowired
     private ObjectMapper objectMapper;

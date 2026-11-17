@@ -107,7 +107,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1, EXISTING_PRODUCT_2);
 
-            MvcResult result = mockMvc.perform(post("/promotion/")
+            MvcResult result = mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(jsonPayload))
@@ -154,7 +154,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            MvcResult result = mockMvc.perform(post("/promotion/")
+            MvcResult result = mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(jsonPayload))
@@ -193,7 +193,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            MvcResult result = mockMvc.perform(post("/promotion/")
+            MvcResult result = mockMvc.perform(post("/api/promotion/")
                             .header("X-Storefront-Id", STOREFRONT_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonPayload))
@@ -237,7 +237,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            MvcResult result = mockMvc.perform(post("/promotion/")
+            MvcResult result = mockMvc.perform(post("/api/promotion/")
                             .header("X-Storefront-Id", STOREFRONT_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonPayload))
@@ -286,7 +286,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 new OrderDiscountAction(new BigDecimal("15.00"))
             );
 
-            MvcResult result = mockMvc.perform(post("/promotion/")
+            MvcResult result = mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
@@ -318,7 +318,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
         void createPromotionRule_existingCategories_success() throws Exception {
             saveCategory("CAT-KEYBOARDS", STOREFRONT_ID);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(ruleWithCategories("CAT-KEYBOARDS")))
@@ -333,7 +333,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
         void createPromotionRule_nonExistentCategory_throwsBusinessException() throws Exception {
             saveCategory("CAT-KEYBOARDS", STOREFRONT_ID);
 
-            MvcResult result = mockMvc.perform(post("/promotion/")
+            MvcResult result = mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(ruleWithCategories("CAT-KEYBOARDS", "CAT-MISSING")))
@@ -354,7 +354,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
         void createPromotionRule_categoryFromAnotherStorefront_throwsBusinessException() throws Exception {
             saveCategory("CAT-FOREIGN", STOREFRONT_ID + 1);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(ruleWithCategories("CAT-FOREIGN")))
@@ -412,7 +412,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 }
                 """;
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidPayload))
@@ -446,7 +446,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 }
                 """;
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidConditionPayload))
@@ -486,7 +486,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 }
                 """.formatted(EXISTING_PRODUCT_1);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidCompositePayload))
@@ -510,7 +510,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 new OrderDiscountAction(new BigDecimal("5.00"))
             );
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -542,7 +542,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                             .header("X-Storefront-Id", STOREFRONT_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonPayload))
@@ -575,7 +575,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                             .header("X-Storefront-Id", STOREFRONT_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonPayload))
@@ -605,7 +605,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                             .header("X-Storefront-Id", STOREFRONT_ID)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonPayload))
@@ -635,7 +635,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 }
                 """.formatted(conditionTree, action);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(payload))
@@ -664,7 +664,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 }
                 """;
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(payload))
@@ -686,7 +686,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
                 }
                 """;
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(payload))
@@ -806,7 +806,7 @@ public class PromotionCreationIntegrationTest extends IntegrationTestBase {
             }
             """.formatted(EXISTING_PRODUCT_1);
 
-            mockMvc.perform(post("/promotion/")
+            mockMvc.perform(post("/api/promotion/")
                     .header("X-Storefront-Id", STOREFRONT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(jsonPayload))

@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt
 public class StorefrontListIntegrationTest extends IntegrationTestBase {
-    private static final String LIST_URL = "/storefront/";
+    private static final String LIST_URL = "/api/storefront/";
 
     @Autowired
     private StorefrontRepository storefrontRepository;

@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt(roles = {Roles.EMPLOYEE})
 public class ProductRetrievalIntegrationTest extends IntegrationTestBase {
-    private static final String BASE_URL = "/product";
+    private static final String BASE_URL = "/api/product";
 
     @Autowired
     private ProductRepository productRepository;

@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt(roles = Roles.EMPLOYEE)
 public class CategoryCreationIntegrationTest extends IntegrationTestBase {
-    private static final String BASE_URL = "/category";
+    private static final String BASE_URL = "/api/category";
     private static final String STOREFRONT_HEADER = "X-Storefront-Id";
 
     @Autowired

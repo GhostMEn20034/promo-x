@@ -73,7 +73,7 @@ describe('StorefrontEditDialog', () => {
     type('storefront-website', '   ');
     await submit();
 
-    const request = http.expectOne('http://api.test/storefront/7');
+    const request = http.expectOne('http://api.test/api/storefront/7');
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ name: 'New Name', website: null });
 
@@ -86,14 +86,14 @@ describe('StorefrontEditDialog', () => {
     type('storefront-name', '   ');
     await submit();
 
-    http.expectNone('http://api.test/storefront/7');
+    http.expectNone('http://api.test/api/storefront/7');
     expect(element.textContent).toContain('Name is required.');
   });
 
   it("shows the backend's validation errors on their fields", async () => {
     await submit();
 
-    http.expectOne('http://api.test/storefront/7').flush(
+    http.expectOne('http://api.test/api/storefront/7').flush(
       {
         code: 'VALIDATION_ERROR',
         errors: [{ path: 'website', code: 'SIZE', message: 'size must be between 1 and 255' }],
@@ -110,7 +110,7 @@ describe('StorefrontEditDialog', () => {
     await submit();
 
     http
-      .expectOne('http://api.test/storefront/7')
+      .expectOne('http://api.test/api/storefront/7')
       .flush(
         { code: 'STOREFRONT_NOT_FOUND', errors: [] },
         { status: 404, statusText: 'Not Found' },

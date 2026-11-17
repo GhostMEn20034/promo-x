@@ -279,7 +279,7 @@ public class ProductLookupCacheIntegrationTest extends IntegrationTestBase {
 
     private void updateCategory(Category category, String name, String externalId) {
         try {
-            mockMvc.perform(put("/category/{categoryId}", category.getId())
+            mockMvc.perform(put("/api/category/{categoryId}", category.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(new UpdateCategoryRequest(name, externalId, null))))
                 .andExpect(status().isOk());
