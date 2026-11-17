@@ -1,0 +1,165 @@
+<section aria-labelledby="products-heading">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-baseline gap-3">
+      <h2 id="products-heading" class="text-lg font-semibold text-gray-900">Products</h2>
+      @if (products.hasValue()) {
+        <p class="text-sm text-gray-500">
+          {{ products.value().totalElements }}
+          {{ products.value().totalElements === 1 ? 'product' : 'products' }}
+        </p>
+      }
+    </div>
+    @if (canCreate()) {
+      <div class="flex gap-2">
+        <a
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+          routerLink="bulk"
+        >
+          Bulk import
+        </a>
+        <button
+          type="button"
+          class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+          (click)="form.set({ mode: 'create' })"
+        >
+          New product
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (created(); as product) {
+    <div
+      role="status"
+      class="mt-4 flex items-center justify-between gap-3 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800"
+    >
+      <span>
+        Created
+        <a class="font-medium underline" [routerLink]="[product.id]">{{ product.name }}</a>.
+      </span>
+      <button
+        type="button"
+        class="text-green-700 hover:text-green-900"
+        aria-label="Dismiss"
+        (click)="created.set(null)"
+      >
+        ✕
+      </button>
+    </div>
+  }
+
+  @if (products.error()) {
+    <div role="alert" class="mt-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+      Couldn't load the products.
+      <button type="button" class="ml-2 font-medium underline" (click)="products.reload()">
+        Try again
+      </button>
+    </div>
+  } @else if (products.hasValue()) {
+    @let result = products.value();
+
+    @if (result.content.length === 0) {
+      <p
+        class="mt-4 rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-500"
+      >
+        @if (result.totalElements === 0) {
+          This storefront has no products yet.
+        } @else {
+          There are no products on this page.
+          <a class="text-blue-700 hover:underline" routerLink="." [queryParams]="{ page: null }">
+            Go to the first page
+          </a>
+        }
+      </p>
+    } @else {
+      <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead
+            class="bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+          >
+            <tr>
+              <th scope="col" class="px-4 py-3">ID</th>
+              <th scope="col" class="px-4 py-3">Name</th>
+              <th scope="col" class="px-4 py-3">SKU</th>
+              <th scope="col" class="px-4 py-3">External ID</th>
+              <th scope="col" class="px-4 py-3">Categories</th>
+              <th scope="col" class="px-4 py-3">Created</th>
+              @if (canEdit()) {
+                <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (product of result.content; track product.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <a
+                    class="font-medium text-blue-700 hover:underline"
+                    [routerLink]="[product.id]"
+                    [attr.aria-label]="'View product ' + product.id + ', ' + product.name"
+                    >{{ product.id }}</a
+                  >
+                </td>
+                <td class="px-4 py-3 text-gray-900">{{ product.name }}</td>
+                <td class="px-4 py-3 font-mono text-xs whitespace-nowrap text-gray-600">
+                  {{ product.sku }}
+                </td>
+                <td class="px-4 py-3 font-mono text-xs break-all text-gray-600">
+                  {{ product.externalId }}
+                </td>
+                <td class="px-4 py-3">
+                  <app-category-chips [categories]="product.categories" [max]="2" />
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                  <time [attr.datetime]="product.createdAt">{{
+                    product.createdAt | date: 'mediumDate'
+                  }}</time>
+                </td>
+                @if (canEdit()) {
+                  <td class="px-4 py-2 text-right">
+                    <button
+                      type="button"
+                      class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                      title="Edit"
+                      [attr.aria-label]="'Edit ' + product.name"
+                      (click)="form.set({ mode: 'edit', product })"
+                    >
+                      <svg
+                        class="size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M16.86 3.49a2.1 2.1 0 0 1 2.97 2.97L7.5 18.79 3 20l1.21-4.5L16.86 3.49z"
+                        />
+                        <path d="M15 5.35l3.65 3.65" />
+                      </svg>
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <app-pager class="mt-6 block" [page]="page()" [totalPages]="result.totalPages" />
+  } @else {
+    <p class="mt-4 text-sm text-gray-500">Loading products…</p>
+  }
+</section>
+
+@if (form(); as target) {
+  <app-product-form-dialog
+    [storefrontId]="storefrontId()"
+    [product]="formProduct(target)"
+    (saved)="onSaved(target, $event)"
+    (closed)="form.set(null)"
+  />
+}

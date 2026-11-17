@@ -37,7 +37,7 @@ describe('StorefrontDetailsPage', () => {
 
     expect(element.querySelector('h1')!.textContent).toContain('Tech Store');
     const tabs = [...element.querySelectorAll('nav a')].map((a) => a.textContent!.trim());
-    expect(tabs).toEqual(['Overview', 'Categories', 'Products Soon', 'Promotion rules Soon']);
+    expect(tabs).toEqual(['Overview', 'Categories', 'Products', 'Promotion rules Soon']);
     expect(element.querySelector('router-outlet')).toBeTruthy();
   });
 
@@ -72,7 +72,7 @@ describe('StorefrontOverviewPage', () => {
       '/promotion-rules',
     ]);
     expect(links[0].textContent).not.toContain('Coming soon');
-    expect(links[1].textContent).toContain('Coming soon');
+    expect(links[1].textContent).not.toContain('Coming soon');
     expect(links[2].textContent).toContain('Coming soon');
   });
 });

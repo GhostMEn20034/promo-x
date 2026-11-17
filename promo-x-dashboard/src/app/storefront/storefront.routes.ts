@@ -23,9 +23,7 @@ export const storefrontRoutes: Routes = [
           },
           {
             path: 'products',
-            title: 'Products',
-            component: ComingSoonPage,
-            data: { section: 'Products' },
+            loadChildren: () => import('../product').then((m) => m.productRoutes),
           },
           {
             path: 'promotion-rules',
