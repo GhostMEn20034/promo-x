@@ -1,0 +1,114 @@
+<dialog
+  #dialog
+  class="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
+  aria-labelledby="category-picker-title"
+  (close)="closed.emit()"
+>
+  <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
+    <div>
+      <h2 id="category-picker-title" class="text-lg font-semibold text-gray-900">
+        Choose a parent category
+      </h2>
+      <p class="mt-1 text-sm text-gray-500">Categories of this storefront, by ID.</p>
+    </div>
+    <button
+      type="button"
+      class="-m-1.5 rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+      aria-label="Close"
+      (click)="cancel()"
+    >
+      <svg
+        class="size-5"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M6 6l12 12M18 6L6 18" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="px-6 py-4">
+    @if (categories.error()) {
+      <div role="alert" class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+        Couldn't load the categories.
+        <button type="button" class="ml-2 font-medium underline" (click)="categories.reload()">
+          Try again
+        </button>
+      </div>
+    } @else if (categories.hasValue()) {
+      @let result = categories.value();
+
+      @if (result.content.length === 0) {
+        <p class="py-6 text-center text-sm text-gray-500">There are no categories on this page.</p>
+      } @else {
+        <div class="max-h-[60vh] overflow-auto rounded-lg border border-gray-200">
+          <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead
+              class="sticky top-0 bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+            >
+              <tr>
+                <th scope="col" class="px-3 py-2">ID</th>
+                <th scope="col" class="px-3 py-2">Name</th>
+                <th scope="col" class="px-3 py-2">External ID</th>
+                <th scope="col" class="px-3 py-2">Parent</th>
+                <th scope="col" class="px-3 py-2"><span class="sr-only">Choose</span></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (category of result.content; track category.id) {
+                @let reason = unavailable(category);
+                <tr
+                  [class.bg-blue-50]="category.id === selectedId()"
+                  [class.text-gray-400]="reason"
+                >
+                  <td class="px-3 py-2 whitespace-nowrap">{{ category.id }}</td>
+                  <td class="px-3 py-2" [class.text-gray-900]="!reason">{{ category.name }}</td>
+                  <td class="px-3 py-2 font-mono text-xs break-all">
+                    {{ category.externalId ?? '—' }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap">
+                    @if (category.parent; as parent) {
+                      {{ parent.name }} <span class="text-gray-400">#{{ parent.id }}</span>
+                    } @else {
+                      <span class="text-gray-400">—</span>
+                    }
+                  </td>
+                  <td class="px-3 py-2 text-right whitespace-nowrap">
+                    @if (reason) {
+                      <span class="text-xs">{{ reason }}</span>
+                    } @else if (category.id === selectedId()) {
+                      <span class="text-xs font-medium text-blue-700">Current</span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        [attr.aria-label]="'Choose ' + category.name"
+                        (click)="pick(category)"
+                      >
+                        Choose
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <app-pager
+        class="mt-4 block"
+        [links]="false"
+        [page]="page()"
+        [totalPages]="result.totalPages"
+        (pageChange)="page.set($event)"
+      />
+    } @else {
+      <p class="py-6 text-center text-sm text-gray-500">Loading categories…</p>
+    }
+  </div>
+</dialog>

@@ -197,6 +197,7 @@ broken, and the items have `category: BUSINESS` and `source: DOMAIN`.
 | `EXTERNAL_ID_VALIDATION_FAILED` | A bulk insert has external ID conflicts. Its items are `DUPLICATE_EXTERNAL_ID_IN_BATCH` (`externalId`, `firstOccurredAtIndex`) and `EXTERNAL_ID_ALREADY_EXISTS`, each with `path: items[<index>].externalId` | Per item |
 | `CATEGORY_ALREADY_EXISTS` | A category with this external ID already exists in the storefront. `path: externalId` | |
 | `PARENT_CATEGORY_NOT_FOUND` | The category's `parentId` doesn't exist. `path: parentId` | |
+| `CATEGORY_CANNOT_BE_OWN_PARENT` | An update sets the category's `parentId` to its own ID. `path: parentId` | |
 | `INVALID_STOREFRONT` | The `X-Storefront-Id` storefront doesn't exist (creating categories and products). `path: storefrontId` | |
 | `INVALID_SORT_PROPERTY` | The rule list was sorted by a property that isn't allowed | `invalidProperty`, `allowedProperties` |
 | `PROMOTION_RULE_USAGE_NOT_RESERVED` | Confirming or canceling a usage that isn't `RESERVED` | `status`: the usage's current status |
@@ -804,7 +805,7 @@ the old external ID.
 - **Roles:** `employee`
 
 Response `200`, the category. Errors: `400`, `404` `CATEGORY_NOT_FOUND`, `409` `CATEGORY_ALREADY_EXISTS`,
-`PARENT_CATEGORY_NOT_FOUND`.
+`PARENT_CATEGORY_NOT_FOUND`, `CATEGORY_CANNOT_BE_OWN_PARENT`.
 
 ### `GET /api/category/{id}`
 

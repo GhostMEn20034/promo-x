@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
+import { ComingSoonPage } from './internal/coming-soon/coming-soon.page';
 import { StorefrontDetailsPage } from './internal/details/storefront-details.page';
 import { StorefrontListPage } from './internal/list/storefront-list.page';
+import { StorefrontOverviewPage } from './internal/overview/storefront-overview.page';
 import { StorefrontClient } from './internal/storefront.client';
 
 /** Lazy-loaded by the app under `/storefronts`. Promo-x-core lets any authenticated caller read storefronts. */
@@ -10,7 +12,29 @@ export const storefrontRoutes: Routes = [
     providers: [StorefrontClient],
     children: [
       { path: '', title: 'Storefronts', component: StorefrontListPage },
-      { path: ':storefrontId', title: 'Storefront', component: StorefrontDetailsPage },
+      {
+        path: ':storefrontId',
+        component: StorefrontDetailsPage,
+        children: [
+          { path: '', title: 'Storefront', component: StorefrontOverviewPage },
+          {
+            path: 'categories',
+            loadChildren: () => import('../category').then((m) => m.categoryRoutes),
+          },
+          {
+            path: 'products',
+            title: 'Products',
+            component: ComingSoonPage,
+            data: { section: 'Products' },
+          },
+          {
+            path: 'promotion-rules',
+            title: 'Promotion rules',
+            component: ComingSoonPage,
+            data: { section: 'Promotion rules' },
+          },
+        ],
+      },
     ],
   },
 ];

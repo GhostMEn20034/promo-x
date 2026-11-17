@@ -283,6 +283,37 @@ public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Should return 409 Conflict and leave the category unchanged when it is set as its own parent")
+    @ExtendWith(PublishedEventsExtension.class)
+    void updateCategory_ShouldReturn409_WhenCategoryIsItsOwnParent(
+            AssertablePublishedEvents events
+    ) throws Exception {
+        Category existing = categoryRepository.save(
+                Category.builder()
+                        .name("Old Name")
+                        .externalId("OLD-EXT")
+                        .storefrontId(activeStorefront.getId())
+                        .build()
+        );
+
+        var updateRequest = new UpdateCategoryRequest("Updated Name", "NEW-EXT", existing.getId());
+
+        mockMvc.perform(put(BASE_URL + "/{categoryId}", existing.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CATEGORY_CANNOT_BE_OWN_PARENT"))
+                .andExpect(jsonPath("$.errors[0].path").value("parentId"))
+                .andExpect(jsonPath("$.errors[0].code").value("CATEGORY_CANNOT_BE_OWN_PARENT"));
+
+        Category reloaded = categoryRepository.findById(existing.getId()).orElseThrow();
+        assertThat(reloaded.getName()).isEqualTo("Old Name");
+        assertThat(reloaded.getExternalId()).isEqualTo("OLD-EXT");
+        assertThat(reloaded.getParentId()).isNull();
+        assertThat(events.ofType(CategoryUpdatedEvent.class)).isEmpty();
+    }
+
+    @Test
     @WithMockJwt(roles = Roles.AUDITOR)
     @DisplayName("Should return 403 Forbidden and leave the category unchanged when the user has no employee role")
     @ExtendWith(PublishedEventsExtension.class)

@@ -6,6 +6,7 @@ import com.promox.core.category.event.CategoryUpdatedEvent;
 import com.promox.core.category.internal.dto.CreateCategoryRequest;
 import com.promox.core.category.internal.dto.UpdateCategoryRequest;
 import com.promox.core.category.internal.exception.CategoryAlreadyExistsException;
+import com.promox.core.category.internal.exception.CategoryOwnParentException;
 import com.promox.core.category.internal.exception.ParentCategoryNotFoundException;
 import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
@@ -112,6 +113,11 @@ public class CategoryService {
         // Checked only on a change: otherwise the category would conflict with itself.
         if (!updateRequest.externalId().equals(previousExternalId)) {
             validateExternalIdUniqueness(categoryToUpdate.getStorefrontId(), updateRequest.externalId());
+        }
+
+        // Checked before the lookup: the category would otherwise be found as an existing parent of its storefront.
+        if (categoryToUpdate.getId().equals(updateRequest.parentId())) {
+            throw new CategoryOwnParentException(categoryToUpdate.getId());
         }
 
         Category parent = fetchAndValidateParent(updateRequest.parentId(), categoryToUpdate.getStorefrontId());
