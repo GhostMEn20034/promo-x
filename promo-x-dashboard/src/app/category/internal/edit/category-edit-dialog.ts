@@ -14,20 +14,16 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-} from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { problemDetailOf } from '../../../infrastructure/http';
+import { trimmedLength } from '../../../shared/forms';
 import { CategoryClient } from '../category.client';
 import {
   Category,
   CATEGORY_EXTERNAL_ID_MAX_LENGTH,
   CATEGORY_NAME_MAX_LENGTH,
   CATEGORY_NAME_MIN_LENGTH,
+  CategoryRef,
   CategoryUpdate,
 } from '../category.model';
 import { CategoryPickerDialog } from '../picker/category-picker-dialog';
@@ -35,7 +31,7 @@ import { CategoryPickerDialog } from '../picker/category-picker-dialog';
 type Field = 'name' | 'externalId' | 'parentId';
 
 /** What the form shows of the chosen parent. */
-type ParentPreview = Pick<Category, 'id' | 'name' | 'externalId'>;
+type ParentPreview = CategoryRef;
 
 /**
  * A modal that edits a category's name, external ID and parent. It opens as soon as it's rendered, emits `saved`
@@ -66,6 +62,20 @@ export class CategoryEditDialog implements OnInit {
   });
   protected readonly parent = signal<ParentPreview | null>(null);
   protected readonly picking = signal(false);
+  protected readonly pickerSelection = computed(() => {
+    const parent = this.parent();
+    return parent ? [parent] : [];
+  });
+  /**
+   * The category itself and its direct children can't be its parent, since either would make it its own ancestor.
+   * Deeper descendants aren't known from a page of categories.
+   */
+  protected readonly parentUnavailable = (candidate: Category): string | null => {
+    if (candidate.id === this.category().id) {
+      return 'This category';
+    }
+    return candidate.parent?.id === this.category().id ? 'Its child' : null;
+  };
   protected readonly saving = signal(false);
   /** An error that isn't about one field. */
   protected readonly formError = signal<string | null>(null);
@@ -198,15 +208,4 @@ export class CategoryEditDialog implements OnInit {
     }
     this.formError.set(unmatched.length > 0 ? unmatched.join(' ') : null);
   }
-}
-
-/** Like promo-x-core's `@NotBlank` and `@Size`, but on the trimmed value, which is what gets sent. */
-function trimmedLength(min: number, max: number): ValidatorFn {
-  return (control: AbstractControl<string>): ValidationErrors | null => {
-    const length = control.value.trim().length;
-    if (length === 0) {
-      return { required: true };
-    }
-    return length < min || length > max ? { length: { min, max } } : null;
-  };
 }

@@ -20,9 +20,9 @@ export const STOREFRONT_SECTIONS: readonly StorefrontSection[] = [
   {
     path: 'products',
     label: 'Products',
-    description: 'Products with their SKUs, prices and categories.',
+    description: 'Products with their SKUs and categories. Add them one by one or import a CSV.',
     icon: 'products',
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     path: 'promotion-rules',
