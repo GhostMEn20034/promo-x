@@ -11,6 +11,8 @@ import com.promox.core.category.internal.persistence.Category;
 import com.promox.core.category.internal.persistence.CategoryRepository;
 import jakarta.annotation.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +68,11 @@ public class CategoryService {
 
     public List<Category> getListById(Collection<Long> categoryIds, Long storefrontId) {
         return categoryRepository.findAllByIdInAndStorefrontId(categoryIds, storefrontId);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Category> findAllByStorefront(Long storefrontId, Pageable pageable) {
+        return categoryRepository.findAllByStorefrontId(storefrontId, pageable);
     }
 
     @Transactional(readOnly = true)

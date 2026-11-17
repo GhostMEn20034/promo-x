@@ -5,6 +5,8 @@ import com.promox.core.category.CategoryExternalIdsExistenceResult;
 import com.promox.core.category.CategoryIdsExistenceResult;
 import com.promox.core.category.CategoryLookupApi;
 import com.promox.core.category.internal.CategoryMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -41,5 +43,10 @@ public class CategoryLookupApiImpl implements CategoryLookupApi {
         return categoryService.getListById(categoryIds, storefrontId).stream()
             .map(CategoryMapper::toDto)
             .toList();
+    }
+
+    public Page<CategoryDto> findAllByStorefront(Long storefrontId, Pageable pageable) {
+        return categoryService.findAllByStorefront(storefrontId, pageable)
+            .map(CategoryMapper::toDto);
     }
 }

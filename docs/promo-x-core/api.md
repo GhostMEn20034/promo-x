@@ -812,6 +812,61 @@ Response `200`, the category. Errors: `400`, `404` `CATEGORY_NOT_FOUND`, `409` `
 
 Response `200`, the category. Errors: `404` `CATEGORY_NOT_FOUND`.
 
+### `GET /api/category/`
+
+Lists the storefront's categories, sorted by ID (oldest first).
+
+- **Roles:** `employee`, `auditor`
+- **Headers:** `X-Storefront-Id`
+
+| Query parameter | Meaning |
+|---|---|
+| `page`, `size` | Paging; `page` starts at 1 |
+
+A `sort` parameter is ignored: the order is always by ID.
+
+Response `200`, a page of categories:
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "externalId": "CAT-ELEC",
+      "name": "Electronics",
+      "parent": null,
+      "storefrontId": 1
+    },
+    {
+      "id": 2,
+      "externalId": "CAT-KEYBOARDS",
+      "name": "Keyboards",
+      "parent": {
+        "id": 1,
+        "externalId": "CAT-ELEC",
+        "name": "Electronics",
+        "parentId": null,
+        "storefrontId": 1
+      },
+      "storefrontId": 1
+    }
+  ],
+  "number": 0,
+  "size": 20,
+  "numberOfElements": 2,
+  "totalElements": 2,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "empty": false,
+  "pageable": { "...": "..." },
+  "sort": { "empty": false, "sorted": true, "unsorted": false }
+}
+```
+
+The page fields mean the same as in [`GET /api/promotion/`](#get-apipromotion). A storefront that doesn't exist has
+no categories, so its page is empty.
+
 ## Products
 
 The product object, as returned by create and update:

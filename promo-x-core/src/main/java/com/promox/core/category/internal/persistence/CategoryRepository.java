@@ -1,5 +1,7 @@
 package com.promox.core.category.internal.persistence;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +35,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     @EntityGraph(attributePaths = {"parent"})
     List<Category> findAllByIdInAndStorefrontId(Collection<Long> ids, Long storefrontId);
+
+    // The parent is a to-one association, so fetching it with the page is a join and doesn't page in memory
+    @EntityGraph(attributePaths = {"parent"})
+    Page<Category> findAllByStorefrontId(Long storefrontId, Pageable pageable);
 }
