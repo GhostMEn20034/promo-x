@@ -11,6 +11,8 @@ import com.promox.core.product.internal.persistence.ProductRepository;
 import jakarta.annotation.Nullable;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +103,27 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<Product> findAllByExternalIds(Collection<String> externalIds, Long storefrontId) {
         return productRepository.findAllByStorefrontIdAndExternalIdIn(storefrontId, externalIds);
+    }
+
+    /**
+     * A page of the storefront's products with their category IDs loaded: the page itself, then the category IDs
+     * of all its products in a second query, instead of one query per product.
+     */
+    @Transactional(readOnly = true)
+    public Page<Product> findAllByStorefront(Long storefrontId, Pageable pageable) {
+        Page<Product> page = productRepository.findAllByStorefrontId(storefrontId, pageable);
+        if (page.isEmpty()) {
+            return page;
+        }
+
+        List<Long> ids = page.getContent().stream().map(Product::getId).toList();
+        Map<Long, Product> withCategoryIds = new HashMap<>();
+        for (Product product : productRepository.findAllWithCategoryIdsByIdIn(ids)) {
+            withCategoryIds.put(product.getId(), product);
+        }
+
+        // Keeps the page's order, which the second query doesn't
+        return page.map(product -> withCategoryIds.get(product.getId()));
     }
 
     @Transactional(readOnly = true)

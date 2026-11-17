@@ -12,6 +12,10 @@ import com.promox.core.product.internal.service.ProductCommandHandler;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,5 +66,21 @@ public class ProductController {
     public ProductWithCategoriesDto getProductById(@PathVariable Long productId) {
         return productLookupApi.findWithCategoriesById(productId)
             .orElseThrow(() -> new ProductNotFoundException(productId));
+    }
+
+    @GetMapping("/")
+    @PreAuthorize("hasAnyRole('" + Roles.EMPLOYEE + "', '" + Roles.AUDITOR + "')")
+    public Page<ProductWithCategoriesDto> getAll(
+        @RequestHeader("X-Storefront-Id") Long storefrontId,
+        Pageable pageable
+    ) {
+        // Strip client-supplied sort parameters to prevent Sort Field Injection.
+        // Newest first; the ID breaks ties between products created at the same instant, so pages don't overlap.
+        Pageable pageSortedByCreation = PageRequest.of(
+            pageable.getPageNumber(),
+            pageable.getPageSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt", "id")
+        );
+        return productLookupApi.findAllWithCategories(storefrontId, pageSortedByCreation);
     }
 }

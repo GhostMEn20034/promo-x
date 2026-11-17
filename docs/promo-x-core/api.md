@@ -941,6 +941,60 @@ Response `200`, the product. Errors: `400`, `404` `PRODUCT_NOT_FOUND`, `409`.
 Response `200`: the product, with `categories` (the full [category objects](#categories)) instead of `categoryIds`.
 Errors: `404` `PRODUCT_NOT_FOUND`.
 
+### `GET /api/product/`
+
+Lists the storefront's products, newest first (by `createdAt`, then by ID for products created at the same time).
+
+- **Roles:** `employee`, `auditor`
+- **Headers:** `X-Storefront-Id`
+
+| Query parameter | Meaning |
+|---|---|
+| `page`, `size` | Paging; `page` starts at 1 |
+
+A `sort` parameter is ignored: the order is always newest first.
+
+Response `200`, a page of products, each with `categories` (the full [category objects](#categories)) instead of
+`categoryIds`, as in `GET /api/product/{id}`:
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "externalId": "PROD-KB-01",
+      "sku": "SKU-KB-01",
+      "name": "Mechanical keyboard",
+      "storefrontId": 1,
+      "createdAt": "2026-11-10T21:35:46.175261Z",
+      "updatedAt": "2026-11-10T21:35:46.175280Z",
+      "categories": [
+        {
+          "id": 2,
+          "externalId": "CAT-KEYBOARDS",
+          "name": "Keyboards",
+          "parent": null,
+          "storefrontId": 1
+        }
+      ]
+    }
+  ],
+  "number": 0,
+  "size": 20,
+  "numberOfElements": 1,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "empty": false,
+  "pageable": { "...": "..." },
+  "sort": { "empty": false, "sorted": true, "unsorted": false }
+}
+```
+
+The page fields mean the same as in [`GET /api/promotion/`](#get-apipromotion). A storefront that doesn't exist has
+no products, so its page is empty.
+
 ## Storefronts
 
 The storefront object:
