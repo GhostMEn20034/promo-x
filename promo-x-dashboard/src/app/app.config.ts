@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withRouterConfig } from '@angular/router';
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { authInterceptor, provideAuth } from './infrastructure/auth';
@@ -12,6 +12,11 @@ export const appConfig: ApplicationConfig = {
     provideAuth({ ...environment.auth, bearerTokenUrls: [environment.apiUrl] }),
     provideHttpClient(withInterceptors([authInterceptor])),
     { provide: API_BASE_URL, useValue: environment.apiUrl },
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      // Child pages, such as a storefront's categories, read the parent's `:storefrontId` as an input
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
   ],
 };

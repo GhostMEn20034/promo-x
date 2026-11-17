@@ -1,0 +1,120 @@
+<section aria-labelledby="categories-heading">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 id="categories-heading" class="text-lg font-semibold text-gray-900">Categories</h2>
+    @if (categories.hasValue()) {
+      <p class="text-sm text-gray-500">
+        {{ categories.value().totalElements }}
+        {{ categories.value().totalElements === 1 ? 'category' : 'categories' }}
+      </p>
+    }
+  </div>
+
+  @if (categories.error()) {
+    <div role="alert" class="mt-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+      Couldn't load the categories.
+      <button type="button" class="ml-2 font-medium underline" (click)="categories.reload()">
+        Try again
+      </button>
+    </div>
+  } @else if (categories.hasValue()) {
+    @let result = categories.value();
+
+    @if (result.content.length === 0) {
+      <p
+        class="mt-4 rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-500"
+      >
+        @if (result.totalElements === 0) {
+          This storefront has no categories yet.
+        } @else {
+          There are no categories on this page.
+          <a class="text-blue-700 hover:underline" routerLink="." [queryParams]="{ page: null }">
+            Go to the first page
+          </a>
+        }
+      </p>
+    } @else {
+      <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead
+            class="bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+          >
+            <tr>
+              <th scope="col" class="px-4 py-3">ID</th>
+              <th scope="col" class="px-4 py-3">Name</th>
+              <th scope="col" class="px-4 py-3">External ID</th>
+              <th scope="col" class="px-4 py-3">Parent</th>
+              @if (canEdit()) {
+                <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (category of result.content; track category.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <a
+                    class="font-medium text-blue-700 hover:underline"
+                    [routerLink]="[category.id]"
+                    [attr.aria-label]="'View category ' + category.id + ', ' + category.name"
+                    >{{ category.id }}</a
+                  >
+                </td>
+                <td class="px-4 py-3 text-gray-900">{{ category.name }}</td>
+                <td class="px-4 py-3 font-mono text-xs break-all text-gray-600">
+                  {{ category.externalId ?? '—' }}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  @if (category.parent; as parent) {
+                    <span class="text-gray-900">{{ parent.name }}</span>
+                    <span class="ml-1 text-gray-400">#{{ parent.id }}</span>
+                  } @else {
+                    <span class="text-gray-400">—</span>
+                  }
+                </td>
+                @if (canEdit()) {
+                  <td class="px-4 py-2 text-right">
+                    <button
+                      type="button"
+                      class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                      title="Edit"
+                      [attr.aria-label]="'Edit ' + category.name"
+                      (click)="editing.set(category)"
+                    >
+                      <svg
+                        class="size-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M16.86 3.49a2.1 2.1 0 0 1 2.97 2.97L7.5 18.79 3 20l1.21-4.5L16.86 3.49z"
+                        />
+                        <path d="M15 5.35l3.65 3.65" />
+                      </svg>
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <app-pager class="mt-6 block" [page]="page()" [totalPages]="result.totalPages" />
+  } @else {
+    <p class="mt-4 text-sm text-gray-500">Loading categories…</p>
+  }
+</section>
+
+@if (editing(); as category) {
+  <app-category-edit-dialog
+    [category]="category"
+    (saved)="onSaved($event)"
+    (closed)="editing.set(null)"
+  />
+}
