@@ -14,7 +14,7 @@ import { Storefront, StorefrontUpdate } from './storefront.model';
 @Injectable()
 export class StorefrontClient {
   private readonly http = inject(HttpClient);
-  private readonly url = `${inject(API_BASE_URL).replace(/\/+$/, '')}/storefront`;
+  private readonly url = `${inject(API_BASE_URL).replace(/\/+$/, '')}/api/storefront`;
 
   /** One page of storefronts, sorted by ID. `page` is 1-based. */
   page(page: Signal<number>, size: number): HttpResourceRef<Page<Storefront> | undefined> {

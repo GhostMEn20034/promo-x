@@ -53,7 +53,7 @@ class PromotionRuleEventsIntegrationTest extends IntegrationTestBase {
     private static final String PRODUCT = "PROD-KB-01";
     private static final String ACTION_ONLY_PRODUCT = "PROD-MS-01";
 
-    private static final String RULE_URL = "/promotion/{promotionRuleId}";
+    private static final String RULE_URL = "/api/promotion/{promotionRuleId}";
 
     private static final String RULE_PAYLOAD = """
         {
@@ -147,7 +147,7 @@ class PromotionRuleEventsIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should publish a created event carrying the saved rule and its timestamps")
     void create_publishesCreatedEvent(Scenario scenario) {
-        scenario.stimulate(() -> perform(post("/promotion/")
+        scenario.stimulate(() -> perform(post("/api/promotion/")
                 .header("X-Storefront-Id", STOREFRONT_ID)
                 .content(RULE_PAYLOAD), 201))
             .andWaitForEventOfType(PromotionRuleCreatedEvent.class)
@@ -235,7 +235,7 @@ class PromotionRuleEventsIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Should store and publish product IDs from conditions and actions and category IDs from conditions")
     void create_extractsIdsFromConditionsAndActions(Scenario scenario) {
-        scenario.stimulate(() -> perform(post("/promotion/")
+        scenario.stimulate(() -> perform(post("/api/promotion/")
                 .header("X-Storefront-Id", STOREFRONT_ID)
                 .content(RULE_WITH_CATEGORIES_PAYLOAD), 201))
             .andWaitForEventOfType(PromotionRuleCreatedEvent.class)
@@ -297,7 +297,7 @@ class PromotionRuleEventsIntegrationTest extends IntegrationTestBase {
     void create_evictsStorefrontRules(Scenario scenario) {
         cacheRulesOf(STOREFRONT_ID);
 
-        scenario.stimulate(() -> perform(post("/promotion/")
+        scenario.stimulate(() -> perform(post("/api/promotion/")
                 .header("X-Storefront-Id", STOREFRONT_ID)
                 .content(RULE_PAYLOAD), 201))
             .andWaitForStateChange(() -> rulesCached(STOREFRONT_ID), cached -> !cached)

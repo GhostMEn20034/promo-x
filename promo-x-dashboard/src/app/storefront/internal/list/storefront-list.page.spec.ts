@@ -35,7 +35,7 @@ describe('StorefrontListPage', () => {
   async function render(page: Page<Storefront>): Promise<void> {
     fixture = TestBed.createComponent(StorefrontListPage);
     TestBed.tick();
-    http.expectOne('http://api.test/storefront/?page=1&size=12').flush(page);
+    http.expectOne('http://api.test/api/storefront/?page=1&size=12').flush(page);
     await fixture.whenStable();
     element = fixture.nativeElement as HTMLElement;
   }
@@ -100,7 +100,7 @@ describe('StorefrontListPage', () => {
     fixture = TestBed.createComponent(StorefrontListPage);
     TestBed.tick();
     http
-      .expectOne('http://api.test/storefront/?page=1&size=12')
+      .expectOne('http://api.test/api/storefront/?page=1&size=12')
       .flush(null, { status: 500, statusText: 'Server Error' });
     await fixture.whenStable();
     element = fixture.nativeElement as HTMLElement;

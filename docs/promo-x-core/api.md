@@ -17,7 +17,7 @@ The HTTP API of promo-x-core. The concepts behind it (storefronts, rules, usages
 
 | Topic | Convention |
 |---|---|
-| Base URL | The application listens on port 8000, e.g. `http://localhost:8000` |
+| Base URL | The application listens on port 8000. Every endpoint is under `/api`, e.g. `http://localhost:8000/api/storefront/`, except the health check at `/actuator/health` |
 | Authentication | Every endpoint except `/actuator/health` needs `Authorization: Bearer <JWT>` from the configured identity provider. The roles come from the token's top-level `roles` claim |
 | Storefront | Endpoints that work inside a storefront take it in the `X-Storefront-Id` header (a storefront ID). Endpoints that take a resource ID in the path don't need it |
 | Bodies | JSON, `Content-Type: application/json` |
@@ -51,7 +51,7 @@ Errors raised by promo-x itself are [RFC 9457](https://www.rfc-editor.org/rfc/rf
   "title": "Validation failed",
   "status": 400,
   "detail": "One or more validation errors occurred.",
-  "instance": "/storefront/",
+  "instance": "/api/storefront/",
   "code": "VALIDATION_ERROR",
   "timestamp": "2026-11-10T21:35:47.046190267Z",
   "errors": [
@@ -100,7 +100,7 @@ is malformed. `code` is always `VALIDATION_ERROR`, and every item has `category:
   "title": "Validation failed",
   "status": 400,
   "detail": "One or more validation errors occurred.",
-  "instance": "/promotion/evaluate",
+  "instance": "/api/promotion/evaluate",
   "code": "VALIDATION_ERROR",
   "timestamp": "2026-11-10T21:35:47.055842631Z",
   "errors": [
@@ -169,7 +169,7 @@ broken, and the items have `category: BUSINESS` and `source: DOMAIN`.
   "title": "Business rule violation",
   "status": 409,
   "detail": "Validation failed: specified product external IDs do not exist",
-  "instance": "/promotion/evaluate",
+  "instance": "/api/promotion/evaluate",
   "code": "PRODUCT_EXTERNAL_IDS_NOT_FOUND",
   "timestamp": "2026-11-10T21:35:47.012345678Z",
   "errors": [
@@ -212,7 +212,7 @@ The resource in the path doesn't exist. These have the same body as business err
   "title": "Promotion not found",
   "status": 404,
   "detail": "Promotion Rule with id '999999' was not found.",
-  "instance": "/promotion/999999",
+  "instance": "/api/promotion/999999",
   "code": "PROMOTION_NOT_FOUND",
   "timestamp": "2026-11-10T21:35:47.030000000Z",
   "errors": [
@@ -252,7 +252,7 @@ These come from Spring Security and Spring Boot, not from promo-x, so they don't
 Spring Boot's error body:
 
 ```json
-{"timestamp": "2026-11-10T21:37:26.988Z", "status": 400, "error": "Bad Request", "path": "/promotion/"}
+{"timestamp": "2026-11-10T21:37:26.988Z", "status": 400, "error": "Bad Request", "path": "/api/promotion/"}
 ```
 
 The role check runs after the request has been read and validated, so a caller without the right role who sends an
@@ -260,7 +260,7 @@ invalid body gets the 400, not the 403.
 
 ## Promotion evaluation and usages
 
-### `POST /promotion/evaluate`
+### `POST /api/promotion/evaluate`
 
 Prices a cart: evaluates the storefront's active rules against it and applies the matching ones.
 
@@ -374,7 +374,7 @@ in the cart, appears in `matchedRules` but not in `appliedRules`.
 
 Errors: `400` validation, `409` `PRODUCT_EXTERNAL_IDS_NOT_FOUND` (with `path: items`).
 
-### `POST /promotion/usage/{usageId}/confirm`
+### `POST /api/promotion/usage/{usageId}/confirm`
 
 Marks a reserved usage as used, for example once the order is placed. Call it before `usage.expiresAt`.
 
@@ -391,7 +391,7 @@ Response `200`, the usage:
 Errors: `404` `PROMOTION_RULE_USAGE_NOT_FOUND`, `409` `PROMOTION_RULE_USAGE_NOT_RESERVED` (already confirmed,
 canceled or expired; `errorContext.status` is the current status).
 
-### `POST /promotion/usage/{usageId}/cancel`
+### `POST /api/promotion/usage/{usageId}/cancel`
 
 Cancels a reserved usage, for example when the order is abandoned, and gives its held uses back to the rules.
 
@@ -399,7 +399,7 @@ Cancels a reserved usage, for example when the order is abandoned, and gives its
 
 Response `200`, the usage, with `status: CANCELED`. Errors: as for confirm.
 
-### `GET /promotion/usage/stats`
+### `GET /api/promotion/usage/stats`
 
 Statistics of the storefront's confirmed (`USED`) usages over a period.
 
@@ -415,7 +415,7 @@ A `+` in a timestamp offset must be sent as `%2B`, or use `Z`. Usages are counte
 when they were confirmed.
 
 ```http
-GET /promotion/usage/stats?from=2026-01-10T00:00:00Z&to=2026-01-13T00:00:00Z
+GET /api/promotion/usage/stats?from=2026-01-10T00:00:00Z&to=2026-01-13T00:00:00Z
 ```
 
 Response `200`:
@@ -538,7 +538,7 @@ Returned by create, update and the usage-limit change:
 | `productExternalIds` | Every product external ID the rule refers to, from its conditions and its action |
 | `createdAt`, `updatedAt` | Timestamps |
 
-### `POST /promotion/`
+### `POST /api/promotion/`
 
 Creates a rule. The product and category external IDs it refers to must exist in the storefront.
 
@@ -585,10 +585,10 @@ Creates a rule. The product and category external IDs it refers to must exist in
 Response `201`, the [rule object](#the-rule-object). Errors: `400` validation, `409`
 `PRODUCT_EXTERNAL_IDS_NOT_FOUND`, `CATEGORY_EXTERNAL_IDS_NOT_FOUND`.
 
-### `PUT /promotion/{id}`
+### `PUT /api/promotion/{id}`
 
 Replaces a rule's name, priority, flags, conditions and action. Usage limits are changed with
-`PATCH /promotion/{id}/usage-limits` instead.
+`PATCH /api/promotion/{id}/usage-limits` instead.
 
 - **Roles:** `promotion-manager`
 
@@ -606,7 +606,7 @@ taking a default.
 
 Response `200`, the [rule object](#the-rule-object). Errors: `400`, `404` `PROMOTION_NOT_FOUND`, `409` as for create.
 
-### `PATCH /promotion/{id}/usage-limits`
+### `PATCH /api/promotion/{id}/usage-limits`
 
 Turns a rule's usage limit on or off and changes its numbers.
 
@@ -625,7 +625,7 @@ Turns a rule's usage limit on or off and changes its numbers.
 
 Response `200`, the [rule object](#the-rule-object). Errors: `400`, `404` `PROMOTION_NOT_FOUND`.
 
-### `GET /promotion/{id}`
+### `GET /api/promotion/{id}`
 
 - **Roles:** `promotion-manager`, `auditor`, `employee`
 
@@ -653,7 +653,7 @@ of `productExternalIds`:
 
 Errors: `404` `PROMOTION_NOT_FOUND`.
 
-### `GET /promotion/`
+### `GET /api/promotion/`
 
 Lists the storefront's rules, newest first by default.
 
@@ -702,7 +702,7 @@ Response `200`, a page of rule summaries:
 
 Errors: `409` `INVALID_SORT_PROPERTY`.
 
-### `DELETE /promotion/{id}`
+### `DELETE /api/promotion/{id}`
 
 Deletes a rule.
 
@@ -782,7 +782,7 @@ The category object:
 | `parent` | The parent category, or null for a top-level category. `parent.parentId` is the parent's own parent, if any |
 | `storefrontId` | The storefront it belongs to |
 
-### `POST /category/`
+### `POST /api/category/`
 
 - **Roles:** `employee`
 - **Headers:** `X-Storefront-Id`
@@ -796,7 +796,7 @@ The category object:
 Response `201`, the category. Errors: `400`, `409` `INVALID_STOREFRONT`, `CATEGORY_ALREADY_EXISTS`,
 `PARENT_CATEGORY_NOT_FOUND`.
 
-### `PUT /category/{id}`
+### `PUT /api/category/{id}`
 
 Replaces the category's fields, same body as create. Changing `externalId` deactivates the active rules that refer to
 the old external ID.
@@ -806,7 +806,7 @@ the old external ID.
 Response `200`, the category. Errors: `400`, `404` `CATEGORY_NOT_FOUND`, `409` `CATEGORY_ALREADY_EXISTS`,
 `PARENT_CATEGORY_NOT_FOUND`.
 
-### `GET /category/{id}`
+### `GET /api/category/{id}`
 
 - **Roles:** `employee`, `auditor`
 
@@ -839,7 +839,7 @@ The product object, as returned by create and update:
 | `categoryIds` | promo-x's IDs of the product's categories |
 | `createdAt`, `updatedAt` | Timestamps |
 
-### `POST /product/`
+### `POST /api/product/`
 
 - **Roles:** `employee`
 - **Headers:** `X-Storefront-Id`
@@ -854,7 +854,7 @@ The product object, as returned by create and update:
 Response `201`, the product. Errors: `400`, `409` `INVALID_STOREFRONT`, `EXTERNAL_ID_ALREADY_EXISTS`,
 `CATEGORY_IDS_NOT_FOUND`.
 
-### `POST /product/bulk-insert`
+### `POST /api/product/bulk-insert`
 
 Adds up to 1000 products at once. Either all of them are added or none.
 
@@ -865,12 +865,12 @@ Adds up to 1000 products at once. Either all of them are added or none.
 { "items": [ { "externalId": "PROD-MS-01", "sku": "SKU-MS-01", "name": "Mouse", "categoryIds": [] } ] }
 ```
 
-`items` takes 1–1000 products, each like the body of `POST /product/`.
+`items` takes 1–1000 products, each like the body of `POST /api/product/`.
 
 Response `204`, no body. Errors: `400`, `409` `INVALID_STOREFRONT`, `EXTERNAL_ID_VALIDATION_FAILED` (with an item per
 duplicated or already existing external ID), `CATEGORY_IDS_NOT_FOUND` (with an item per product).
 
-### `PUT /product/{id}`
+### `PUT /api/product/{id}`
 
 Replaces the product's fields, same body as create.
 
@@ -878,7 +878,7 @@ Replaces the product's fields, same body as create.
 
 Response `200`, the product. Errors: `400`, `404` `PRODUCT_NOT_FOUND`, `409`.
 
-### `GET /product/{id}`
+### `GET /api/product/{id}`
 
 - **Roles:** `employee`, `auditor`
 
@@ -899,7 +899,7 @@ The storefront object:
 | `name` | Display name |
 | `website` | The storefront's website, or null |
 
-### `POST /storefront/`
+### `POST /api/storefront/`
 
 - **Roles:** `admin`
 
@@ -910,7 +910,7 @@ The storefront object:
 
 Response `201`, the storefront. Errors: `400`.
 
-### `PUT /storefront/{id}`
+### `PUT /api/storefront/{id}`
 
 Replaces the storefront's fields, same body as create.
 
@@ -918,13 +918,13 @@ Replaces the storefront's fields, same body as create.
 
 Response `200`, the storefront. Errors: `400`, `404` `STOREFRONT_NOT_FOUND`.
 
-### `GET /storefront/{id}`
+### `GET /api/storefront/{id}`
 
 - **Roles:** any authenticated caller
 
 Response `200`, the storefront. Errors: `404` `STOREFRONT_NOT_FOUND`.
 
-### `GET /storefront/`
+### `GET /api/storefront/`
 
 Lists all storefronts, sorted by ID (oldest first).
 
@@ -956,7 +956,7 @@ Response `200`, a page of storefronts:
 }
 ```
 
-The page fields mean the same as in [`GET /promotion/`](#get-promotion).
+The page fields mean the same as in [`GET /api/promotion/`](#get-apipromotion).
 
 ## Health
 

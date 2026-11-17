@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockJwt(roles = Roles.ADMIN)
 @EnableScenarios
 public class ProductUpdateIntegrationTest extends IntegrationTestBase {
-    private static final String UPDATE_URL = "/product/{productId}";
+    private static final String UPDATE_URL = "/api/product/{productId}";
 
     @Autowired
     private ObjectMapper objectMapper;

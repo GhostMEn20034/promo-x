@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 public class PromotionUsageStatsIntegrationTest extends IntegrationTestBase {
-    private static final String STATS_URL = "/promotion/usage/stats";
+    private static final String STATS_URL = "/api/promotion/usage/stats";
     private static final long STOREFRONT_ID = 100L;
 
     private static final Instant FROM = Instant.parse("2026-01-10T00:00:00Z");

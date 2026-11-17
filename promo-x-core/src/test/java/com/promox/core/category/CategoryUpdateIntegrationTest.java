@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt(roles = Roles.EMPLOYEE)
 public class CategoryUpdateIntegrationTest extends IntegrationTestBase {
-    private static final String BASE_URL = "/category";
+    private static final String BASE_URL = "/api/category";
 
     @Autowired
     private ObjectMapper objectMapper;

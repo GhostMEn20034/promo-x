@@ -33,8 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WithMockJwt(roles = Roles.PROMOTION_MANAGER)
 public class PromotionUpdateIntegrationTest extends IntegrationTestBase {
-    private static final String UPDATE_PROMOTION_RULE_URL = "/promotion/{promotionRuleId}";
-    private static final String UPDATE_USAGE_LIMITS_URL = "/promotion/{promotionRuleId}/usage-limits";
+    private static final String UPDATE_PROMOTION_RULE_URL = "/api/promotion/{promotionRuleId}";
+    private static final String UPDATE_USAGE_LIMITS_URL = "/api/promotion/{promotionRuleId}/usage-limits";
 
     @Autowired
     private ObjectMapper objectMapper;
