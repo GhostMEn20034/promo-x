@@ -13,6 +13,9 @@ export interface Product {
   readonly categories: readonly CategoryRef[];
 }
 
+/** What's needed to show a product that was chosen, such as one a promotion rule refers to. */
+export type ProductRef = Pick<Product, 'id' | 'externalId' | 'sku' | 'name'>;
+
 /** A product as create and update return it: with `categoryIds` instead of `categories`. */
 export interface SavedProduct extends Omit<Product, 'categories'> {
   readonly categoryIds: readonly number[];

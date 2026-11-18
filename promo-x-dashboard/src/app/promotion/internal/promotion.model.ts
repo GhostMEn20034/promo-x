@@ -1,0 +1,149 @@
+/** A promotion rule as `GET /api/promotion/` lists it: without its condition tree and action. */
+export interface PromotionRuleSummary {
+  readonly id: number;
+  readonly storefrontId: number;
+  readonly name: string;
+  /** Rules are evaluated from the highest priority down. */
+  readonly priority: number;
+  /** Once this rule changes the cart, lower-priority rules are skipped. */
+  readonly isShortCircuit: boolean;
+  /** Only active rules are evaluated. */
+  readonly isActive: boolean;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+/** The operators of a leaf condition. Each condition type supports only some of them. */
+export type Operator = 'EQUALS' | 'NOT_EQUALS' | 'GREATER_THAN_OR_EQUAL';
+
+export type LogicalOperator = 'AND' | 'OR';
+
+export type LeafConditionType =
+  | 'PROMO_CODE'
+  | 'CUSTOMER_AUTHENTICATION_STATE'
+  | 'SUBTOTAL'
+  | 'SINGLE_PRODUCT_EXTERNAL_ID_MATCH'
+  | 'PRODUCT_EXTERNAL_ID_ANY_MATCH'
+  | 'PRODUCT_EXTERNAL_ID_QUANTITY'
+  | 'SINGLE_PRODUCT_SKU_MATCH'
+  | 'PRODUCT_SKU_ANY_MATCH'
+  | 'PRODUCT_SKU_QUANTITY'
+  | 'SINGLE_PRODUCT_CATEGORY_MATCH'
+  | 'PRODUCT_CATEGORY_ANY_MATCH'
+  | 'SINGLE_PRODUCT_COLLECTION_MATCH'
+  | 'PRODUCT_COLLECTION_ANY_MATCH';
+
+export type ActionType =
+  | 'PRODUCT_EXTERNAL_ID_PERCENTAGE_DISCOUNT_ACTION'
+  | 'PRODUCT_PERCENTAGE_DISCOUNT_ACTION'
+  | 'PRODUCT_EXTERNAL_ID_BUY_X_GET_X_FREE_ACTION'
+  | 'PRODUCT_SKU_BUY_X_GET_X_FREE_ACTION'
+  | 'ORDER_PERCENTAGE_DISCOUNT'
+  | 'ORDER_FLAT_DISCOUNT'
+  | 'FREE_SHIPPING_ACTION'
+  | 'SHIPPING_PERCENTAGE_DISCOUNT';
+
+/** Combines its children with AND (all match) or OR (any matches). */
+export interface CompositeCondition {
+  readonly type: 'COMPOSITE';
+  readonly operator: LogicalOperator;
+  readonly children: readonly ConditionNode[];
+}
+
+/** A condition on the cart or the shopper. Its other fields depend on the type, see `CONDITION_TYPES`. */
+export interface LeafCondition {
+  readonly type: LeafConditionType;
+  readonly operator?: Operator;
+  readonly [field: string]: unknown;
+}
+
+export type ConditionNode = CompositeCondition | LeafCondition;
+
+/** What a rule does to the cart. Its other fields depend on the type, see `ACTION_TYPES`. */
+export interface Action {
+  readonly type: ActionType;
+  readonly [field: string]: unknown;
+}
+
+/** Display metadata promo-x-core sends with a condition. */
+export interface ConditionSpec {
+  readonly displayName: string;
+  readonly description: string;
+  readonly supportedOperators: readonly Operator[];
+  readonly operatorsDisplayName: Partial<Record<Operator, string>>;
+}
+
+/** Display metadata promo-x-core sends with an action. */
+export interface ActionSpec {
+  readonly displayName: string;
+  readonly description: string;
+}
+
+/** The fields every rule response has. */
+export interface PromotionRule {
+  readonly id: number;
+  readonly storefrontId: number;
+  readonly name: string;
+  readonly priority: number;
+  readonly isShortCircuit: boolean;
+  readonly isActive: boolean;
+  /** Whether the rule may only be applied `usageLimit` times. */
+  readonly hasUsageLimit: boolean;
+  readonly usageLimit: number | null;
+  /** Lowered shortly after each evaluation that applies the rule, so it can lag behind by a moment. */
+  readonly remainingUses: number | null;
+  /** The tree as it was sent, with each nested condition's `spec` added. */
+  readonly conditionTree: { readonly node: ConditionNode; readonly spec: ConditionSpec };
+  readonly action: { readonly action: Action; readonly spec: ActionSpec };
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+/** A product a rule refers to, as `GET /api/promotion/{id}` embeds it. */
+export interface RuleProduct {
+  readonly id: number;
+  readonly externalId: string;
+  readonly sku: string;
+  readonly name: string;
+  readonly storefrontId: number;
+  readonly categoryIds: readonly number[];
+}
+
+/** `GET /api/promotion/{id}`: the rule with the products it refers to. */
+export interface PromotionRuleDetails extends PromotionRule {
+  readonly products: readonly RuleProduct[];
+}
+
+/** Create, update and the usage-limit change return the rule with the external IDs of its products. */
+export interface SavedPromotionRule extends PromotionRule {
+  readonly productExternalIds: readonly string[];
+}
+
+/** The body of `PUT /api/promotion/{id}`, which replaces every field but the usage limit. */
+export interface PromotionRuleInput {
+  readonly name: string;
+  readonly priority: number;
+  readonly isShortCircuit: boolean;
+  readonly isActive: boolean;
+  readonly conditionTree: ConditionNode;
+  readonly action: Action;
+}
+
+/** The body of `POST /api/promotion/`. The remaining uses start at `usageLimit`. */
+export interface NewPromotionRule extends PromotionRuleInput {
+  readonly hasUsageLimit: boolean;
+  readonly usageLimit?: number;
+}
+
+/** The body of `PATCH /api/promotion/{id}/usage-limits`. */
+export interface UsageLimitsInput {
+  readonly hasUsageLimit: boolean;
+  readonly usageLimit: number;
+  /** When false, `remainingUses` is ignored and the current count is kept. */
+  readonly mutateRemainingUses: boolean;
+  readonly remainingUses?: number;
+}
+
+export const RULE_NAME_MAX_LENGTH = 255;
+/** Priorities and limits are Java `int`s. */
+export const MAX_INT = 2_147_483_647;

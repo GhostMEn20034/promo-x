@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { ComingSoonPage } from './internal/coming-soon/coming-soon.page';
 import { StorefrontDetailsPage } from './internal/details/storefront-details.page';
 import { StorefrontListPage } from './internal/list/storefront-list.page';
 import { StorefrontOverviewPage } from './internal/overview/storefront-overview.page';
@@ -27,9 +26,7 @@ export const storefrontRoutes: Routes = [
           },
           {
             path: 'promotion-rules',
-            title: 'Promotion rules',
-            component: ComingSoonPage,
-            data: { section: 'Promotion rules' },
+            loadChildren: () => import('../promotion').then((m) => m.promotionRoutes),
           },
         ],
       },
