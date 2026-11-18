@@ -1,0 +1,210 @@
+@let current = query();
+
+<section aria-labelledby="rules-heading">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <h2 id="rules-heading" class="text-lg font-semibold text-gray-900">Promotion rules</h2>
+      @if (rules.hasValue()) {
+        <p class="text-sm text-gray-500" data-testid="rules-count">
+          {{ rules.value().totalElements }}
+          {{ rules.value().totalElements === 1 ? 'rule' : 'rules' }}
+          @if (filtered()) {
+            match the filters
+          }
+        </p>
+      }
+    </div>
+    @if (canCreate()) {
+      <a
+        class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+        routerLink="new"
+      >
+        New rule
+      </a>
+    }
+  </div>
+
+  <div
+    class="mt-4 grid gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm shadow-sm sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_minmax(0,1.5fr)]"
+    role="search"
+    aria-label="Filter and sort the rules"
+  >
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-500">Status</span>
+      <select
+        id="rules-status"
+        class="rounded-md border border-gray-300 px-2 py-1.5"
+        (change)="setStatus($any($event.target).value)"
+      >
+        <option value="" [selected]="current.isActive === null">All</option>
+        <option value="true" [selected]="current.isActive === true">Active</option>
+        <option value="false" [selected]="current.isActive === false">Inactive</option>
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-500">Short-circuit</span>
+      <select
+        id="rules-short-circuit"
+        class="rounded-md border border-gray-300 px-2 py-1.5"
+        (change)="setShortCircuit($any($event.target).value)"
+      >
+        <option value="" [selected]="current.isShortCircuit === null">All</option>
+        <option value="true" [selected]="current.isShortCircuit === true">Short-circuit</option>
+        <option value="false" [selected]="current.isShortCircuit === false">
+          Not short-circuit
+        </option>
+      </select>
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-500">Created from (UTC)</span>
+      <input
+        id="rules-created-from"
+        type="date"
+        class="rounded-md border border-gray-300 px-2 py-1"
+        [value]="current.createdFrom ?? ''"
+        [max]="current.createdTo ?? ''"
+        (change)="setCreatedFrom($any($event.target).value)"
+      />
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-500">Created to (UTC)</span>
+      <input
+        id="rules-created-to"
+        type="date"
+        class="rounded-md border border-gray-300 px-2 py-1"
+        [value]="current.createdTo ?? ''"
+        [min]="current.createdFrom ?? ''"
+        (change)="setCreatedTo($any($event.target).value)"
+      />
+    </label>
+    <label class="flex flex-col gap-1">
+      <span class="text-xs font-medium text-gray-500">Sort</span>
+      <select
+        id="rules-sort"
+        class="rounded-md border border-gray-300 px-2 py-1.5"
+        (change)="setSort($any($event.target).value)"
+      >
+        @for (option of sortOptions; track option.value) {
+          <option [value]="option.value" [selected]="current.sort === option.value">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (filtered()) {
+    <button
+      type="button"
+      class="mt-2 text-sm text-blue-700 hover:underline"
+      (click)="clearFilters()"
+    >
+      Clear filters
+    </button>
+  }
+
+  @if (invalidRange()) {
+    <p role="alert" class="mt-4 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      "Created from" is after "Created to", so no rule can match.
+    </p>
+  }
+
+  @if (rules.error()) {
+    <div role="alert" class="mt-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+      Couldn't load the promotion rules.
+      <button type="button" class="ml-2 font-medium underline" (click)="rules.reload()">
+        Try again
+      </button>
+    </div>
+  } @else if (rules.hasValue()) {
+    @let result = rules.value();
+
+    @if (result.content.length === 0) {
+      <div
+        class="mt-4 rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-500"
+      >
+        @if (result.totalElements > 0) {
+          There are no rules on this page.
+        } @else if (filtered()) {
+          No rules match these filters.
+          <button type="button" class="text-blue-700 hover:underline" (click)="clearFilters()">
+            Clear filters
+          </button>
+        } @else {
+          This storefront has no promotion rules yet.
+          @if (canCreate()) {
+            <a class="text-blue-700 hover:underline" routerLink="new">Create the first one</a>
+          }
+        }
+      </div>
+    } @else {
+      <div class="mt-4 overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead
+            class="bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+          >
+            <tr>
+              <th scope="col" class="px-4 py-3">ID</th>
+              <th scope="col" class="px-4 py-3">Name</th>
+              <th scope="col" class="px-4 py-3 text-right">Priority</th>
+              <th scope="col" class="px-4 py-3">Status</th>
+              <th scope="col" class="px-4 py-3">Short-circuit</th>
+              <th scope="col" class="px-4 py-3">Created</th>
+              <th scope="col" class="px-4 py-3">Updated</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (rule of result.content; track rule.id) {
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-3 whitespace-nowrap text-gray-500">{{ rule.id }}</td>
+                <td class="px-4 py-3">
+                  <a class="font-medium text-blue-700 hover:underline" [routerLink]="[rule.id]">{{
+                    rule.name
+                  }}</a>
+                </td>
+                <td class="px-4 py-3 text-right font-mono tabular-nums">{{ rule.priority }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  @if (rule.isActive) {
+                    <span
+                      class="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700"
+                      >Active</span
+                    >
+                  } @else {
+                    <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600"
+                      >Inactive</span
+                    >
+                  }
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  @if (rule.isShortCircuit) {
+                    <span
+                      class="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs text-amber-800"
+                      title="Once this rule changes the cart, lower-priority rules are skipped"
+                      >Stops lower rules</span
+                    >
+                  } @else {
+                    <span class="text-gray-400">—</span>
+                  }
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                  <time [attr.datetime]="rule.createdAt" [title]="rule.createdAt">{{
+                    rule.createdAt | date: 'mediumDate'
+                  }}</time>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                  <time [attr.datetime]="rule.updatedAt" [title]="rule.updatedAt">{{
+                    rule.updatedAt | date: 'mediumDate'
+                  }}</time>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <app-pager class="mt-6 block" [page]="current.page" [totalPages]="result.totalPages" />
+  } @else {
+    <p class="mt-4 text-sm text-gray-500">Loading promotion rules…</p>
+  }
+</section>

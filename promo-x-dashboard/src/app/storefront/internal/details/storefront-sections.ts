@@ -27,8 +27,8 @@ export const STOREFRONT_SECTIONS: readonly StorefrontSection[] = [
   {
     path: 'promotion-rules',
     label: 'Promotion rules',
-    description: 'Conditions, actions, priorities and usage limits of the promotions.',
+    description: 'The rules evaluated against carts, by status, priority and short-circuit.',
     icon: 'promotions',
-    comingSoon: true,
+    comingSoon: false,
   },
 ];

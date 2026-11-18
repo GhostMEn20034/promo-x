@@ -37,7 +37,7 @@ describe('StorefrontDetailsPage', () => {
 
     expect(element.querySelector('h1')!.textContent).toContain('Tech Store');
     const tabs = [...element.querySelectorAll('nav a')].map((a) => a.textContent!.trim());
-    expect(tabs).toEqual(['Overview', 'Categories', 'Products', 'Promotion rules Soon']);
+    expect(tabs).toEqual(['Overview', 'Categories', 'Products', 'Promotion rules']);
     expect(element.querySelector('router-outlet')).toBeTruthy();
   });
 
@@ -60,7 +60,7 @@ describe('StorefrontDetailsPage', () => {
 });
 
 describe('StorefrontOverviewPage', () => {
-  it('links to every section, marking the ones that are coming soon', async () => {
+  it('links to every section', async () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
     const fixture = TestBed.createComponent(StorefrontOverviewPage);
     await fixture.whenStable();
@@ -71,8 +71,6 @@ describe('StorefrontOverviewPage', () => {
       '/products',
       '/promotion-rules',
     ]);
-    expect(links[0].textContent).not.toContain('Coming soon');
-    expect(links[1].textContent).not.toContain('Coming soon');
-    expect(links[2].textContent).toContain('Coming soon');
+    expect(links.filter((a) => a.textContent!.includes('Coming soon'))).toEqual([]);
   });
 });
