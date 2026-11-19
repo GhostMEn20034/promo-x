@@ -2,7 +2,7 @@ import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http'
 import { inject, Injectable, Signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL, Page } from '../../infrastructure/http';
-import { Category, CategoryUpdate } from './category.model';
+import { Category, CategoryInput } from './category.model';
 
 /**
  * promo-x-core's category endpoints. Reads are resources that follow their signals; writes are one-off requests.
@@ -37,8 +37,14 @@ export class CategoryClient {
     return httpResource<Category>(() => (isId(id()) ? `${this.url}/${id()}` : undefined));
   }
 
-  update(id: number, update: CategoryUpdate): Observable<Category> {
-    return this.http.put<Category>(`${this.url}/${id}`, update);
+  create(storefrontId: number, category: CategoryInput): Observable<Category> {
+    return this.http.post<Category>(`${this.url}/`, category, {
+      headers: { 'X-Storefront-Id': String(storefrontId) },
+    });
+  }
+
+  update(id: number, category: CategoryInput): Observable<Category> {
+    return this.http.put<Category>(`${this.url}/${id}`, category);
   }
 }
 

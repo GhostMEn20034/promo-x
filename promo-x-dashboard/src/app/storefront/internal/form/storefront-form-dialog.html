@@ -1,12 +1,17 @@
 <dialog
   #dialog
   class="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
-  aria-labelledby="storefront-edit-title"
+  aria-labelledby="storefront-form-title"
   (close)="closed.emit()"
   (cancel)="onCancel($event)"
 >
   <form class="p-6" novalidate [formGroup]="form" (ngSubmit)="submit()">
-    <h2 id="storefront-edit-title" class="text-lg font-semibold text-gray-900">Edit storefront</h2>
+    <h2 id="storefront-form-title" class="text-lg font-semibold text-gray-900">
+      {{ editing() ? 'Edit storefront' : 'New storefront' }}
+    </h2>
+    @if (storefront(); as storefront) {
+      <p class="mt-1 text-sm text-gray-500">ID {{ storefront.id }}</p>
+    }
 
     <label class="mt-5 block text-sm font-medium text-gray-700" for="storefront-name">Name</label>
     <input
@@ -58,7 +63,7 @@
         class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         [disabled]="saving()"
       >
-        {{ saving() ? 'Saving…' : 'Save' }}
+        {{ saving() ? 'Saving…' : editing() ? 'Save' : 'Create storefront' }}
       </button>
     </div>
   </form>

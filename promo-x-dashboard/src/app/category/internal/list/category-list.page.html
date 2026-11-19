@@ -1,13 +1,44 @@
 <section aria-labelledby="categories-heading">
-  <div class="flex flex-wrap items-baseline justify-between gap-2">
-    <h2 id="categories-heading" class="text-lg font-semibold text-gray-900">Categories</h2>
-    @if (categories.hasValue()) {
-      <p class="text-sm text-gray-500">
-        {{ categories.value().totalElements }}
-        {{ categories.value().totalElements === 1 ? 'category' : 'categories' }}
-      </p>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <h2 id="categories-heading" class="text-lg font-semibold text-gray-900">Categories</h2>
+      @if (categories.hasValue()) {
+        <p class="text-sm text-gray-500">
+          {{ categories.value().totalElements }}
+          {{ categories.value().totalElements === 1 ? 'category' : 'categories' }}
+        </p>
+      }
+    </div>
+    @if (canEdit()) {
+      <button
+        type="button"
+        class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+        (click)="form.set({ mode: 'create' })"
+      >
+        New category
+      </button>
     }
   </div>
+
+  @if (created(); as category) {
+    <div
+      role="status"
+      class="mt-4 flex items-center justify-between gap-3 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800"
+    >
+      <span>
+        Created
+        <a class="font-medium underline" [routerLink]="[category.id]">{{ category.name }}</a>.
+      </span>
+      <button
+        type="button"
+        class="text-green-700 hover:text-green-900"
+        aria-label="Dismiss"
+        (click)="created.set(null)"
+      >
+        ✕
+      </button>
+    </div>
+  }
 
   @if (categories.error()) {
     <div role="alert" class="mt-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -25,6 +56,15 @@
       >
         @if (result.totalElements === 0) {
           This storefront has no categories yet.
+          @if (canEdit()) {
+            <button
+              type="button"
+              class="text-blue-700 hover:underline"
+              (click)="form.set({ mode: 'create' })"
+            >
+              Create the first one
+            </button>
+          }
         } @else {
           There are no categories on this page.
           <a class="text-blue-700 hover:underline" routerLink="." [queryParams]="{ page: null }">
@@ -78,7 +118,7 @@
                       class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                       title="Edit"
                       [attr.aria-label]="'Edit ' + category.name"
-                      (click)="editing.set(category)"
+                      (click)="form.set({ mode: 'edit', category })"
                     >
                       <svg
                         class="size-4"
@@ -111,10 +151,11 @@
   }
 </section>
 
-@if (editing(); as category) {
-  <app-category-edit-dialog
-    [category]="category"
+@if (form(); as open) {
+  <app-category-form-dialog
+    [storefrontId]="storefrontId()"
+    [category]="open.mode === 'edit' ? open.category : null"
     (saved)="onSaved($event)"
-    (closed)="editing.set(null)"
+    (closed)="form.set(null)"
   />
 }

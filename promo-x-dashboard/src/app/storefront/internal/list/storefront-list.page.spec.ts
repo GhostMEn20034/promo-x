@@ -46,6 +46,13 @@ describe('StorefrontListPage', () => {
     );
   }
 
+  // jsdom doesn't implement modal dialogs.
+  beforeAll(() => {
+    HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+      this.open = true;
+    };
+  });
+
   beforeEach(() => {
     roles.set([]);
     TestBed.configureTestingModule({
@@ -108,5 +115,53 @@ describe('StorefrontListPage', () => {
     expect(element.querySelector('[role="alert"]')!.textContent).toContain(
       "Couldn't load the storefronts.",
     );
+  });
+
+  it('offers a new storefront to admins: in the header, and as a card after the last one', async () => {
+    await render(pageOf([{ id: 1, name: 'Tech Store', website: null }]));
+    expect(element.querySelector('[data-testid="new-storefront-card"]')).toBeNull();
+    expect(element.textContent).not.toContain('New storefront');
+
+    roles.set([Role.Admin]);
+    await fixture.whenStable();
+    const cards = [...element.querySelectorAll('ul > li')];
+    expect(cards.at(-1)!.querySelector('[data-testid="new-storefront-card"]')).toBeTruthy();
+    expect(
+      [...element.querySelectorAll('button')].filter(
+        (button) => button.textContent!.trim() === 'New storefront',
+      ),
+    ).toHaveLength(2);
+  });
+
+  it('shows the new storefront card on the last page only', async () => {
+    roles.set([Role.Admin]);
+    await render(pageOf([{ id: 1, name: 'Tech Store', website: null }], 3));
+
+    expect(element.querySelector('[data-testid="new-storefront-card"]')).toBeNull();
+  });
+
+  it('creates a storefront, then confirms it and reloads the list', async () => {
+    roles.set([Role.Admin]);
+    await render(pageOf([{ id: 1, name: 'Tech Store', website: null }]));
+
+    element.querySelector<HTMLButtonElement>('[data-testid="new-storefront-card"]')!.click();
+    await fixture.whenStable();
+    const name = element.querySelector<HTMLInputElement>('#storefront-name')!;
+    name.value = 'Book Store';
+    name.dispatchEvent(new Event('input'));
+    element.querySelector('form')!.dispatchEvent(new Event('submit'));
+
+    const created = { id: 2, name: 'Book Store', website: null };
+    http.expectOne('http://api.test/api/storefront/').flush(created);
+    TestBed.tick();
+    http
+      .expectOne('http://api.test/api/storefront/?page=1&size=12')
+      .flush(pageOf([{ id: 1, name: 'Tech Store', website: null }, created]));
+    await fixture.whenStable();
+
+    expect(element.querySelector('dialog')).toBeNull();
+    expect(element.querySelector('[role="status"]')!.textContent).toContain('Created Book Store.');
+    expect(element.querySelector('[role="status"] a')!.getAttribute('href')).toBe('/storefronts/2');
+    expect(cardNames()).toEqual(['Tech Store', 'Book Store']);
   });
 });

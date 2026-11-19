@@ -4,8 +4,11 @@ export interface Storefront {
   readonly website: string | null;
 }
 
-/** The body of `PUT /api/storefront/{id}`. It replaces both fields, so a null `website` removes it. */
-export interface StorefrontUpdate {
+/**
+ * The body of `POST /api/storefront/` and `PUT /api/storefront/{id}`. An update replaces both fields, so a null
+ * `website` removes it.
+ */
+export interface StorefrontInput {
   readonly name: string;
   readonly website: string | null;
 }

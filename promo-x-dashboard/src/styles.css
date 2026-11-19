@@ -1,3 +1,20 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+/*
+ * Tailwind v4 gives buttons the default cursor, unlike v3 and most apps. Everything clickable shows the pointer
+ * again: buttons, selects, checkboxes and radios, and the labels that wrap them (such as switches and choice
+ * cards). Disabled ones keep the default cursor.
+ */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  select:not(:disabled),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  label:has(> input[type='checkbox']:not(:disabled)),
+  label:has(> input[type='radio']:not(:disabled)) {
+    cursor: pointer;
+  }
+}

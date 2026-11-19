@@ -1,5 +1,38 @@
 <section class="mx-auto max-w-6xl px-6 py-8">
-  <h1 class="text-2xl font-semibold text-gray-900">Storefronts</h1>
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-semibold text-gray-900">Storefronts</h1>
+    @if (canEdit()) {
+      <button
+        type="button"
+        class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+        (click)="form.set({ mode: 'create' })"
+      >
+        New storefront
+      </button>
+    }
+  </div>
+
+  @if (created(); as storefront) {
+    <div
+      role="status"
+      class="mt-6 flex items-center justify-between gap-3 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800"
+    >
+      <span>
+        Created
+        <a class="font-medium underline" [routerLink]="['/storefronts', storefront.id]">{{
+          storefront.name
+        }}</a>.
+      </span>
+      <button
+        type="button"
+        class="text-green-700 hover:text-green-900"
+        aria-label="Dismiss"
+        (click)="created.set(null)"
+      >
+        ✕
+      </button>
+    </div>
+  }
 
   @if (storefronts.error()) {
     <div role="alert" class="mt-6 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -15,6 +48,15 @@
       <p class="mt-6 text-gray-600">
         @if (result.totalElements === 0) {
           There are no storefronts yet.
+          @if (canEdit()) {
+            <button
+              type="button"
+              class="text-blue-700 hover:underline"
+              (click)="form.set({ mode: 'create' })"
+            >
+              Create the first one
+            </button>
+          }
         } @else {
           There are no storefronts on this page.
           <a class="text-blue-700 hover:underline" routerLink="." [queryParams]="{ page: null }">
@@ -29,8 +71,36 @@
             <app-storefront-card
               [storefront]="storefront"
               [canEdit]="canEdit()"
-              (edit)="editing.set(storefront)"
+              (edit)="form.set({ mode: 'edit', storefront })"
             />
+          </li>
+        }
+        <!-- The list is oldest first, so a new storefront would land after the last one -->
+        @if (canEdit() && result.last) {
+          <li>
+            <button
+              type="button"
+              class="group flex h-full min-h-32 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-5 text-gray-500 transition hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              data-testid="new-storefront-card"
+              (click)="form.set({ mode: 'create' })"
+            >
+              <span
+                class="grid size-10 place-items-center rounded-full bg-gray-100 transition group-hover:bg-blue-100"
+              >
+                <svg
+                  class="size-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </span>
+              <span class="text-sm font-medium">New storefront</span>
+            </button>
           </li>
         }
       </ul>
@@ -68,10 +138,10 @@
   }
 </section>
 
-@if (editing(); as storefront) {
-  <app-storefront-edit-dialog
-    [storefront]="storefront"
+@if (form(); as open) {
+  <app-storefront-form-dialog
+    [storefront]="open.mode === 'edit' ? open.storefront : null"
     (saved)="onSaved($event)"
-    (closed)="editing.set(null)"
+    (closed)="form.set(null)"
   />
 }

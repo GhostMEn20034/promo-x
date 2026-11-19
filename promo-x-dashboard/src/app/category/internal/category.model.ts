@@ -21,8 +21,11 @@ export interface Category {
 /** What's needed to show a category that was chosen, such as a parent or a product's category. */
 export type CategoryRef = Pick<Category, 'id' | 'name' | 'externalId'>;
 
-/** The body of `PUT /api/category/{id}`. It replaces every field, so a null `parentId` makes it top-level. */
-export interface CategoryUpdate {
+/**
+ * The body of `POST /api/category/` and `PUT /api/category/{id}`. An update replaces every field, so a null
+ * `parentId` makes the category top-level.
+ */
+export interface CategoryInput {
   readonly name: string;
   readonly externalId: string;
   readonly parentId: number | null;

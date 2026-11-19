@@ -2,7 +2,7 @@ import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http'
 import { inject, Injectable, Signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL, Page } from '../../infrastructure/http';
-import { Storefront, StorefrontUpdate } from './storefront.model';
+import { Storefront, StorefrontInput } from './storefront.model';
 
 /**
  * promo-x-core's storefront endpoints. Reads are resources that follow their signals; writes are one-off
@@ -31,8 +31,12 @@ export class StorefrontClient {
     );
   }
 
-  update(id: number, update: StorefrontUpdate): Observable<Storefront> {
-    return this.http.put<Storefront>(`${this.url}/${id}`, update);
+  create(storefront: StorefrontInput): Observable<Storefront> {
+    return this.http.post<Storefront>(`${this.url}/`, storefront);
+  }
+
+  update(id: number, storefront: StorefrontInput): Observable<Storefront> {
+    return this.http.put<Storefront>(`${this.url}/${id}`, storefront);
   }
 }
 
