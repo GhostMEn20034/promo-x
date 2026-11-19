@@ -5,12 +5,14 @@ import {
   DestroyRef,
   ElementRef,
   inject,
+  computed,
   input,
   OnInit,
   output,
   signal,
   viewChild,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -19,30 +21,31 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { HttpErrorResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { problemDetailOf } from '../../../infrastructure/http';
 import { StorefrontClient } from '../storefront.client';
 import {
   Storefront,
   STOREFRONT_NAME_MAX_LENGTH,
   STOREFRONT_WEBSITE_MAX_LENGTH,
-  StorefrontUpdate,
+  StorefrontInput,
 } from '../storefront.model';
 
 type Field = 'name' | 'website';
 
 /**
- * A modal that edits a storefront's name and website. It opens as soon as it's rendered, emits `saved` with the
- * storefront promo-x-core returns, and `closed` when the user dismisses it.
+ * A modal that creates a storefront (`storefront` is null) or edits one's name and website. It opens as soon as
+ * it's rendered, emits `saved` with the storefront promo-x-core returns, and `closed` when the user dismisses it.
  */
 @Component({
-  selector: 'app-storefront-edit-dialog',
+  selector: 'app-storefront-form-dialog',
   imports: [ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './storefront-edit-dialog.html',
+  templateUrl: './storefront-form-dialog.html',
 })
-export class StorefrontEditDialog implements OnInit {
-  readonly storefront = input.required<Storefront>();
+export class StorefrontFormDialog implements OnInit {
+  /** The storefront to edit, or null to create one. */
+  readonly storefront = input<Storefront | null>(null);
   readonly saved = output<Storefront>();
   readonly closed = output<void>();
 
@@ -58,13 +61,17 @@ export class StorefrontEditDialog implements OnInit {
   /** An error that isn't about one field. */
   protected readonly formError = signal<string | null>(null);
 
+  protected readonly editing = computed(() => this.storefront() !== null);
+
   constructor() {
     afterNextRender(() => this.dialog().nativeElement.showModal());
   }
 
   ngOnInit(): void {
-    const { name, website } = this.storefront();
-    this.form.setValue({ name, website: website ?? '' });
+    const storefront = this.storefront();
+    if (storefront) {
+      this.form.setValue({ name: storefront.name, website: storefront.website ?? '' });
+    }
   }
 
   protected submit(): void {
@@ -78,8 +85,7 @@ export class StorefrontEditDialog implements OnInit {
 
     this.saving.set(true);
     this.formError.set(null);
-    this.client
-      .update(this.storefront().id, this.toUpdate())
+    this.request(this.toInput())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
@@ -121,8 +127,13 @@ export class StorefrontEditDialog implements OnInit {
     return null;
   }
 
+  private request(input: StorefrontInput): Observable<Storefront> {
+    const storefront = this.storefront();
+    return storefront ? this.client.update(storefront.id, input) : this.client.create(input);
+  }
+
   /** The backend rejects an empty website (it must be 1–255 characters), so a blank one is sent as null. */
-  private toUpdate(): StorefrontUpdate {
+  private toInput(): StorefrontInput {
     const { name, website } = this.form.getRawValue();
     return { name: name.trim(), website: website.trim() || null };
   }
@@ -150,7 +161,7 @@ export class StorefrontEditDialog implements OnInit {
       status === 404
         ? 'This storefront no longer exists.'
         : status === 403
-          ? "You're not allowed to edit storefronts."
+          ? `You're not allowed to ${this.editing() ? 'edit' : 'create'} storefronts.`
           : "Couldn't save the storefront. Try again.",
     );
   }

@@ -1,13 +1,17 @@
 <dialog
   #dialog
   class="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 shadow-xl backdrop:bg-black/40"
-  aria-labelledby="category-edit-title"
+  aria-labelledby="category-form-title"
   (close)="closed.emit()"
   (cancel)="onCancel($event)"
 >
   <form class="p-6" novalidate [formGroup]="form" (ngSubmit)="submit()">
-    <h2 id="category-edit-title" class="text-lg font-semibold text-gray-900">Edit category</h2>
-    <p class="mt-1 text-sm text-gray-500">ID {{ category().id }}</p>
+    <h2 id="category-form-title" class="text-lg font-semibold text-gray-900">
+      {{ editing() ? 'Edit category' : 'New category' }}
+    </h2>
+    @if (category(); as category) {
+      <p class="mt-1 text-sm text-gray-500">ID {{ category.id }}</p>
+    }
 
     <label class="mt-5 block text-sm font-medium text-gray-700" for="category-name">Name</label>
     <input
@@ -111,7 +115,7 @@
         class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         [disabled]="saving()"
       >
-        {{ saving() ? 'Saving…' : 'Save' }}
+        {{ saving() ? 'Saving…' : editing() ? 'Save' : 'Create category' }}
       </button>
     </div>
   </form>
@@ -119,7 +123,7 @@
   @if (picking()) {
     <app-category-picker-dialog
       heading="Choose a parent category"
-      [storefrontId]="category().storefrontId"
+      [storefrontId]="storefrontId()"
       [selected]="pickerSelection()"
       [unavailable]="parentUnavailable"
       (picked)="onPicked($event)"

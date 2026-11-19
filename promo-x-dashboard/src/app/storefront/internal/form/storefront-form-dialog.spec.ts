@@ -4,11 +4,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../../../infrastructure/http';
 import { StorefrontClient } from '../storefront.client';
 import { Storefront } from '../storefront.model';
-import { StorefrontEditDialog } from './storefront-edit-dialog';
+import { StorefrontFormDialog } from './storefront-form-dialog';
 
-describe('StorefrontEditDialog', () => {
+describe('StorefrontFormDialog', () => {
   const storefront: Storefront = { id: 7, name: 'Tech Store', website: 'https://techstore.com' };
-  let fixture: ComponentFixture<StorefrontEditDialog>;
+  let fixture: ComponentFixture<StorefrontFormDialog>;
   let element: HTMLElement;
   let http: HttpTestingController;
   let saved: ReturnType<typeof vi.fn<(value: Storefront) => void>>;
@@ -36,7 +36,7 @@ describe('StorefrontEditDialog', () => {
     });
     http = TestBed.inject(HttpTestingController);
 
-    fixture = TestBed.createComponent(StorefrontEditDialog);
+    fixture = TestBed.createComponent(StorefrontFormDialog);
     fixture.componentRef.setInput('storefront', storefront);
     saved = vi.fn<(value: Storefront) => void>();
     closed = vi.fn<() => void>();
@@ -129,5 +129,54 @@ describe('StorefrontEditDialog', () => {
 
     expect(closed).toHaveBeenCalled();
     expect(saved).not.toHaveBeenCalled();
+  });
+
+  describe('without a storefront', () => {
+    beforeEach(async () => {
+      fixture.destroy();
+      fixture = TestBed.createComponent(StorefrontFormDialog);
+      fixture.componentInstance.saved.subscribe(saved);
+      await fixture.whenStable();
+      element = fixture.nativeElement as HTMLElement;
+    });
+
+    it('opens empty, to create one', () => {
+      expect(element.querySelector('h2')!.textContent).toContain('New storefront');
+      expect(input('storefront-name').value).toBe('');
+      expect(element.querySelector('button[type="submit"]')!.textContent).toContain(
+        'Create storefront',
+      );
+    });
+
+    it('creates the storefront', async () => {
+      type('storefront-name', ' Book Store ');
+      type('storefront-website', 'https://books.example.com');
+      await submit();
+
+      const request = http.expectOne('http://api.test/api/storefront/');
+      expect(request.request.method).toBe('POST');
+      expect(request.request.body).toEqual({
+        name: 'Book Store',
+        website: 'https://books.example.com',
+      });
+
+      const created = { id: 9, name: 'Book Store', website: 'https://books.example.com' };
+      request.flush(created);
+      expect(saved).toHaveBeenCalledWith(created);
+    });
+
+    it('says when the user may not create storefronts', async () => {
+      type('storefront-name', 'Book Store');
+      await submit();
+
+      http
+        .expectOne('http://api.test/api/storefront/')
+        .flush(null, { status: 403, statusText: 'Forbidden' });
+      await fixture.whenStable();
+
+      expect(element.querySelector('[role="alert"]')!.textContent).toContain(
+        "You're not allowed to create storefronts.",
+      );
+    });
   });
 });

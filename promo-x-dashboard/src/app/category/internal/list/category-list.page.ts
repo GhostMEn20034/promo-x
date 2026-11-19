@@ -12,13 +12,13 @@ import { AuthApi, Role } from '../../../infrastructure/auth';
 import { Pager } from '../../../shared/ui';
 import { CategoryClient } from '../category.client';
 import { Category } from '../category.model';
-import { CategoryEditDialog } from '../edit/category-edit-dialog';
+import { CategoryFormDialog } from '../form/category-form-dialog';
 
 const PAGE_SIZE = 20;
 
 @Component({
   selector: 'app-category-list-page',
-  imports: [RouterLink, Pager, CategoryEditDialog],
+  imports: [RouterLink, Pager, CategoryFormDialog],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './category-list.page.html',
 })
@@ -35,12 +35,35 @@ export class CategoryListPage {
     this.page,
     PAGE_SIZE,
   );
-  /** promo-x-core lets only employees update categories; auditors only read them. */
+  /** promo-x-core lets only employees create and update categories; auditors only read them. */
   protected readonly canEdit = computed(() => this.auth.hasAnyRole([Role.Employee]));
-  protected readonly editing = signal<Category | null>(null);
+  /** The form: creating a category, or editing one. */
+  protected readonly form = signal<
+    { readonly mode: 'create' } | { readonly mode: 'edit'; readonly category: Category } | null
+  >(null);
+  /** The category just created, for the confirmation. */
+  protected readonly created = signal<Category | null>(null);
+
+  protected onSaved(saved: Category): void {
+    if (this.form()?.mode === 'create') {
+      this.onCreated(saved);
+    } else {
+      this.onUpdated(saved);
+    }
+    this.form.set(null);
+  }
+
+  /**
+   * Categories are listed by ID, so the new one goes at the end of the last page. The list is reloaded so it shows
+   * up there, and the confirmation links to it from whatever page this is.
+   */
+  private onCreated(category: Category): void {
+    this.created.set(category);
+    this.categories.reload();
+  }
 
   /** Replaces the edited row, and refreshes the parent shown on its child rows. */
-  protected onSaved(updated: Category): void {
+  private onUpdated(updated: Category): void {
     this.categories.value.update(
       (page) =>
         page && {
@@ -64,7 +87,6 @@ export class CategoryListPage {
           }),
         },
     );
-    this.editing.set(null);
   }
 }
 

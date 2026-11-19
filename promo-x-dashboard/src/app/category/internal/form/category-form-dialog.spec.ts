@@ -4,9 +4,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../../../infrastructure/http';
 import { CategoryClient } from '../category.client';
 import { Category } from '../category.model';
-import { CategoryEditDialog } from './category-edit-dialog';
+import { CategoryFormDialog } from './category-form-dialog';
 
-describe('CategoryEditDialog', () => {
+describe('CategoryFormDialog', () => {
   const category: Category = {
     id: 7,
     externalId: 'EXT-SMART',
@@ -15,7 +15,7 @@ describe('CategoryEditDialog', () => {
     storefrontId: 1,
   };
   const url = 'http://api.test/api/category/7';
-  let fixture: ComponentFixture<CategoryEditDialog>;
+  let fixture: ComponentFixture<CategoryFormDialog>;
   let element: HTMLElement;
   let http: HttpTestingController;
   let saved: ReturnType<typeof vi.fn<(value: Category) => void>>;
@@ -43,7 +43,8 @@ describe('CategoryEditDialog', () => {
     });
     http = TestBed.inject(HttpTestingController);
 
-    fixture = TestBed.createComponent(CategoryEditDialog);
+    fixture = TestBed.createComponent(CategoryFormDialog);
+    fixture.componentRef.setInput('storefrontId', category.storefrontId);
     fixture.componentRef.setInput('category', category);
     saved = vi.fn<(value: Category) => void>();
     closed = vi.fn<() => void>();
@@ -82,8 +83,8 @@ describe('CategoryEditDialog', () => {
   }
 
   /** Opens the picker and answers its first request with these categories. */
-  async function openPicker(content: Category[]): Promise<HTMLDialogElement> {
-    button('Change').click();
+  async function openPicker(content: Category[], opener = 'Change'): Promise<HTMLDialogElement> {
+    button(opener).click();
     // Not whenStable(): the picker's request keeps the app busy until it's answered
     TestBed.tick();
     const request = http.expectOne('http://api.test/api/category/?page=1&size=10');
@@ -282,5 +283,88 @@ describe('CategoryEditDialog', () => {
 
     expect(closed).toHaveBeenCalled();
     expect(saved).not.toHaveBeenCalled();
+  });
+
+  describe('without a category', () => {
+    const createUrl = 'http://api.test/api/category/';
+
+    beforeEach(async () => {
+      fixture.destroy();
+      fixture = TestBed.createComponent(CategoryFormDialog);
+      fixture.componentRef.setInput('storefrontId', 1);
+      fixture.componentInstance.saved.subscribe(saved);
+      await fixture.whenStable();
+      element = fixture.nativeElement as HTMLElement;
+    });
+
+    it('opens empty and top-level, to create one', () => {
+      expect(element.querySelector('h2')!.textContent).toContain('New category');
+      expect(input('category-name').value).toBe('');
+      expect(parentPreview()).toBe("None, it's a top-level category");
+      expect(button('Create category')).toBeTruthy();
+    });
+
+    it('creates the category in the storefront, with the parent chosen in the picker', async () => {
+      await type('category-name', ' Audio ');
+      await type('category-external-id', ' EXT-AUDIO ');
+      const picker = await openPicker(
+        [{ id: 3, externalId: 'EXT-ELEC', name: 'Electronics', parent: null, storefrontId: 1 }],
+        'Choose',
+      );
+      // Nothing to exclude: the category doesn't exist yet
+      button('Choose', picker).click();
+      await fixture.whenStable();
+      expect(element.textContent).not.toContain('deactivates');
+
+      await submit();
+      const request = http.expectOne(createUrl);
+      expect(request.request.method).toBe('POST');
+      expect(request.request.headers.get('X-Storefront-Id')).toBe('1');
+      expect(request.request.body).toEqual({
+        name: 'Audio',
+        externalId: 'EXT-AUDIO',
+        parentId: 3,
+      });
+
+      const created: Category = {
+        id: 12,
+        externalId: 'EXT-AUDIO',
+        name: 'Audio',
+        parent: {
+          id: 3,
+          externalId: 'EXT-ELEC',
+          name: 'Electronics',
+          parentId: null,
+          storefrontId: 1,
+        },
+        storefrontId: 1,
+      };
+      request.flush(created);
+      expect(saved).toHaveBeenCalledWith(created);
+    });
+
+    it('shows a taken external ID under its field', async () => {
+      await type('category-name', 'Audio');
+      await type('category-external-id', 'EXT-ELEC');
+      await submit();
+
+      http.expectOne(createUrl).flush(
+        {
+          code: 'CATEGORY_ALREADY_EXISTS',
+          errors: [
+            {
+              path: 'externalId',
+              code: 'CATEGORY_ALREADY_EXISTS',
+              message: 'A category with this external ID already exists',
+            },
+          ],
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+      await fixture.whenStable();
+
+      expect(element.textContent).toContain('A category with this external ID already exists');
+      expect(saved).not.toHaveBeenCalled();
+    });
   });
 });

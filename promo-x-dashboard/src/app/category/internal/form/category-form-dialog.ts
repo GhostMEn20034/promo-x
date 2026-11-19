@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { problemDetailOf } from '../../../infrastructure/http';
 import { trimmedLength } from '../../../shared/forms';
 import { CategoryClient } from '../category.client';
@@ -23,8 +24,8 @@ import {
   CATEGORY_EXTERNAL_ID_MAX_LENGTH,
   CATEGORY_NAME_MAX_LENGTH,
   CATEGORY_NAME_MIN_LENGTH,
+  CategoryInput,
   CategoryRef,
-  CategoryUpdate,
 } from '../category.model';
 import { CategoryPickerDialog } from '../picker/category-picker-dialog';
 
@@ -34,19 +35,23 @@ type Field = 'name' | 'externalId' | 'parentId';
 type ParentPreview = CategoryRef;
 
 /**
- * A modal that edits a category's name, external ID and parent. It opens as soon as it's rendered, emits `saved`
- * with the category promo-x-core returns, and `closed` when the user dismisses it.
+ * A modal that creates a category in the storefront (`category` is null) or edits one's name, external ID and
+ * parent. It opens as soon as it's rendered, emits `saved` with the category promo-x-core returns, and `closed`
+ * when the user dismisses it.
  *
- * The parent is shown as a preview; changing it opens `CategoryPickerDialog` on top.
+ * The parent is shown as a preview; choosing it opens `CategoryPickerDialog` on top.
  */
 @Component({
-  selector: 'app-category-edit-dialog',
+  selector: 'app-category-form-dialog',
   imports: [ReactiveFormsModule, CategoryPickerDialog],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './category-edit-dialog.html',
+  templateUrl: './category-form-dialog.html',
 })
-export class CategoryEditDialog implements OnInit {
-  readonly category = input.required<Category>();
+export class CategoryFormDialog implements OnInit {
+  /** The storefront a new category is created in, and whose categories the parent is chosen from. */
+  readonly storefrontId = input.required<number>();
+  /** The category to edit, or null to create one. */
+  readonly category = input<Category | null>(null);
   readonly saved = output<Category>();
   readonly closed = output<void>();
 
@@ -68,13 +73,17 @@ export class CategoryEditDialog implements OnInit {
   });
   /**
    * The category itself and its direct children can't be its parent, since either would make it its own ancestor.
-   * Deeper descendants aren't known from a page of categories.
+   * Deeper descendants aren't known from a page of categories. A new category can take any parent.
    */
   protected readonly parentUnavailable = (candidate: Category): string | null => {
-    if (candidate.id === this.category().id) {
+    const category = this.category();
+    if (!category) {
+      return null;
+    }
+    if (candidate.id === category.id) {
       return 'This category';
     }
-    return candidate.parent?.id === this.category().id ? 'Its child' : null;
+    return candidate.parent?.id === category.id ? 'Its child' : null;
   };
   protected readonly saving = signal(false);
   /** An error that isn't about one field. */
@@ -83,19 +92,24 @@ export class CategoryEditDialog implements OnInit {
   private readonly externalId = toSignal(this.form.controls.externalId.valueChanges, {
     initialValue: '',
   });
+  protected readonly editing = computed(() => this.category() !== null);
   /** promo-x-core deactivates the active rules that refer to the old external ID, so the user is told. */
-  protected readonly externalIdChanged = computed(
-    () => this.externalId().trim() !== (this.category().externalId ?? ''),
-  );
+  protected readonly externalIdChanged = computed(() => {
+    const category = this.category();
+    return category !== null && this.externalId().trim() !== (category.externalId ?? '');
+  });
 
   constructor() {
     afterNextRender(() => this.dialog().nativeElement.showModal());
   }
 
   ngOnInit(): void {
-    const { name, externalId, parent } = this.category();
-    this.form.setValue({ name, externalId: externalId ?? '', parentId: parent?.id ?? null });
-    this.parent.set(parent);
+    const category = this.category();
+    if (category) {
+      const { name, externalId, parent } = category;
+      this.form.setValue({ name, externalId: externalId ?? '', parentId: parent?.id ?? null });
+      this.parent.set(parent);
+    }
   }
 
   protected onPicked(picked: Category): void {
@@ -125,8 +139,7 @@ export class CategoryEditDialog implements OnInit {
 
     this.saving.set(true);
     this.formError.set(null);
-    this.client
-      .update(this.category().id, this.toUpdate())
+    this.request(this.toInput())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
@@ -169,8 +182,15 @@ export class CategoryEditDialog implements OnInit {
     return null;
   }
 
+  private request(input: CategoryInput): Observable<Category> {
+    const category = this.category();
+    return category
+      ? this.client.update(category.id, input)
+      : this.client.create(this.storefrontId(), input);
+  }
+
   /** PUT replaces every field, so the parent is always sent; null makes the category top-level. */
-  private toUpdate(): CategoryUpdate {
+  private toInput(): CategoryInput {
     const { name, externalId, parentId } = this.form.getRawValue();
     return { name: name.trim(), externalId: externalId.trim(), parentId };
   }
@@ -186,7 +206,11 @@ export class CategoryEditDialog implements OnInit {
       return;
     }
     if (status === 403) {
-      this.formError.set("You're not allowed to edit categories.");
+      this.formError.set(
+        this.editing()
+          ? "You're not allowed to edit categories."
+          : "You're not allowed to create categories.",
+      );
       return;
     }
 

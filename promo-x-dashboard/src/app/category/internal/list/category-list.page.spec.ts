@@ -170,4 +170,49 @@ describe('CategoryListPage', () => {
       "Couldn't load the categories.",
     );
   });
+
+  it('offers New category to employees only', async () => {
+    await render(pageOf([electronics]));
+    expect(element.textContent).not.toContain('New category');
+
+    roles.set([Role.Employee]);
+    await fixture.whenStable();
+    expect(
+      [...element.querySelectorAll('button')].some((b) => b.textContent!.trim() === 'New category'),
+    ).toBe(true);
+  });
+
+  it('creates a category, then confirms it and reloads the list', async () => {
+    roles.set([Role.Employee]);
+    await render(pageOf([electronics]));
+
+    [...element.querySelectorAll('button')]
+      .find((b) => b.textContent!.trim() === 'New category')!
+      .click();
+    await fixture.whenStable();
+    const dialog = element.querySelector('app-category-form-dialog dialog')!;
+    expect(dialog.textContent).toContain('New category');
+    for (const [id, value] of [
+      ['category-name', 'Smartphones'],
+      ['category-external-id', 'EXT-SMART'],
+    ]) {
+      const field = element.querySelector<HTMLInputElement>(`#${id}`)!;
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+    }
+    element.querySelector('form')!.dispatchEvent(new Event('submit'));
+
+    const created = { ...smartphones, parent: null };
+    const request = http.expectOne('http://api.test/api/category/');
+    expect(request.request.headers.get('X-Storefront-Id')).toBe('1');
+    request.flush(created);
+    TestBed.tick();
+    http.expectOne(listUrl).flush(pageOf([electronics, created]));
+    await fixture.whenStable();
+
+    expect(element.querySelector('app-category-form-dialog')).toBeNull();
+    expect(element.querySelector('[role="status"]')!.textContent).toContain('Created Smartphones.');
+    expect(element.querySelector('[role="status"] a')!.getAttribute('href')).toBe('/7');
+    expect(rows().map((row) => row[1])).toEqual(['Electronics', 'Smartphones']);
+  });
 });
