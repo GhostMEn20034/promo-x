@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL, Page } from '../../infrastructure/http';
 import { PromotionListQuery, toApiParams } from './list/promotion-list-query';
 import {
+  EvaluationRequest,
+  EvaluationResult,
   NewPromotionRule,
   PromotionRuleDetails,
   PromotionRuleInput,
@@ -67,6 +69,13 @@ export class PromotionClient {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
+  }
+
+  /** Prices the cart with the storefront's active rules. */
+  evaluate(storefrontId: number, cart: EvaluationRequest): Observable<EvaluationResult> {
+    return this.http.post<EvaluationResult>(`${this.url}/evaluate`, cart, {
+      headers: { [STOREFRONT_HEADER]: String(storefrontId) },
+    });
   }
 }
 

@@ -62,7 +62,7 @@ export class PromotionRuleListPage {
   protected readonly filtered = computed(() => hasFilters(this.query()));
   protected readonly invalidRange = computed(() => hasInvalidRange(this.query()));
   protected readonly rules = inject(PromotionClient).page(this.storefrontId, this.query, PAGE_SIZE);
-  /** promo-x-core lets only promotion managers create rules. */
+  /** promo-x-core lets only promotion managers create rules and evaluate carts. */
   protected readonly canCreate = computed(() => this.auth.hasAnyRole([Role.PromotionManager]));
 
   protected setStatus(value: string): void {
