@@ -217,3 +217,31 @@ export interface EvaluationResult {
 
 /** promo-x-core takes 1 to 128 cart lines. */
 export const EVALUATION_MAX_ITEMS = 128;
+
+/** Totals of a storefront's confirmed (`USED`) usages over a period. */
+export interface UsageTotals {
+  readonly usageCount: number;
+  /** Promo codes entered across those usages, including codes that matched no rule. */
+  readonly enteredPromoCodeCount: number;
+  /** Usages with a customer ID. */
+  readonly registeredCustomerUsageCount: number;
+  readonly anonymousCustomerUsageCount: number;
+  /** Average order discount per usage. Null when there's no usage. */
+  readonly averageTotalDiscount: number | null;
+  readonly averageSubtotalDiscount: number | null;
+  readonly averageShippingDiscount: number | null;
+}
+
+/** The usages of one UTC day. */
+export interface UsageDailyCount {
+  /** `YYYY-MM-DD`. */
+  readonly date: string;
+  readonly usageCount: number;
+}
+
+/** `GET /api/promotion/usage/stats`. */
+export interface UsageStats {
+  readonly totals: UsageTotals;
+  /** One entry for every UTC day the period touches, oldest first, 0 for days without usage. */
+  readonly dailyCounts: readonly UsageDailyCount[];
+}

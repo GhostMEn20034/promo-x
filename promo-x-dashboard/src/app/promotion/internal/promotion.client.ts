@@ -12,6 +12,7 @@ import {
   PromotionRuleSummary,
   SavedPromotionRule,
   UsageLimitsInput,
+  UsageStats,
 } from './promotion.model';
 
 const STOREFRONT_HEADER = 'X-Storefront-Id';
@@ -43,6 +44,26 @@ export class PromotionClient {
           }
         : undefined,
     );
+  }
+
+  /**
+   * The storefront's confirmed usages from `from` (included) to `to` (excluded): totals and a count per UTC day.
+   * Nothing is requested while the range is undefined.
+   */
+  usageStats(
+    storefrontId: Signal<number>,
+    range: Signal<{ readonly from: string; readonly to: string } | undefined>,
+  ): HttpResourceRef<UsageStats | undefined> {
+    return httpResource<UsageStats>(() => {
+      const period = range();
+      return isId(storefrontId()) && period
+        ? {
+            url: `${this.url}/usage/stats`,
+            params: period,
+            headers: { [STOREFRONT_HEADER]: String(storefrontId()) },
+          }
+        : undefined;
+    });
   }
 
   /** The rule with this ID and its products. Nothing is requested while the ID isn't a positive integer. */
