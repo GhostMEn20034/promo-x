@@ -1,15 +1,31 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  numberAttribute,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthApi, Role } from '../../../infrastructure/auth';
+import { UsageStatsPanel } from '../../../promotion';
 import { STOREFRONT_SECTIONS } from '../details/storefront-sections';
 
-/**
- * A storefront's landing page: a menu of its sections. Statistics and charts are meant to go above the menu.
- */
+/** A storefront's landing page: its promotion usage, for those who may see it, then a menu of its sections. */
 @Component({
   selector: 'app-storefront-overview-page',
-  imports: [RouterLink],
+  imports: [RouterLink, UsageStatsPanel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (canSeeUsage()) {
+      <!-- Deferred, so the promotion module stays in its own lazy chunk -->
+      @defer {
+        <app-usage-stats-panel class="mb-10" [storefrontId]="storefrontId()" />
+      } @placeholder {
+        <p class="mb-10 text-sm text-gray-500">Loading usage statistics…</p>
+      }
+    }
+
     <section aria-labelledby="sections-heading">
       <h2 id="sections-heading" class="text-lg font-semibold text-gray-900">Sections</h2>
       <ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -72,5 +88,14 @@ import { STOREFRONT_SECTIONS } from '../details/storefront-sections';
   `,
 })
 export class StorefrontOverviewPage {
+  /** The parent route's `:storefrontId` parameter. */
+  readonly storefrontId = input.required<number, unknown>({ transform: numberAttribute });
+
+  private readonly auth = inject(AuthApi);
+
   protected readonly sections = STOREFRONT_SECTIONS;
+  /** promo-x-core lets auditors, promotion managers and admins read the usage statistics. */
+  protected readonly canSeeUsage = computed(() =>
+    this.auth.hasAnyRole([Role.Auditor, Role.PromotionManager, Role.Admin]),
+  );
 }
