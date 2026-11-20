@@ -147,3 +147,73 @@ export interface UsageLimitsInput {
 export const RULE_NAME_MAX_LENGTH = 255;
 /** Priorities and limits are Java `int`s. */
 export const MAX_INT = 2_147_483_647;
+
+/** A cart line of `POST /api/promotion/evaluate`. */
+export interface EvaluationItemInput {
+  readonly productExternalId: string;
+  readonly quantity: number;
+  /** The price of one unit, before promotions. */
+  readonly unitPrice: number;
+}
+
+/** The body of `POST /api/promotion/evaluate`: the cart to price. */
+export interface EvaluationRequest {
+  readonly sessionId?: string;
+  /** Left out for an anonymous guest. */
+  readonly customerId?: string;
+  readonly promoCodes: readonly string[];
+  readonly items: readonly EvaluationItemInput[];
+  readonly shippingCost: number;
+  /** False: uses of usage-limited rules count right away, with nothing to confirm. */
+  readonly reserveUsage: boolean;
+}
+
+export interface EvaluatedItem {
+  readonly productExternalId: string;
+  readonly productSku: string;
+  readonly categories: readonly string[];
+  readonly collections: readonly string[];
+  readonly quantity: number;
+  readonly unitPrice: number;
+  readonly priceBeforeDiscount: number;
+  readonly discountAmount: number;
+  readonly priceAfterDiscount: number;
+}
+
+export interface RuleMention {
+  readonly ruleId: number;
+  readonly ruleName: string;
+}
+
+/** The usage an evaluation recorded. */
+export interface EvaluationUsage {
+  readonly id: string;
+  readonly status: 'RESERVED' | 'USED' | 'CANCELED' | 'EXPIRED';
+  readonly expiresAt: string | null;
+}
+
+/** The priced cart `POST /api/promotion/evaluate` returns. */
+export interface EvaluationResult {
+  readonly sessionId: string | null;
+  readonly customerId: string | null;
+  readonly promoCodes: readonly string[];
+  readonly oldTotal: number;
+  readonly newTotal: number;
+  readonly totalDiscount: number;
+  readonly itemsSubtotal: number;
+  readonly itemsDiscount: number;
+  readonly itemsTotal: number;
+  readonly oldShippingCost: number;
+  readonly shippingDiscount: number;
+  readonly newShippingCost: number;
+  readonly items: readonly EvaluatedItem[];
+  /** Rules whose conditions matched, highest priority first, whether or not their action changed the cart. */
+  readonly matchedRules: readonly RuleMention[];
+  /** Rules whose action changed the cart, in the order they were applied. */
+  readonly appliedRules: readonly RuleMention[];
+  /** Null when no rule was applied. */
+  readonly usage: EvaluationUsage | null;
+}
+
+/** promo-x-core takes 1 to 128 cart lines. */
+export const EVALUATION_MAX_ITEMS = 128;

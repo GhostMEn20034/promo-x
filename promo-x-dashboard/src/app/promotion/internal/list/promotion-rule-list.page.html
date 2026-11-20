@@ -15,12 +15,20 @@
       }
     </div>
     @if (canCreate()) {
-      <a
-        class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-        routerLink="new"
-      >
-        New rule
-      </a>
+      <div class="flex gap-2">
+        <a
+          class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+          routerLink="evaluate"
+        >
+          Test a cart
+        </a>
+        <a
+          class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+          routerLink="new"
+        >
+          New rule
+        </a>
+      </div>
     }
   </div>
 
