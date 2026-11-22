@@ -199,7 +199,7 @@ broken, and the items have `category: BUSINESS` and `source: DOMAIN`.
 | `PARENT_CATEGORY_NOT_FOUND` | The category's `parentId` doesn't exist. `path: parentId` | |
 | `CATEGORY_CANNOT_BE_OWN_PARENT` | An update sets the category's `parentId` to its own ID. `path: parentId` | |
 | `INVALID_STOREFRONT` | The `X-Storefront-Id` storefront doesn't exist (creating categories and products). `path: storefrontId` | |
-| `INVALID_SORT_PROPERTY` | The rule list was sorted by a property that isn't allowed | `invalidProperty`, `allowedProperties` |
+| `INVALID_SORT_PROPERTY` | The rule list or the usage audit was sorted by a property that isn't allowed | `invalidProperty`, `allowedProperties` |
 | `PROMOTION_RULE_USAGE_NOT_RESERVED` | Confirming or canceling a usage that isn't `RESERVED` | `status`: the usage's current status |
 
 ### Not found (404)
@@ -456,6 +456,81 @@ usages can take that long to appear.
 
 Errors: `400` validation with `source: QUERY_PARAMETER` (`from`/`to` missing: `NOT_NULL`; `from` after `to`:
 `ASSERT_TRUE` with `path: validRange`).
+
+### `GET /api/promotion/usage/audit/`
+
+The storefront's audited evaluations, newest first: one per evaluation that applied at least one rule, whatever its
+usage's status. Optionally only those that matched or applied given rules.
+
+- **Roles:** `promotion-manager`, `auditor`, `admin`
+- **Headers:** `X-Storefront-Id`
+
+| Query parameter | Meaning |
+|---|---|
+| `matchedRuleIds` | Only audits that matched **any** of these rules, e.g. `matchedRuleIds=1,2` or the parameter repeated |
+| `appliedRuleIds` | Only audits that applied **any** of these rules. With `matchedRuleIds` too, an audit must pass both |
+| `page`, `size` | Paging; `page` starts at 1 |
+| `sort` | `createdAt,desc` (default) or `createdAt,asc`. Nothing else can be sorted by |
+
+```http
+GET /api/promotion/usage/audit/?appliedRuleIds=1&size=20
+```
+
+Response `200`, a page of audits:
+
+```json
+{
+  "content": [
+    {
+      "usageId": "5cbc1006-9c90-4252-b39e-d9511bc88cc3",
+      "status": "USED",
+      "sessionId": "cart-7f3a",
+      "customerId": "customer-42",
+      "promoCodes": ["SUMMER"],
+      "subtotalBefore": 225.0,
+      "subtotalAfter": 185.0,
+      "shippingCostBefore": 10.0,
+      "shippingCostAfter": 10.0,
+      "totalBefore": 235.0,
+      "totalAfter": 195.0,
+      "matchedRules": [
+        { "ruleId": 1, "ruleName": "20% off keyboards with SUMMER" },
+        { "ruleId": 2, "ruleName": "Free mouse, used up" }
+      ],
+      "appliedRules": [{ "ruleId": 1, "ruleName": "20% off keyboards with SUMMER" }],
+      "createdAt": "2026-11-10T21:35:46.657587Z"
+    }
+  ],
+  "number": 0,
+  "size": 20,
+  "numberOfElements": 1,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "empty": false,
+  "pageable": { "...": "..." },
+  "sort": { "...": "..." }
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `usageId` | The usage the evaluation recorded, as `usage.id` in the evaluation response |
+| `status` | The usage's current status: `RESERVED`, `USED`, `CANCELED` or `EXPIRED` |
+| `sessionId`, `customerId` | As sent to the evaluation. A null `customerId` was an anonymous customer |
+| `promoCodes` | The distinct promo codes sent, in no particular order |
+| `subtotalBefore`, `subtotalAfter` | The lines' total before and after promotions |
+| `shippingCostBefore`, `shippingCostAfter` | Shipping before and after promotions |
+| `totalBefore`, `totalAfter` | The order before and after promotions |
+| `matchedRules` | Rules whose conditions matched, whether or not they changed the cart, by their current priority, highest first. If priorities changed since, this isn't the order they were evaluated in |
+| `appliedRules` | Rules whose action changed the cart, in the order they were applied, as recorded at the time |
+| `createdAt` | When the cart was evaluated |
+
+Rules are shown with their current names. Deleting a rule keeps the audits that named it, but removes the rule from
+their `matchedRules` and `appliedRules`, so they can no longer be found by its ID.
+
+Errors: `400` when a rule ID isn't a number, `409` `INVALID_SORT_PROPERTY` when sorted by anything but `createdAt`.
 
 ## Promotion rules
 

@@ -8,6 +8,7 @@ import {
   numberAttribute,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthApi } from '../../../infrastructure/auth';
 import { isStorefrontId, StorefrontClient } from '../storefront.client';
 import { WebsiteLink } from '../ui/website-link';
 import { STOREFRONT_SECTIONS } from './storefront-sections';
@@ -47,7 +48,7 @@ import { STOREFRONT_SECTIONS } from './storefront-sections';
 
         <nav class="mt-6 border-b border-gray-200" aria-label="Storefront sections">
           <ul class="-mb-px flex gap-6 overflow-x-auto">
-            @for (tab of tabs; track tab.path) {
+            @for (tab of tabs(); track tab.path) {
               <li>
                 <a
                   class="inline-flex items-center gap-2 border-b-2 border-transparent px-1 pb-3 text-sm font-medium whitespace-nowrap text-gray-500 hover:border-gray-300 hover:text-gray-900 aria-[current=page]:border-blue-600 aria-[current=page]:text-blue-700"
@@ -83,10 +84,15 @@ export class StorefrontDetailsPage {
   readonly storefrontId = input.required<number, unknown>({ transform: numberAttribute });
 
   protected readonly storefront = inject(StorefrontClient).byId(this.storefrontId);
-  protected readonly tabs = [
+  private readonly auth = inject(AuthApi);
+
+  /** Overview, then the sections the user may open. */
+  protected readonly tabs = computed(() => [
     { path: '.', label: 'Overview', comingSoon: false },
-    ...STOREFRONT_SECTIONS,
-  ];
+    ...STOREFRONT_SECTIONS.filter(
+      (section) => !section.roles || this.auth.hasAnyRole(section.roles),
+    ),
+  ]);
 
   protected readonly notFound = computed(() => {
     if (!isStorefrontId(this.storefrontId())) {

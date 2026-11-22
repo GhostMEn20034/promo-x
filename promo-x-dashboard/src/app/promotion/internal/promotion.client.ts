@@ -11,6 +11,8 @@ import {
   PromotionRuleInput,
   PromotionRuleSummary,
   SavedPromotionRule,
+  UsageAuditItem,
+  UsageAuditQuery,
   UsageLimitsInput,
   UsageStats,
 } from './promotion.model';
@@ -63,6 +65,38 @@ export class PromotionClient {
             headers: { [STOREFRONT_HEADER]: String(storefrontId()) },
           }
         : undefined;
+    });
+  }
+
+  /**
+   * A page of the storefront's audited evaluations, newest first. A rule ID list keeps only the evaluations that
+   * matched, or applied, any of those rules. Nothing is requested while the query is undefined.
+   */
+  usageAudit(
+    storefrontId: Signal<number>,
+    query: Signal<UsageAuditQuery | undefined>,
+  ): HttpResourceRef<Page<UsageAuditItem> | undefined> {
+    return httpResource<Page<UsageAuditItem>>(() => {
+      const current = query();
+      if (!isId(storefrontId()) || !current) {
+        return undefined;
+      }
+      const params: Record<string, string | number | readonly (string | number)[]> = {
+        page: current.page,
+        size: current.size,
+      };
+      // Repeated parameters, `?appliedRuleIds=1&appliedRuleIds=2`
+      if (current.matchedRuleIds?.length) {
+        params['matchedRuleIds'] = current.matchedRuleIds;
+      }
+      if (current.appliedRuleIds?.length) {
+        params['appliedRuleIds'] = current.appliedRuleIds;
+      }
+      return {
+        url: `${this.url}/usage/audit/`,
+        params,
+        headers: { [STOREFRONT_HEADER]: String(storefrontId()) },
+      };
     });
   }
 

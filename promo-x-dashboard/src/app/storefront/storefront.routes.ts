@@ -28,6 +28,10 @@ export const storefrontRoutes: Routes = [
             path: 'promotion-rules',
             loadChildren: () => import('../promotion').then((m) => m.promotionRoutes),
           },
+          {
+            path: 'evaluations',
+            loadChildren: () => import('../promotion').then((m) => m.usageAuditRoutes),
+          },
         ],
       },
     ],

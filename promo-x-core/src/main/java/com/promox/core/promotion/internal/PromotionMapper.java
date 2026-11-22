@@ -9,12 +9,17 @@ import com.promox.core.promotion.internal.persistence.PromotionRule;
 
 import com.promox.core.promotion.internal.persistence.PromotionRuleSummaryProjection;
 import com.promox.core.promotion.internal.persistence.PromotionRuleUsage;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsageAuditRow;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsageAuditRuleRow;
 import com.promox.core.promotion.internal.persistence.PromotionRuleUsageDailyCount;
 import com.promox.core.promotion.internal.persistence.PromotionRuleUsageStats;
+import com.promox.core.promotion.internal.persistence.PromotionRuleUsageStatus;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -155,5 +160,32 @@ public final class PromotionMapper {
 
     public PromotionRuleUsageDailyCountDto toUsageDailyCountDto(PromotionRuleUsageDailyCount dailyCount) {
         return new PromotionRuleUsageDailyCountDto(dailyCount.date(), dailyCount.usageCount());
+    }
+
+    public PromotionRuleUsageAuditDto toUsageAuditDto(
+        PromotionRuleUsageAuditRow row,
+        List<PromotionRuleUsageAuditRuleRow> matchedRules,
+        List<PromotionRuleUsageAuditRuleRow> appliedRules
+    ) {
+        return new PromotionRuleUsageAuditDto(
+            row.usageId(),
+            PromotionRuleUsageStatus.valueOf(row.status()),
+            row.sessionId(),
+            row.customerId(),
+            new LinkedHashSet<>(Arrays.asList(row.promoCodes())),
+            row.subtotalBefore(),
+            row.subtotalAfter(),
+            row.shippingCostBefore(),
+            row.shippingCostAfter(),
+            row.totalBefore(),
+            row.totalAfter(),
+            matchedRules.stream().map(PromotionMapper::toRuleRef).toList(),
+            appliedRules.stream().map(PromotionMapper::toRuleRef).toList(),
+            row.createdAt()
+        );
+    }
+
+    private static PromotionRuleRefDto toRuleRef(PromotionRuleUsageAuditRuleRow row) {
+        return new PromotionRuleRefDto(row.ruleId(), row.ruleName());
     }
 }

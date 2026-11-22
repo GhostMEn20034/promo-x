@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -121,6 +122,26 @@ public class PromotionController {
     public PromotionRuleUsageDto cancelPromotionRuleUsage(@PathVariable UUID usageId) {
         return promotionCommandHandler.cancelUsage(usageId)
                 .orElseThrow(() -> new PromotionRuleUsageNotFoundException(usageId));
+    }
+
+    /**
+     * The storefront's usage audits, newest first. {@code matchedRuleIds} and {@code appliedRuleIds} (each a list,
+     * {@code ?appliedRuleIds=1,2} or repeated) keep only the audits that matched, or applied, any of those rules.
+     */
+    @GetMapping("/usage/audit/")
+    @PreAuthorize("hasAnyRole('" + Roles.PROMOTION_MANAGER + "', '" + Roles.ADMIN + "', '" + Roles.AUDITOR + "')")
+    public Page<PromotionRuleUsageAuditDto> getPaginatedUsageAudit(
+            @RequestHeader("X-Storefront-Id") Long storefrontId,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false, defaultValue = "") Set<Long> matchedRuleIds,
+            @RequestParam(required = false, defaultValue = "") Set<Long> appliedRuleIds
+    ) {
+        return promotionLookupApi.getUsageAuditItemsByStorefrontId(
+            storefrontId,
+            pageable,
+            matchedRuleIds,
+            appliedRuleIds
+        );
     }
 
     @GetMapping("/usage/stats")
