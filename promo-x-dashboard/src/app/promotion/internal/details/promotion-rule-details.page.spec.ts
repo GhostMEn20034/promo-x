@@ -187,6 +187,21 @@ describe('PromotionRuleDetailsPage', () => {
     expect(text('button')).toEqual(expect.arrayContaining(['Delete', 'Change']));
   });
 
+  it('offers the evaluations, closed, only to those who may read the usage audit', async () => {
+    roles.set([Role.Employee]);
+    await render();
+    expect(element.querySelector('app-rule-evaluations')).toBeNull();
+
+    fixture.destroy();
+    roles.set([Role.Auditor]);
+    await render();
+    const card = element.querySelector('app-rule-evaluations')!;
+    expect(text('app-rule-evaluations button')).toEqual(['Show evaluations']);
+    // Closed: nothing is asked for until it's opened
+    expect(card.querySelector('app-usage-audit-list')).toBeNull();
+    http.expectNone((req) => req.url.includes('/usage/audit/'));
+  });
+
   it('deletes the rule once confirmed, then goes back to the list', async () => {
     roles.set([Role.PromotionManager]);
     await render();

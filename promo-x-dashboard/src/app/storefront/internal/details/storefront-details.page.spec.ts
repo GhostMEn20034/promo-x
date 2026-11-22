@@ -10,15 +10,22 @@ import { StorefrontClient } from '../storefront.client';
 import { StorefrontDetailsPage } from './storefront-details.page';
 
 describe('StorefrontDetailsPage', () => {
+  const roles = signal<Role[]>([]);
+  const auth = {
+    roles,
+    hasAnyRole: (wanted: readonly Role[]) => wanted.some((role) => roles().includes(role)),
+  };
   let http: HttpTestingController;
 
   beforeEach(() => {
+    roles.set([]);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: 'http://api.test' },
+        { provide: AuthApi, useValue: auth },
         StorefrontClient,
       ],
     });
@@ -41,6 +48,33 @@ describe('StorefrontDetailsPage', () => {
     const tabs = [...element.querySelectorAll('nav a')].map((a) => a.textContent!.trim());
     expect(tabs).toEqual(['Overview', 'Categories', 'Products', 'Promotion rules']);
     expect(element.querySelector('router-outlet')).toBeTruthy();
+  });
+
+  it('adds the Evaluations tab for those who may read the usage audit', async () => {
+    const tabsFor = async (granted: Role[]): Promise<string[]> => {
+      roles.set(granted);
+      const fixture = TestBed.createComponent(StorefrontDetailsPage);
+      fixture.componentRef.setInput('storefrontId', '1');
+      TestBed.tick();
+      http
+        .expectOne('http://api.test/api/storefront/1')
+        .flush({ id: 1, name: 'Tech Store', website: null });
+      await fixture.whenStable();
+      const tabs = [...(fixture.nativeElement as HTMLElement).querySelectorAll('nav a')];
+      fixture.destroy();
+      return tabs.map((a) => a.textContent!.trim());
+    };
+
+    expect(await tabsFor([Role.Employee])).not.toContain('Evaluations');
+    for (const role of [Role.PromotionManager, Role.Auditor, Role.Admin]) {
+      expect(await tabsFor([role])).toEqual([
+        'Overview',
+        'Categories',
+        'Products',
+        'Promotion rules',
+        'Evaluations',
+      ]);
+    }
   });
 
   it("says the storefront doesn't exist on a 404, without tabs", async () => {
@@ -102,6 +136,24 @@ describe('StorefrontOverviewPage', () => {
       '/promotion-rules',
     ]);
     expect(links.filter((a) => a.textContent!.includes('Coming soon'))).toEqual([]);
+  });
+
+  it('leaves Evaluations out of the menu for those who may not read the usage audit', async () => {
+    roles.set([Role.Employee]);
+    const element = await render();
+
+    expect([...element.querySelectorAll('a')].map((a) => a.getAttribute('href'))).not.toContain(
+      '/evaluations',
+    );
+  });
+
+  it('lists Evaluations in the menu for those who may read the usage audit', async () => {
+    roles.set([Role.Auditor]);
+    const element = await render();
+
+    expect([...element.querySelectorAll('a')].map((a) => a.getAttribute('href'))).toContain(
+      '/evaluations',
+    );
   });
 
   it("doesn't show the promotion usage to those who may not read it", async () => {

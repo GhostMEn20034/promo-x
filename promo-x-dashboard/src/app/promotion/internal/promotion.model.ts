@@ -245,3 +245,42 @@ export interface UsageStats {
   /** One entry for every UTC day the period touches, oldest first, 0 for days without usage. */
   readonly dailyCounts: readonly UsageDailyCount[];
 }
+
+/** A rule an audited evaluation matched or applied, with its current name. */
+export interface AuditedRule {
+  readonly ruleId: number;
+  readonly ruleName: string;
+}
+
+/** One evaluation that applied at least one rule, from `GET /api/promotion/usage/audit/`. */
+export interface UsageAuditItem {
+  /** The usage the evaluation recorded. */
+  readonly usageId: string;
+  /** The usage's current status. */
+  readonly status: EvaluationUsage['status'];
+  readonly sessionId: string | null;
+  /** Null for an anonymous customer. */
+  readonly customerId: string | null;
+  readonly promoCodes: readonly string[];
+  readonly subtotalBefore: number;
+  readonly subtotalAfter: number;
+  readonly shippingCostBefore: number;
+  readonly shippingCostAfter: number;
+  readonly totalBefore: number;
+  readonly totalAfter: number;
+  /** By the rules' current priority, highest first, whether or not they changed the cart. */
+  readonly matchedRules: readonly AuditedRule[];
+  /** In the order they were applied. */
+  readonly appliedRules: readonly AuditedRule[];
+  /** When the cart was evaluated. */
+  readonly createdAt: string;
+}
+
+/** Which audits to read: a page, and optionally only those that matched or applied any of the rules. */
+export interface UsageAuditQuery {
+  /** 1-based. */
+  readonly page: number;
+  readonly size: number;
+  readonly matchedRuleIds?: readonly number[];
+  readonly appliedRuleIds?: readonly number[];
+}

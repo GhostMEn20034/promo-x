@@ -11,6 +11,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthApi, Role } from '../../../infrastructure/auth';
+import { RuleEvaluations } from '../audit/rule-evaluations';
+import { USAGE_AUDIT_ROLES } from '../audit/usage-audit-roles';
 import { isId, PromotionClient } from '../promotion.client';
 import { RuleProduct, SavedPromotionRule } from '../promotion.model';
 import { fromAction, newAction, newGroup, rootFromCondition } from '../rule/rule-draft';
@@ -31,6 +33,7 @@ import { UsageLimitsDialog } from './usage-limits-dialog';
     UsageMeter,
     UsageLimitsDialog,
     DeleteRuleDialog,
+    RuleEvaluations,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -218,6 +221,14 @@ import { UsageLimitsDialog } from './usage-limits-dialog';
         </div>
       </div>
 
+      @if (canSeeEvaluations()) {
+        <app-rule-evaluations
+          class="mt-6 block"
+          [storefrontId]="storefrontId()"
+          [ruleId]="details.id"
+        />
+      }
+
       @if (editingLimits()) {
         <app-usage-limits-dialog
           [rule]="details"
@@ -250,6 +261,8 @@ export class PromotionRuleDetailsPage {
   protected readonly rule = inject(PromotionClient).byId(this.ruleId);
   /** promo-x-core lets only promotion managers change rules. */
   protected readonly canManage = computed(() => this.auth.hasAnyRole([Role.PromotionManager]));
+  /** promo-x-core lets promotion managers, auditors and admins read the usage audit. */
+  protected readonly canSeeEvaluations = computed(() => this.auth.hasAnyRole(USAGE_AUDIT_ROLES));
   protected readonly editingLimits = signal(false);
   protected readonly deleting = signal(false);
   /** From `/storefronts/:id/promotion-rules/:ruleId` to `/storefronts/:id/products/:productId`. */

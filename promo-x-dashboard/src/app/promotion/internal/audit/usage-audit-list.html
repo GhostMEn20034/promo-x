@@ -1,0 +1,196 @@
+@if (forbidden()) {
+  <p class="text-sm text-gray-500">You're not allowed to see the evaluations.</p>
+} @else if (audits.error()) {
+  <div role="alert" class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
+    Couldn't load the evaluations.
+    <button type="button" class="ml-2 font-medium underline" (click)="audits.reload()">
+      Try again
+    </button>
+  </div>
+} @else if (shown(); as result) {
+  @if (result.content.length === 0) {
+    <p
+      class="rounded-xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-gray-500"
+      data-testid="audit-empty"
+    >
+      @if (result.totalElements > 0) {
+        There are no evaluations on this page.
+      } @else {
+        {{ emptyText() }}
+      }
+    </p>
+  } @else {
+    <div
+      class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm transition-opacity"
+      [class.opacity-50]="stale()"
+      [attr.aria-busy]="stale()"
+    >
+      <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead
+          class="bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+        >
+          <tr>
+            <th scope="col" class="px-4 py-3">Evaluated</th>
+            <th scope="col" class="px-4 py-3">Status</th>
+            <th scope="col" class="px-4 py-3">Customer</th>
+            <th scope="col" class="px-4 py-3">Promo codes</th>
+            <th scope="col" class="px-4 py-3">Rules</th>
+            <th scope="col" class="px-4 py-3 text-right">Total</th>
+            <th scope="col" class="px-2 py-3"><span class="sr-only">Details</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (audit of result.content; track audit.usageId) {
+            @let open = expanded() === audit.usageId;
+            @let status = statuses[audit.status];
+            <tr class="align-top hover:bg-gray-50" data-testid="audit-row">
+              <td class="px-4 py-3 whitespace-nowrap text-gray-700">
+                <time [attr.datetime]="audit.createdAt" [title]="audit.createdAt">{{
+                  audit.createdAt | date: 'MMM d, y, HH:mm:ss'
+                }}</time>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <span
+                  class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  [class]="status.badge"
+                  >{{ status.label }}</span
+                >
+              </td>
+              <td class="px-4 py-3">
+                @if (audit.customerId) {
+                  <span class="font-mono text-xs break-all text-gray-900">{{
+                    audit.customerId
+                  }}</span>
+                } @else {
+                  <span class="text-gray-500">Guest</span>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <span class="flex flex-wrap gap-1">
+                  @for (code of audit.promoCodes; track code) {
+                    <code
+                      class="rounded-md bg-violet-50 px-1.5 py-0.5 font-mono text-xs text-violet-800 ring-1 ring-violet-200 ring-inset"
+                      >{{ code }}</code
+                    >
+                  } @empty {
+                    <span class="text-gray-400">—</span>
+                  }
+                </span>
+              </td>
+              <td class="px-4 py-3" data-testid="audit-rules">
+                <!-- Applied, in the order they were applied -->
+                <span class="flex flex-wrap items-center gap-1">
+                  @for (rule of audit.appliedRules; track rule.ruleId; let last = $last) {
+                    <a
+                      class="rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-800 hover:bg-blue-100"
+                      [class.ring-2]="highlighted(rule)"
+                      [class.ring-blue-500]="highlighted(rule)"
+                      [routerLink]="[...ruleLink(), rule.ruleId]"
+                      [title]="'Applied, rule ' + rule.ruleId"
+                      >{{ rule.ruleName }}</a
+                    >
+                    @if (!last) {
+                      <span class="text-xs text-gray-400" aria-label="then">→</span>
+                    }
+                  }
+                </span>
+                @let matched = matchedOnly(audit);
+                @if (matched.length > 0) {
+                  <span class="mt-1.5 flex flex-wrap items-center gap-1">
+                    <span class="text-[11px] text-gray-500">Matched only:</span>
+                    @for (rule of matched; track rule.ruleId) {
+                      <a
+                        class="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 hover:bg-gray-200"
+                        [class.ring-2]="highlighted(rule)"
+                        [class.ring-gray-400]="highlighted(rule)"
+                        [routerLink]="[...ruleLink(), rule.ruleId]"
+                        [title]="'Matched, but changed nothing, rule ' + rule.ruleId"
+                        >{{ rule.ruleName }}</a
+                      >
+                    }
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap tabular-nums">
+                <span class="font-medium text-gray-900">{{
+                  audit.totalAfter | number: '1.2-2'
+                }}</span>
+                @if (audit.totalBefore > audit.totalAfter) {
+                  <span class="block text-xs text-gray-400 line-through"
+                    ><span class="sr-only">Before: </span
+                    >{{ audit.totalBefore | number: '1.2-2' }}</span
+                  >
+                  <span class="block text-xs text-green-700"
+                    ><span class="sr-only">Discount: </span>−{{
+                      audit.totalBefore - audit.totalAfter | number: '1.2-2'
+                    }}</span
+                  >
+                }
+              </td>
+              <td class="px-2 py-2.5 text-right">
+                <button
+                  type="button"
+                  class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  [attr.aria-expanded]="open"
+                  [attr.aria-controls]="'audit-' + audit.usageId"
+                  [attr.aria-label]="(open ? 'Hide' : 'Show') + ' the details of this evaluation'"
+                  (click)="toggle(audit.usageId)"
+                >
+                  <svg
+                    class="size-4 transition-transform"
+                    [class.rotate-180]="open"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+              </td>
+            </tr>
+            @if (open) {
+              <tr [id]="'audit-' + audit.usageId" data-testid="audit-details">
+                <td colspan="7" class="bg-gray-50 px-4 py-3">
+                  <dl
+                    class="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-[max-content_1fr_max-content_1fr]"
+                  >
+                    <dt class="text-gray-500">Items</dt>
+                    <dd class="text-gray-900 tabular-nums">
+                      {{ audit.subtotalBefore | number: '1.2-2' }} →
+                      {{ audit.subtotalAfter | number: '1.2-2' }}
+                    </dd>
+                    <dt class="text-gray-500">Shipping</dt>
+                    <dd class="text-gray-900 tabular-nums">
+                      {{ audit.shippingCostBefore | number: '1.2-2' }} →
+                      {{ audit.shippingCostAfter | number: '1.2-2' }}
+                    </dd>
+                    <dt class="text-gray-500">Usage</dt>
+                    <dd class="font-mono text-xs break-all text-gray-900">{{ audit.usageId }}</dd>
+                    <dt class="text-gray-500">Session</dt>
+                    <dd class="font-mono text-xs break-all text-gray-900">
+                      {{ audit.sessionId ?? '—' }}
+                    </dd>
+                  </dl>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <app-pager
+    class="mt-4 block"
+    [links]="pageLinks()"
+    [page]="page()"
+    [totalPages]="result.totalPages"
+    (pageChange)="onPageChange($event)"
+  />
+} @else {
+  <p class="text-sm text-gray-500">Loading evaluations…</p>
+}
