@@ -99,7 +99,8 @@ has a usage limit. Otherwise there is nothing to hold, and the usage is `USED` s
 
 Every usage has an **audit**: the cart values before and after, the entered promo codes, the customer or session,
 the matched and applied rules and the order lines with their categories at that moment. Usage statistics are
-computed from these audits.
+computed from these audits, and the audits can be listed, newest first, optionally only those that matched or applied
+given rules.
 
 ## Usage statistics
 
@@ -116,7 +117,7 @@ depends on its roles:
 | Role | For | May |
 |---|---|---|
 | `integration-client` | Calling systems | Evaluate carts, confirm and cancel usages |
-| `promotion-manager` | Marketing staff | Everything about rules, evaluate, usages and stats |
+| `promotion-manager` | Marketing staff | Everything about rules, evaluate, usages, usage stats and usage audit |
 | `employee` | Catalog staff | Manage categories and products, read rules |
-| `auditor` | Reporting | Read rules, catalog and usage stats |
-| `admin` | Administrators | Manage storefronts, update products, read usage stats |
+| `auditor` | Reporting | Read rules, catalog, usage stats and usage audit |
+| `admin` | Administrators | Manage storefronts, update products, read usage stats and usage audit |

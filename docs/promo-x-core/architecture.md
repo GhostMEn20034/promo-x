@@ -164,6 +164,11 @@ waits and then sees the new status instead of handling the usage twice.
   `promotion_rule_usage_audit` and its child tables hold the audit, one row per usage, sharing its primary key.
 - **Usage stats:** two native queries on the audit table, one aggregating the totals and one counting usages per UTC
   day with `generate_series`, indexed by `(storefront_id, created_at)`.
+- **Usage audit:** separate native queries, so the rules are never joined into the paged query. A page of audits with
+  their usages' status (newest-first and oldest-first are two queries, so each can use the same index), a count with
+  the same filter, then the matched and the applied rules of only that page's usages. The rule filters are `bigint[]`
+  parameters, where an empty array filters nothing. The join tables don't record order, so the applied rules are
+  ordered by `array_position` in the usage's `applied_rule_ids`, the only record of the order they were applied in.
 - **Sessions:** `spring.jpa.open-in-view` is off, so a connection goes back to the pool when its transaction ends.
   Whatever a response needs must be loaded inside the transaction.
 
