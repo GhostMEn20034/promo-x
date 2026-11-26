@@ -21,3 +21,5 @@ Create a realm with your clients and roles, and a mapper that puts the realm rol
 
 - [promo-x-core](promo-x-core/run.md): its database and Redis, migrations, environment variables and profiles,
   and its logs, including how to read them in Docker, Elastic Beanstalk and Kubernetes.
+- [promo-x-dashboard](promo-x-dashboard/run.md): the staff web app. Its Keycloak client, configuration and build.
+  Start promo-x-core first.
