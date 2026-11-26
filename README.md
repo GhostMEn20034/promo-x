@@ -22,16 +22,22 @@ Built as a modular monolith with Java 25, Spring Boot 4 and Spring Modulith, on 
 - [Running promo-x](docs/run.md): Keycloak, then each service.
 - [Running promo-x-core](docs/promo-x-core/run.md): its database and Redis, migrations, environment variables and
   profiles, and its logs: the fields, turning on DEBUG, and reading them in Docker, Elastic Beanstalk and Kubernetes.
+- [Testing promo-x-core](docs/promo-x-core/test.md): running the tests, their output, writing integration tests, CI.
+- [Running promo-x-dashboard](docs/promo-x-dashboard/run.md): the staff web app's Keycloak client, configuration
+  and build.
+- [Testing promo-x-dashboard](docs/promo-x-dashboard/test.md): its unit tests.
 
 ## Repository layout
 
 ```
 promo-x-core/         The engine (Spring Boot application)
+promo-x-dashboard/    The staff web app (Angular)
 common-infra/         Infrastructure shared by promo-x services
   dev/                  Keycloak for local development
   ci/keycloak/          Keycloak realm used by the CI smoke test
-docs/                 System design and how to run it
-  promo-x-core/         Backend design, API, and how to run it
+docs/                 System design, and how to run and test each project
+  promo-x-core/         Backend design, API, and how to run and test it
+  promo-x-dashboard/    How to run and test the dashboard
 ```
 
 ## Running locally
@@ -41,16 +47,8 @@ Prerequisites: JDK 25 and Docker. Start Keycloak, then the services, as describe
 
 ## Testing
 
-```bash
-cd promo-x-core
-./mvnw test
-```
-
-The tests start PostgreSQL and Redis with Testcontainers, so Docker must be running. Security is mocked
-with `@WithMockJwt`, so no identity provider is needed.
-
-CI (`.github/workflows/promo-x-core-ci.yml`) has two jobs: the tests, and a smoke test that applies the
-migrations, starts the application against real PostgreSQL, Redis and Keycloak, and checks `/actuator/health`.
+- [Testing promo-x-core](docs/promo-x-core/test.md): integration tests with Testcontainers, and CI.
+- [Testing promo-x-dashboard](docs/promo-x-dashboard/test.md): unit tests with Vitest.
 
 ## License
 
