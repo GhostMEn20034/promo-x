@@ -1,5 +1,7 @@
 package com.promox.core.infrastructure.security;
 
+import com.promox.core.infrastructure.logging.UserIdLoggingFilter;
+
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -21,6 +24,10 @@ public class DefaultSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) {
+        // Log the rejected requests; set on both, for a missing token and for an invalid one.
+        var authenticationEntryPoint = new LoggingAuthenticationEntryPoint();
+        var accessDeniedHandler = new LoggingAccessDeniedHandler();
+
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -29,8 +36,15 @@ public class DefaultSecurityConfig {
                     .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
             )
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler))
             .oauth2ResourceServer(o -> o
-                .jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter)));
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler)
+                .jwt(j -> j.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+            // Once the token is authenticated, so every later log line of the request has the user ID.
+            .addFilterAfter(new UserIdLoggingFilter(), BearerTokenAuthenticationFilter.class);
 
         return http.build();
     }

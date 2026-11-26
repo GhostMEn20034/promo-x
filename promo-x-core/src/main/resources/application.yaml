@@ -49,8 +49,23 @@ spring:
   cache:
     type: redis
 
+  main:
+    # Printed to stdout outside the logger, it would be the only line there that isn't JSON.
+    banner-mode: off
+
 server:
   port: 8000
+
+logging:
+  structured:
+    format:
+      # Logstash JSON, one log line per line on stdout: @timestamp, level, logger_name, thread_name, message,
+      # stack_trace, plus the MDC (requestId, traceId, spanId, userId, jobName, jobRunId) and key-value pairs.
+      console: logstash
+    json:
+      add:
+        app_name: ${spring.application.name}
+        environment: ${app.environment}
 
 management:
   endpoint:
@@ -67,6 +82,8 @@ springdoc:
 
 # Application-specific properties
 app:
+  # The environment named in every log line, set by the active profile below; "unknown" if none is active.
+  environment: unknown
   cache:
     ttls:
       promotion-rules: 1h
@@ -77,3 +94,15 @@ app:
   promotion:
     # How long a reserved rule usage may wait to be confirmed (stored as the usage's expires_at)
     usage-reservation-ttl: 15m
+
+---
+spring.config.activate.on-profile: dev
+app.environment: dev
+
+---
+spring.config.activate.on-profile: stage
+app.environment: stage
+
+---
+spring.config.activate.on-profile: prod
+app.environment: production
